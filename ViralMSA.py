@@ -58,6 +58,27 @@ def check_bowtie2():
         o = None
     if o is None or 'Bowtie 2 version' not in o.decode():
         print("ERROR: bowtie2 is not runnable in your PATH", file=stderr); exit(1)
+    try:
+        o = check_output(['bowtie2-build', '-h'])
+    except:
+        o = None
+    if o is None or 'Bowtie 2 version' not in o.decode():
+        print("ERROR: bowtie2-build is not runnable in your PATH", file=stderr); exit(1)
+
+# check HISAT2
+def check_hisat2():
+    try:
+        o = check_output(['hisat2', '-h'])
+    except:
+        o = None
+    if o is None or 'HISAT2 version' not in o.decode():
+        print("ERROR: hisat2 is not runnable in your PATH", file=stderr); exit(1)
+    try:
+        o = check_output(['hisat2-build', '-h'])
+    except:
+        o = None
+    if o is None or 'HISAT2 version' not in o.decode():
+        print("ERROR: hisat2-build is not runnable in your PATH", file=stderr); exit(1)
 
 # build minimap2 index
 def build_index_minimap2(ref_genome_path, threads, verbose=True):
@@ -98,6 +119,31 @@ def build_index_bowtie2(ref_genome_path, threads, verbose=True):
         print_log("bowtie2 index built: %s.bowtie2.*.bt2" % ref_genome_path)
     chdir(orig_dir)
 
+# build HISAT2 index
+def build_index_hisat2(ref_genome_path, threads, verbose=True):
+    exts = [('%d.ht2'%i) for i in range(1,9)]
+    all_found = True
+    for ext in exts:
+        if not isfile('%s.hisat2.%s' % (ref_genome_path,ext)):
+            all_found = False; break
+    if all_found:
+        if verbose:
+            print_log("HISAT2 index found: %s.hisat2.*.ht2" % ref_genome_path)
+        return
+    for ext in exts:
+        if isfile('%s.hisat2.%s' % (ref_genome_path,ext)):
+            remove('%s.hisat2.%s' % (ref_genome_path,ext))
+    ref_genome_dir, ref_genome_fn = split(ref_genome_path)
+    orig_dir = getcwd()
+    chdir(ref_genome_dir)
+    command = ['hisat2-build', '--threads', str(threads), ref_genome_path, '%s.hisat2' % ref_genome_fn]
+    if verbose:
+        print_log("Building HISAT2 index: %s" % ' '.join(command))
+    log = open('%s.hisat2.log' % ref_genome_path, 'w'); call(command, stdout=log, stderr=STDOUT); log.close()
+    if verbose:
+        print_log("HISAT2 index built: %s.hisat2.*.ht2" % ref_genome_path)
+    chdir(orig_dir)
+
 # align genomes using minimap2
 def align_minimap2(seqs_path, out_sam_path, ref_genome_path, threads, verbose=True):
     index_path = '%s.mmi' % ref_genome_path
@@ -117,6 +163,15 @@ def align_bowtie2(seqs_path, out_sam_path, ref_genome_path, threads, verbose=Tru
     if verbose:
         print_log("bowtie2 alignment complete: %s" % out_sam_path)
 
+# align genomes using HISAT2
+def align_hisat2(seqs_path, out_sam_path, ref_genome_path, threads, verbose=True):
+    command = ['hisat2', '-p', str(threads), '-f', '-x', '%s.hisat2' % ref_genome_path, '-U', seqs_path, '-S', out_sam_path]
+    if verbose:
+        print_log("Aligning using HISAT2: %s" % ' '.join(command))
+    log = open('%s.log' % out_sam_path, 'w'); call(command, stderr=log); log.close()
+    if verbose:
+        print_log("HISAT2 alignment complete: %s" % out_sam_path)
+
 # aligners
 ALIGNERS = {
     'minimap2': {
@@ -129,6 +184,12 @@ ALIGNERS = {
         'check':       check_bowtie2,
         'build_index': build_index_bowtie2,
         'align':       align_bowtie2,
+    },
+
+    'hisat2': {
+        'check':       check_hisat2,
+        'build_index': build_index_hisat2,
+        'align':       align_hisat2,
     },
 }
 
