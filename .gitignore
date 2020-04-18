@@ -1,3 +1,14 @@
+# ignore alignment files
+*.aln
+*.aln.gz
+*.bam
+*.fas
+*.fas.gz
+*.fasta
+*.fasta.gz
+*.sam
+*.sam.gz
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

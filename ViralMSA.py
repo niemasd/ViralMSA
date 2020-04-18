@@ -7,9 +7,9 @@ ViralMSA: Reference-guided multiple sequence alignment of viral genomes
 from Bio import Entrez
 from datetime import datetime
 from multiprocessing import cpu_count
-from os import makedirs
-from os.path import abspath,expanduser,isdir,isfile
-from subprocess import call
+from os import chdir,getcwd,makedirs,remove
+from os.path import abspath,expanduser,isdir,isfile,split
+from subprocess import call,check_output,STDOUT
 from sys import stderr,stdout
 import argparse
 
@@ -41,6 +41,24 @@ def parse_cigar(s):
         out.append((let, int(num[::-1])))
     return out[::-1]
 
+# check minimap2
+def check_minimap2():
+    try:
+        o = check_output(['minimap2', '-h'])
+    except:
+        o = None
+    if o is None or 'Usage: minimap2' not in o.decode():
+        print("ERROR: Minimap2 is not runnable in your PATH", file=stderr); exit(1)
+
+# check bowtie2
+def check_bowtie2():
+    try:
+        o = check_output(['bowtie2', '-h'])
+    except:
+        o = None
+    if o is None or 'Bowtie 2 version' not in o.decode():
+        print("ERROR: bowtie2 is not runnable in your PATH", file=stderr); exit(1)
+
 # build minimap2 index
 def build_index_minimap2(ref_genome_path, threads, verbose=True):
     index_path = '%s.mmi' % ref_genome_path
@@ -55,6 +73,31 @@ def build_index_minimap2(ref_genome_path, threads, verbose=True):
     if verbose:
         print_log("Minimap2 index built: %s" % index_path)
 
+# build bowtie2 index
+def build_index_bowtie2(ref_genome_path, threads, verbose=True):
+    exts = ['1.bt2', '2.bt2', '3.bt2', '4.bt2', 'rev.1.bt2', 'rev.2.bt2']
+    all_found = True
+    for ext in exts:
+        if not isfile('%s.bowtie2.%s' % (ref_genome_path,ext)):
+            all_found = False; break
+    if all_found:
+        if verbose:
+            print_log("bowtie2 index found: %s.bowtie2.*.bt2" % ref_genome_path)
+        return
+    for ext in exts:
+        if isfile('%s.bowtie2.%s' % (ref_genome_path,ext)):
+            remove('%s.bowtie2.%s' % (ref_genome_path,ext))
+    ref_genome_dir, ref_genome_fn = split(ref_genome_path)
+    orig_dir = getcwd()
+    chdir(ref_genome_dir)
+    command = ['bowtie2-build', '--threads', str(threads), ref_genome_path, '%s.bowtie2' % ref_genome_fn]
+    if verbose:
+        print_log("Building bowtie2 index: %s" % ' '.join(command))
+    log = open('%s.bowtie2.log' % ref_genome_path, 'w'); call(command, stdout=log, stderr=STDOUT); log.close()
+    if verbose:
+        print_log("bowtie2 index built: %s.bowtie2.*.bt2" % ref_genome_path)
+    chdir(orig_dir)
+
 # align genomes using minimap2
 def align_minimap2(seqs_path, out_sam_path, ref_genome_path, threads, verbose=True):
     index_path = '%s.mmi' % ref_genome_path
@@ -65,12 +108,28 @@ def align_minimap2(seqs_path, out_sam_path, ref_genome_path, threads, verbose=Tr
     if verbose:
         print_log("Minimap2 alignment complete: %s" % out_sam_path)
 
+# align genomes using bowtie2
+def align_bowtie2(seqs_path, out_sam_path, ref_genome_path, threads, verbose=True):
+    command = ['bowtie2', '-p', str(threads), '-f', '-x', '%s.bowtie2' % ref_genome_path, '-U', seqs_path, '-S', out_sam_path]
+    if verbose:
+        print_log("Aligning using bowtie2: %s" % ' '.join(command))
+    log = open('%s.log' % out_sam_path, 'w'); call(command, stderr=log); log.close()
+    if verbose:
+        print_log("bowtie2 alignment complete: %s" % out_sam_path)
+
 # aligners
 ALIGNERS = {
     'minimap2': {
+        'check':       check_minimap2,
         'build_index': build_index_minimap2,
         'align':       align_minimap2,
-    }
+    },
+
+    'bowtie2': {
+        'check':       check_bowtie2,
+        'build_index': build_index_bowtie2,
+        'align':       align_bowtie2,
+    },
 }
 
 # main content
@@ -91,6 +150,7 @@ if __name__ == "__main__":
     args.aligner = args.aligner.lower()
     if args.aligner not in ALIGNERS:
         print("ERROR: Invalid aligner: %s (valid options: %s)" % (args.aligner, ', '.join(sorted(ALIGNERS.keys()))), file=stderr); exit(1)
+    ALIGNERS[args.aligner]['check']()
     args.sequences = abspath(expanduser(args.sequences))
     if not isfile(args.sequences):
         print("ERROR: Sequences file not found: %s" % args.sequences, file=stderr); exit(1)
@@ -187,3 +247,4 @@ if __name__ == "__main__":
             aln.write('-'*(len(ref_seq)-seq_len)) # write gaps after alignment
         aln.write('\n')
     aln.close()
+    print_log("Multiple sequence alignment complete: %s" % out_aln_path)
