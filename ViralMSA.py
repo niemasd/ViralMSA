@@ -11,7 +11,7 @@ from multiprocessing import cpu_count
 from os import chdir,getcwd,makedirs,remove
 from os.path import abspath,expanduser,isdir,isfile,split
 from shutil import move
-from subprocess import call,check_output,STDOUT
+from subprocess import call,check_output,PIPE,Popen,STDOUT
 from sys import stderr,stdout
 import argparse
 
@@ -156,6 +156,9 @@ def build_index_hisat2(ref_genome_path, threads, verbose=True):
 
 # build STAR index
 def build_index_star(ref_genome_path, threads, verbose=True):
+    delete_log = True # STAR by default creates Log.out in the running directory
+    if isfile('Log.out'):
+        delete_log = False # don't delete it (it existed before running ViralMSA)
     index_path = '%s.STAR' % ref_genome_path
     genome_length = sum(len(l.strip()) for l in open(ref_genome_path) if not l.startswith('>'))
     genomeSAindexNbases = min(14, int(log2(genome_length)/2)-1)
@@ -166,6 +169,8 @@ def build_index_star(ref_genome_path, threads, verbose=True):
     log = open('%s/index.log' % index_path, 'w'); call(command, stdout=log, stderr=STDOUT); log.close()
     if verbose:
         print_log("STAR index built: %s" % index_path)
+    if delete_log and isfile('Log.out'):
+        remove('Log.out')
 
 # align genomes using minimap2
 def align_minimap2(seqs_path, out_sam_path, ref_genome_path, threads, verbose=True):
@@ -197,6 +202,9 @@ def align_hisat2(seqs_path, out_sam_path, ref_genome_path, threads, verbose=True
 
 # align genomes using STAR
 def align_star(seqs_path, out_sam_path, ref_genome_path, threads, verbose=True):
+    delete_log = True # STAR by default creates Log.out in the running directory
+    if isfile('Log.out'):
+        delete_log = False # don't delete it (it existed before running ViralMSA)
     index_path = '%s.STAR' % ref_genome_path
     out_sam_dir, out_sam_fn = split(out_sam_path)
     out_file_prefix = '%s.' % '.'.join(out_sam_path.split('.')[:-1])
@@ -207,15 +215,11 @@ def align_star(seqs_path, out_sam_path, ref_genome_path, threads, verbose=True):
     move('%sAligned.out.sam' % out_file_prefix, out_sam_path)
     if verbose:
         print_log("STAR alignment complete: %s" % out_sam_dir)
+    if delete_log and isfile('Log.out'):
+        remove('Log.out')
 
 # aligners
 ALIGNERS = {
-    'minimap2': {
-        'check':       check_minimap2,
-        'build_index': build_index_minimap2,
-        'align':       align_minimap2,
-    },
-
     'bowtie2': {
         'check':       check_bowtie2,
         'build_index': build_index_bowtie2,
@@ -226,6 +230,12 @@ ALIGNERS = {
         'check':       check_hisat2,
         'build_index': build_index_hisat2,
         'align':       align_hisat2,
+    },
+
+    'minimap2': {
+        'check':       check_minimap2,
+        'build_index': build_index_minimap2,
+        'align':       align_minimap2,
     },
 
     'star': {
