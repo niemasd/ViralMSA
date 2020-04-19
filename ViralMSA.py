@@ -6,9 +6,11 @@ ViralMSA: Reference-guided multiple sequence alignment of viral genomes
 # imports
 from Bio import Entrez
 from datetime import datetime
+from math import log2
 from multiprocessing import cpu_count
 from os import chdir,getcwd,makedirs,remove
 from os.path import abspath,expanduser,isdir,isfile,split
+from shutil import move
 from subprocess import call,check_output,STDOUT
 from sys import stderr,stdout
 import argparse
@@ -79,6 +81,15 @@ def check_hisat2():
     if o is None or 'HISAT2 version' not in o.decode():
         print("ERROR: hisat2-build is not runnable in your PATH", file=stderr); exit(1)
 
+# check STAR
+def check_star():
+    try:
+        o = check_output(['STAR', '-h'])
+    except:
+        o = None
+    if o is None or 'Usage: STAR' not in o.decode():
+        print("ERROR: STAR is not runnable in your PATH", file=stderr); exit(1)
+
 # build minimap2 index
 def build_index_minimap2(ref_genome_path, threads, verbose=True):
     index_path = '%s.mmi' % ref_genome_path
@@ -143,6 +154,19 @@ def build_index_hisat2(ref_genome_path, threads, verbose=True):
         print_log("HISAT2 index built: %s.hisat2.*.ht2" % ref_genome_path)
     chdir(orig_dir)
 
+# build STAR index
+def build_index_star(ref_genome_path, threads, verbose=True):
+    index_path = '%s.STAR' % ref_genome_path
+    genome_length = sum(len(l.strip()) for l in open(ref_genome_path) if not l.startswith('>'))
+    genomeSAindexNbases = min(14, int(log2(genome_length)/2)-1)
+    makedirs(index_path, exist_ok=True)
+    command = ['STAR', '--runMode', 'genomeGenerate', '--runThreadN', str(threads), '--genomeDir', index_path, '--genomeFastaFiles', ref_genome_path, '--genomeSAindexNbases', str(genomeSAindexNbases)]
+    if verbose:
+        print_log("Building STAR index: %s" % ' '.join(command))
+    log = open('%s/index.log' % index_path, 'w'); call(command, stdout=log, stderr=STDOUT); log.close()
+    if verbose:
+        print_log("STAR index built: %s" % index_path)
+
 # align genomes using minimap2
 def align_minimap2(seqs_path, out_sam_path, ref_genome_path, threads, verbose=True):
     index_path = '%s.mmi' % ref_genome_path
@@ -155,7 +179,7 @@ def align_minimap2(seqs_path, out_sam_path, ref_genome_path, threads, verbose=Tr
 
 # align genomes using bowtie2
 def align_bowtie2(seqs_path, out_sam_path, ref_genome_path, threads, verbose=True):
-    command = ['bowtie2', '-p', str(threads), '-f', '-x', '%s.bowtie2' % ref_genome_path, '-U', seqs_path, '-S', out_sam_path]
+    command = ['bowtie2', '--very-sensitive', '-p', str(threads), '-f', '-x', '%s.bowtie2' % ref_genome_path, '-U', seqs_path, '-S', out_sam_path]
     if verbose:
         print_log("Aligning using bowtie2: %s" % ' '.join(command))
     log = open('%s.log' % out_sam_path, 'w'); call(command, stderr=log); log.close()
@@ -164,12 +188,25 @@ def align_bowtie2(seqs_path, out_sam_path, ref_genome_path, threads, verbose=Tru
 
 # align genomes using HISAT2
 def align_hisat2(seqs_path, out_sam_path, ref_genome_path, threads, verbose=True):
-    command = ['hisat2', '-p', str(threads), '-f', '-x', '%s.hisat2' % ref_genome_path, '-U', seqs_path, '-S', out_sam_path]
+    command = ['hisat2', '--very-sensitive', '-p', str(threads), '-f', '-x', '%s.hisat2' % ref_genome_path, '-U', seqs_path, '-S', out_sam_path]
     if verbose:
         print_log("Aligning using HISAT2: %s" % ' '.join(command))
     log = open('%s.log' % out_sam_path, 'w'); call(command, stderr=log); log.close()
     if verbose:
         print_log("HISAT2 alignment complete: %s" % out_sam_path)
+
+# align genomes using STAR
+def align_star(seqs_path, out_sam_path, ref_genome_path, threads, verbose=True):
+    index_path = '%s.STAR' % ref_genome_path
+    out_sam_dir, out_sam_fn = split(out_sam_path)
+    out_file_prefix = '%s.' % '.'.join(out_sam_path.split('.')[:-1])
+    command = ['STAR', '--runThreadN', str(threads), '--genomeDir', index_path, '--readFilesIn', seqs_path, '--outFileNamePrefix', out_file_prefix, '--outFilterMismatchNmax', '9999999999']
+    if verbose:
+        print_log("Aligning using STAR: %s" % ' '.join(command))
+    log = open('%s/STAR.log' % out_sam_dir, 'w'); call(command, stdout=log); log.close()
+    move('%sAligned.out.sam' % out_file_prefix, out_sam_path)
+    if verbose:
+        print_log("STAR alignment complete: %s" % out_sam_dir)
 
 # aligners
 ALIGNERS = {
@@ -189,6 +226,12 @@ ALIGNERS = {
         'check':       check_hisat2,
         'build_index': build_index_hisat2,
         'align':       align_hisat2,
+    },
+
+    'star': {
+        'check':       check_star,
+        'build_index': build_index_star,
+        'align':       align_star,
     },
 }
 

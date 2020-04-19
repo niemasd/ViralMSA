@@ -1,5 +1,5 @@
 # ViralMSA
-ViralMSA is a tool to perform reference-guided multiple sequence alignment of viral genomes. ViralMSA wraps around existing read mapping tools such as [Minimap2](https://doi.org/10.1093/bioinformatics/bty191) and [HISAT2](https://doi.org/10.1038/s41587-019-0201-4), and as such, it can natively improve as methods of read mapping evolve. Importantly, this approach scales linearly with the number of sequences and can be massively parallelized. However, insertions with respect to the reference genome will be thrown away. This is fair for many viral analyses (e.g. phylogenetic inference, as insertions with respect to the reference likely lack phylogenetic information), but it may not be appropriate for all contexts.
+ViralMSA is a tool to perform reference-guided multiple sequence alignment of viral genomes. ViralMSA wraps around existing read mapping tools such as [Minimap2](https://doi.org/10.1093/bioinformatics/bty191), and as such, it can natively improve as methods of read mapping evolve. Importantly, this approach scales linearly with the number of sequences and can be massively parallelized. However, insertions with respect to the reference genome will be thrown away. This is fair for many viral analyses (e.g. phylogenetic inference, as insertions with respect to the reference likely lack phylogenetic information), but it may not be appropriate for all contexts.
 
 ## Installation
 ViralMSA is written in Python 3 and depends on [BioPython](https://biopython.org/). You can simply download [ViralMSA.py](ViralMSA.py) to your machine and make it executable.
@@ -7,8 +7,9 @@ ViralMSA is written in Python 3 and depends on [BioPython](https://biopython.org
 ViralMSA also requires at least one of the following tools to perform the alignment:
 
 * [Minimap2](https://github.com/lh3/minimap2) (used by default)
-* [HISAT2](http://daehwankimlab.github.io/hisat2/)
 * [bowtie2](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml)
+* [HISAT2](http://daehwankimlab.github.io/hisat2/)
+* [STAR](https://github.com/alexdobin/STAR)
 
 ## Usage
 ViralMSA can be used as follows:
