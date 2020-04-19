@@ -18,9 +18,7 @@ CIGAR_LETTERS = {'M','D','I','S','H','=','X'}
 
 # reference genomes for common viruses
 REFS = {
-    # COVID-19
     'sarscov2': 'MT072688',
-    'covid19':  'MT072688',
 }
 
 # return the current time as a string
