@@ -18,6 +18,7 @@ CIGAR_LETTERS = {'M','D','I','S','H','=','X'}
 
 # reference genomes for common viruses
 REFS = {
+    'hiv1':     'K03455',
     'sarscov2': 'MT072688',
 }
 
