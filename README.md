@@ -1,7 +1,7 @@
 # ViralMSA
 ViralMSA is a tool to perform reference-guided multiple sequence alignment of viral genomes. ViralMSA wraps around existing read mapping tools such as [Minimap2](https://doi.org/10.1093/bioinformatics/bty191), and as such, it can natively improve as methods of read mapping evolve. Importantly, this approach scales linearly with the number of sequences and can be massively parallelized. However, insertions with respect to the reference genome will be thrown away. This is fair for many viral analyses (e.g. phylogenetic inference, as insertions with respect to the reference likely lack phylogenetic information), but it may not be appropriate for all contexts.
 
-Importantly, ViralMSA differs significantly from [VIRULIGN](https://doi.org/10.1093/bioinformatics/bty851), a codon-correct alignment tool designed for viruses, in three key ways:
+Importantly, ViralMSA differs significantly from [VIRULIGN](https://doi.org/10.1093/bioinformatics/bty851), a codon-correct reference-guided alignment tool designed for viruses, in three key ways:
 
 1. VIRULIGN requires a thorough annotation of the reference genome, which may be difficult to obtain (especially towards the beginning of a novel outbreak) and does not provide the user to easily utilize different reference genomes for different viral strains. ViralMSA, on the other hand, only requires the reference genome assembly's GenBank accession number and can build any required index files on-the-fly
 2. ViralMSA in its default settings is orders of magnitude faster than VIRULIGN, which is critical for rapidly-growing epidemics
