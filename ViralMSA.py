@@ -16,6 +16,7 @@ from sys import stderr,stdout
 import argparse
 
 # useful constants
+VERSION = '1.0.0'
 CIGAR_LETTERS = {'M','D','I','S','H','=','X'}
 
 # reference genomes for common viruses
@@ -278,13 +279,14 @@ if __name__ == "__main__":
     args.reference = args.reference.upper()
     makedirs(args.viralmsa_dir, exist_ok=True)
 
-    # print main user args
-    print_log("===== USER ARGUMENTS =====")
+    # print run information
+    print_log("===== RUN INFORMATION =====")
+    print_log("ViralMSA Version: %s" % VERSION)
     print_log("Sequences: %s" % args.sequences)
     print_log("Reference: %s" % args.reference)
     print_log("Email Address: %s" % args.email)
     print_log("Output Directory: %s" % args.output)
-    print_log("Aligners: %s" % args.aligner)
+    print_log("Aligner: %s" % args.aligner)
     print_log("ViralMSA Cache Directory: %s" % args.viralmsa_dir)
     print_log()
 
