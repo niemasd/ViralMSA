@@ -12,7 +12,7 @@ from os import chdir,getcwd,makedirs,remove
 from os.path import abspath,expanduser,isdir,isfile,split
 from shutil import move
 from subprocess import call,check_output,PIPE,Popen,STDOUT
-from sys import stderr,stdout
+from sys import argv,stderr,stdout
 import argparse
 
 # useful constants
@@ -292,6 +292,15 @@ ALIGNERS = {
 
 # main content
 if __name__ == "__main__":
+    # check if user just wants to list references
+    if '-l' in argv or '--list_references' in argv:
+        print("=== List of ViralMSA Reference Sequences ===")
+        for v in sorted(REF_NAMES.keys()):
+            print("* %s" % v)
+            for r in sorted(REF_NAMES[v].keys()):
+                print("  - %s: %s" % (r, REF_NAMES[v][r]))
+        exit(0)
+
     # parse user args
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-s', '--sequences', required=True, type=str, help="Input Sequences (FASTA format)")
@@ -300,7 +309,8 @@ if __name__ == "__main__":
     parser.add_argument('-o', '--output', required=True, type=str, help="Output Directory")
     parser.add_argument('-a', '--aligner', required=False, type=str, default='Minimap2', help="Aligner")
     parser.add_argument('-t', '--threads', required=False, type=int, default=cpu_count(), help="Number of Threads")
-    parser.add_argument('--include_ref', action="store_true", help="Include reference sequence in output alignment")
+    parser.add_argument('-l', '--list_references', action="store_true", help="List all reference sequences")
+    parser.add_argument('--omit_ref', action="store_true", help="Omit reference sequence from output alignment")
     parser.add_argument('--viralmsa_dir', required=False, type=str, default=abspath(expanduser("~/.viralmsa")), help="ViralMSA Cache Directory")
     args = parser.parse_args()
     if args.threads < 1:
@@ -371,10 +381,10 @@ if __name__ == "__main__":
             continue
         if l[0] != '>':
             ref_seq.append(l)
-        elif args.include_ref:
+        elif not args.omit_ref:
             aln.write(l); aln.write('\n')
     ref_seq = ''.join(ref_seq)
-    if args.include_ref:
+    if not args.omit_ref:
         aln.write(ref_seq); aln.write('\n')
     for line in open(out_sam_path):
         l = line.rstrip('\n')
