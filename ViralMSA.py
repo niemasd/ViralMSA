@@ -23,12 +23,50 @@ CIGAR_LETTERS = {'M','D','I','S','H','=','X'}
 REFS = {
     'bombalivirus':    'NC_039345', # Bombali Virus (Bombali ebolavirus)
     'bundibugyovirus': 'NC_014373', # Bundibugyo Virus (Bundibugyo ebolavirus)
-    'hiv1':            'K03455',    # HIV-1
+    'hcv1':            'NC_004102', # HCV genotype 1
+    'hcv1h77':         'NC_038882', # HCV genotpye 1 (isolate H77)
+    'hcv2':            'NC_009823', # HCV genotype 2
+    'hcv3':            'NC_009824', # HCV genotype 3
+    'hcv4':            'NC_009825', # HCV genotype 4
+    'hcv5':            'NC_009826', # HCV genotype 5
+    'hcv6':            'NC_009827', # HCV genotype 6
+    'hcv7':            'NC_030791', # HCV genotype 7
+    'hiv1':            'NC_001802', # HIV-1
+    'hiv2':            'NC_001722', # HIV-2
     'ebolavirus':      'NC_002549', # Ebola Virus (Zaire ebolavirus)
     'restonvirus':     'NC_004161', # Reston Virus (Reston ebolavirus)
     'sarscov2':        'MT072688',  # SARS-CoV-2 (COVID-19)
     'sudanvirus':      'NC_006432', # Sudan Virus (Sudan ebolavirus)
     'taiforestvirus':  'NC_014372', # Tai Forest Virus (Tai Forest ebolavirus, Cote d'Ivoire ebolavirus)
+}
+REF_NAMES = {
+    'Ebola': {
+        'bombalivirus':    'Bombali Virus (Bombali ebolavirus)',
+        'bundibugyovirus': 'Bundibugyo Virus (Bundibugyo ebolavirus)',
+        'ebolavirus':      'Ebola Virus (Zaire ebolavirus)',
+        'restonvirus':     'Reston Virus (Reston ebolavirus)',
+        'sudanvirus':      'Sudan Virus (Sudan ebolavirus)',
+        'taiforestvirus':  'Tai Forest Virus (Tai Forest ebolavirus, Cote d\'Ivoire ebolavirus)',
+    },
+
+    'HCV': {
+        'hcv1':            'HCV genotype 1',
+        'hcv1h77':         'HCV genotpye 1 (isolate H77)',
+        'hcv2':            'HCV genotype 2',
+        'hcv3':            'HCV genotype 3',
+        'hcv4':            'HCV genotype 4',
+        'hcv5':            'HCV genotype 5',
+        'hcv6':            'HCV genotype 6',
+        'hcv7':            'HCV genotype 7',
+    },
+    
+    'HIV': {
+        'hiv1':            'HIV-1',
+    },
+    
+    'SARS-CoV-2': {
+        'sarscov2':        'SARS-CoV-2 (COVID-19)',
+    }
 }
 
 # return the current time as a string
