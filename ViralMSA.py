@@ -21,8 +21,14 @@ CIGAR_LETTERS = {'M','D','I','S','H','=','X'}
 
 # reference genomes for common viruses
 REFS = {
-    'hiv1':     'K03455',
-    'sarscov2': 'MT072688',
+    'bombalivirus':    'NC_039345', # Bombali Virus (Bombali ebolavirus)
+    'bundibugyovirus': 'NC_014373', # Bundibugyo Virus (Bundibugyo ebolavirus)
+    'hiv1':            'K03455',    # HIV-1
+    'ebolavirus':      'NC_002549', # Ebola Virus (Zaire ebolavirus)
+    'restonvirus':     'NC_004161', # Reston Virus (Reston ebolavirus)
+    'sarscov2':        'MT072688',  # SARS-CoV-2 (COVID-19)
+    'sudanvirus':      'NC_006432', # Sudan Virus (Sudan ebolavirus)
+    'taiforestvirus':  'NC_014372', # Tai Forest Virus (Tai Forest ebolavirus, Cote d'Ivoire ebolavirus)
 }
 
 # return the current time as a string
