@@ -21,9 +21,8 @@ ViralMSA also requires at least one of the following tools to perform the alignm
 ViralMSA can be used as follows:
 
 ```
-usage: ViralMSA.py [-h] -s SEQUENCES -r REFERENCE -e EMAIL -o OUTPUT [-a ALIGNER] [-t THREADS] [--include_ref] [--viralmsa_dir VIRALMSA_DIR]
+usage: ViralMSA.py [-h] -s SEQUENCES -r REFERENCE -e EMAIL -o OUTPUT [-a ALIGNER] [-t THREADS] [-l] [--omit_ref] [--viralmsa_dir VIRALMSA_DIR]
 
-optional arguments:
   -h, --help                            show this help message and exit
   -s SEQUENCES, --sequences SEQUENCES   Input Sequences (FASTA format) (default: None)
   -r REFERENCE, --reference REFERENCE   Reference (default: None)
@@ -31,7 +30,8 @@ optional arguments:
   -o OUTPUT, --output OUTPUT            Output Directory (default: None)
   -a ALIGNER, --aligner ALIGNER         Aligner (default: Minimap2)
   -t THREADS, --threads THREADS         Number of Threads (default: max)
-  --include_ref                         Include reference sequence in output alignment (default: False)
+  -l, --list_references                 List all reference sequences (default: False)
+  --omit_ref                            Omit reference sequence from output alignment (default: False)
   --viralmsa_dir VIRALMSA_DIR           ViralMSA Cache Directory (default: ~/.viralmsa)
 ```
 
