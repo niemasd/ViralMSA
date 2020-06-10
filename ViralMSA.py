@@ -18,7 +18,7 @@ from urllib.request import urlopen
 import argparse
 
 # useful constants
-VERSION = '1.0.2'
+VERSION = '1.0.3'
 RELEASES_URL = 'https://api.github.com/repos/niemasd/ViralMSA/tags'
 CIGAR_LETTERS = {'M','D','I','S','H','=','X'}
 
@@ -89,8 +89,11 @@ def update_viralmsa():
     old_version = VERSION; new_version = newest['name']
     url = 'https://raw.githubusercontent.com/niemasd/ViralMSA/%s/ViralMSA.py' % newest['commit']['sha']
     content = urlopen(url).read()
-    with open(__file__, 'wb') as f:
-        f.write(content)
+    try:
+        with open(__file__, 'wb') as f:
+            f.write(content)
+    except PermissionError:
+        print("ERROR: Received a permission error when updating ViralMSA. Perhaps try running as root?", file=stderr); exit(1)
     print("Successfully updated ViralMSA %s --> %s" % (old_version, new_version)); exit(0)
 
 # return the current time as a string
