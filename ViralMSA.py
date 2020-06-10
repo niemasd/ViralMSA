@@ -82,11 +82,12 @@ def update_viralmsa():
     newest = max(tags, key=lambda x: parse_version(x['name']))
     if parse_version(newest['name']) <= parse_version(VERSION):
         print("ViralMSA is already at the newest version (%s)" % VERSION); exit(0)
+    old_version = VERSION; new_version = newest['name']
     url = 'https://raw.githubusercontent.com/niemasd/ViralMSA/%s/ViralMSA.py' % newest['commit']['sha']
     content = urlopen(url).read()
     with open(__file__, 'wb') as f:
         f.write(content)
-    exit(0)
+    print("Successfully updated ViralMSA %s --> %s" % (old_version, new_version)); exit(0)
 
 # return the current time as a string
 def get_time():
