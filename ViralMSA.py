@@ -6,6 +6,7 @@ ViralMSA: Reference-guided multiple sequence alignment of viral genomes
 # imports
 from Bio import Entrez
 from datetime import datetime
+from json import load as jload
 from math import log2
 from multiprocessing import cpu_count
 from os import chdir,getcwd,makedirs,remove
@@ -13,10 +14,12 @@ from os.path import abspath,expanduser,isdir,isfile,split
 from shutil import move
 from subprocess import call,check_output,PIPE,Popen,STDOUT
 from sys import argv,stderr,stdout
+from urllib.request import urlopen
 import argparse
 
 # useful constants
-VERSION = '1.0.0'
+VERSION = '1.0.1'
+RELEASES_URL = 'https://api.github.com/repos/niemasd/ViralMSA/tags'
 CIGAR_LETTERS = {'M','D','I','S','H','=','X'}
 
 # reference genomes for common viruses
@@ -68,6 +71,22 @@ REF_NAMES = {
         'sarscov2':        'SARS-CoV-2 (COVID-19)',
     }
 }
+
+# convert a ViralMSA version string to a tuple of integers
+def parse_version(s):
+    return tuple(int(v) for v in s.split('.'))
+
+# update ViralMSA to the newest version
+def update_viralmsa():
+    tags = jload(urlopen(RELEASES_URL))
+    newest = max(tags, key=lambda x: parse_version(x['name']))
+    if parse_version(newest['name']) <= parse_version(VERSION):
+        print("ViralMSA is already at the newest version (%s)" % VERSION); exit(0)
+    url = 'https://raw.githubusercontent.com/niemasd/ViralMSA/%s/ViralMSA.py' % newest['commit']['sha']
+    content = urlopen(url).read()
+    with open(__file__, 'wb') as f:
+        f.write(content)
+    exit(0)
 
 # return the current time as a string
 def get_time():
@@ -292,6 +311,10 @@ ALIGNERS = {
 
 # main content
 if __name__ == "__main__":
+    # check if user wants to update ViralMSA
+    if '-u' in argv or '--update' in argv:
+        update_viralmsa()
+
     # check if user just wants to list references
     if '-l' in argv or '--list_references' in argv:
         print("=== List of ViralMSA Reference Sequences ===")
