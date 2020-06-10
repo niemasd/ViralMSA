@@ -18,7 +18,7 @@ from urllib.request import urlopen
 import argparse
 
 # useful constants
-VERSION = '1.0.1'
+VERSION = '1.0.2'
 RELEASES_URL = 'https://api.github.com/repos/niemasd/ViralMSA/tags'
 CIGAR_LETTERS = {'M','D','I','S','H','=','X'}
 
@@ -72,6 +72,10 @@ REF_NAMES = {
     }
 }
 
+# print to long (prefixed by current time)
+def print_log(s='', end='\n'):
+    print("[%s] %s" % (get_time(), s), end=end); stdout.flush()
+
 # convert a ViralMSA version string to a tuple of integers
 def parse_version(s):
     return tuple(int(v) for v in s.split('.'))
@@ -92,10 +96,6 @@ def update_viralmsa():
 # return the current time as a string
 def get_time():
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-# print to long (prefixed by current time)
-def print_log(s='', end='\n'):
-    print("[%s] %s" % (get_time(), s), end=end); stdout.flush()
 
 # parse a CIGAR string
 def parse_cigar(s):
@@ -348,6 +348,7 @@ if __name__ == "__main__":
         print("ERROR: Sequences file not found: %s" % args.sequences, file=stderr); exit(1)
     if args.sequences.lower().endswith('.gz'):
         print("ERROR: Sequences cannot be compressed: %s" % args.sequences, file=stderr); exit(1)
+    input_IDs = {l.strip()[1:] for l in open(args.sequences) if l.startswith('>')}
     args.output = abspath(expanduser(args.output))
     if isdir(args.output) or isfile(args.output):
         print("ERROR: Output directory exists: %s" % args.output, file=stderr); exit(1)
@@ -410,6 +411,7 @@ if __name__ == "__main__":
     ref_seq = ''.join(ref_seq)
     if not args.omit_ref:
         aln.write(ref_seq); aln.write('\n')
+    output_IDs = set()
     for line in open(out_sam_path):
         l = line.rstrip('\n')
         if len(l) == 0 or l[0] == '@':
@@ -418,7 +420,7 @@ if __name__ == "__main__":
         flags = int(parts[1])
         if flags != 0 and flags != 16:
             continue
-        ID = parts[0].strip()
+        ID = parts[0].strip(); output_IDs.add(ID)
         ref_ind = int(parts[3])-1
         cigar = parts[5].strip()
         seq = parts[9].strip()
@@ -441,3 +443,5 @@ if __name__ == "__main__":
         aln.write('\n')
     aln.close()
     print_log("Multiple sequence alignment complete: %s" % out_aln_path)
+    if len(output_IDs) < len(input_IDs):
+        print_log("WARNING: Some sequences from the input are missing from the output. Perhaps try a different aligner?")
