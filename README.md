@@ -33,6 +33,7 @@ usage: ViralMSA.py [-h] -s SEQUENCES -r REFERENCE -e EMAIL -o OUTPUT [-a ALIGNER
   -l, --list_references                 List all reference sequences (default: False)
   --omit_ref                            Omit reference sequence from output alignment (default: False)
   --viralmsa_dir VIRALMSA_DIR           ViralMSA Cache Directory (default: ~/.viralmsa)
+  -u, --update                          Update ViralMSA (default: False)
 ```
 
 For the reference, you can provide a GenBank accession number, such as the following:
