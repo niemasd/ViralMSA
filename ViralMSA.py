@@ -18,7 +18,7 @@ from urllib.request import urlopen
 import argparse
 
 # useful constants
-VERSION = '1.0.3'
+VERSION = '1.0.4'
 RELEASES_URL = 'https://api.github.com/repos/niemasd/ViralMSA/tags'
 CIGAR_LETTERS = {'M','D','I','S','H','=','X'}
 
@@ -339,6 +339,7 @@ if __name__ == "__main__":
     parser.add_argument('-l', '--list_references', action="store_true", help="List all reference sequences")
     parser.add_argument('--omit_ref', action="store_true", help="Omit reference sequence from output alignment")
     parser.add_argument('--viralmsa_dir', required=False, type=str, default=abspath(expanduser("~/.viralmsa")), help="ViralMSA Cache Directory")
+    parser.add_argument('-u', '--update', action="store_true", help="Update ViralMSA")
     args = parser.parse_args()
     if args.threads < 1:
         print("ERROR: Number of threads must be positive", file=stderr); exit(1)
