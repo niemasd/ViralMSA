@@ -6,19 +6,20 @@ ViralMSA: Reference-guided multiple sequence alignment of viral genomes
 # imports
 from Bio import Entrez
 from datetime import datetime
+from hashlib import md5
 from json import load as jload
 from math import log2
 from multiprocessing import cpu_count
 from os import chdir,getcwd,makedirs,remove
 from os.path import abspath,expanduser,isdir,isfile,split
-from shutil import move
+from shutil import copy,move
 from subprocess import call,check_output,PIPE,Popen,STDOUT
 from sys import argv,stderr,stdout
 from urllib.request import urlopen
 import argparse
 
 # useful constants
-VERSION = '1.0.4'
+VERSION = '1.0.5'
 RELEASES_URL = 'https://api.github.com/repos/niemasd/ViralMSA/tags'
 CIGAR_LETTERS = {'M','D','I','S','H','=','X'}
 
@@ -341,6 +342,7 @@ if __name__ == "__main__":
     parser.add_argument('--viralmsa_dir', required=False, type=str, default=abspath(expanduser("~/.viralmsa")), help="ViralMSA Cache Directory")
     parser.add_argument('-u', '--update', action="store_true", help="Update ViralMSA")
     args = parser.parse_args()
+    makedirs(args.viralmsa_dir, exist_ok=True)
     if args.threads < 1:
         print("ERROR: Number of threads must be positive", file=stderr); exit(1)
     args.aligner = args.aligner.lower()
@@ -356,11 +358,25 @@ if __name__ == "__main__":
     args.output = abspath(expanduser(args.output))
     if isdir(args.output) or isfile(args.output):
         print("ERROR: Output directory exists: %s" % args.output, file=stderr); exit(1)
-    tmp = args.reference.lower().replace(' ','').replace('-','').replace('_','')
-    if tmp in REFS:
-        args.reference = REFS[tmp]
-    args.reference = args.reference.upper()
-    makedirs(args.viralmsa_dir, exist_ok=True)
+    if isfile(args.reference):
+        if sum(l.startswith('>') for l in open(args.reference)) != 1:
+            print("ERROR: Reference file (%s) must have exactly 1 sequence in the FASTA format" % args.reference, file=stderr); exit(1)
+        ref_seq = ''.join(l for l in open(args.reference) if not l.startswith('>'))
+        h = md5(ref_seq.encode()).hexdigest()
+        fn = args.reference
+        args.reference = '%s_HASH_%s' % (fn.split('/')[-1].strip(), h)
+        ref_path = '%s/%s' % (args.viralmsa_dir, args.reference)
+        ref_genome_path = '%s/%s' % (ref_path, fn.split('/')[-1].strip())
+        if not isdir(ref_path):
+            makedirs(ref_path)
+            copy(fn, ref_genome_path)
+    else:
+        tmp = args.reference.lower().replace(' ','').replace('-','').replace('_','')
+        if tmp in REFS:
+            args.reference = REFS[tmp]
+        args.reference = args.reference.upper()
+        ref_path = '%s/%s' % (args.viralmsa_dir, args.reference)
+        ref_genome_path = '%s/%s.fas' % (ref_path, args.reference)
 
     # print run information
     print_log("===== RUN INFORMATION =====")
@@ -375,8 +391,6 @@ if __name__ == "__main__":
 
     # download reference genome if not already downloaded
     print_log("===== REFERENCE GENOME =====")
-    ref_path = '%s/%s' % (args.viralmsa_dir, args.reference)
-    ref_genome_path = '%s/%s.fas' % (ref_path, args.reference)
     makedirs(ref_path, exist_ok=True)
     if isfile(ref_genome_path):
         print_log("Reference genome found: %s" % ref_genome_path)
