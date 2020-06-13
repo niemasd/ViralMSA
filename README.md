@@ -48,6 +48,12 @@ For specific viruses of interest, you can simply use their name, and we have pro
 ViralMSA.py -e email@address.com -s sequences.fas -o output -r SARS-CoV-2
 ```
 
+If you have a local reference genome you would like to use, you can provide the path to a FASTA file with a single sequence, such as the following:
+
+```
+ViralMSA.py -e email@address.com -s sequences.fas -o output -r my_reference.fas
+```
+
 # Citing ViralMSA
 If you use ViralMSA in your work, please cite:
 
