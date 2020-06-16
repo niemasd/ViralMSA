@@ -8,7 +8,13 @@ Importantly, ViralMSA differs significantly from [VIRULIGN](https://doi.org/10.1
 3. VIRULIGN is codon-aware, making it appropriate for the alignment of coding sequences, whereas ViralMSA is appropriate for the alignment of full viral genomes
 
 ## Installation
-ViralMSA is written in Python 3 and depends on [BioPython](https://biopython.org/). You can simply download [ViralMSA.py](ViralMSA.py) to your machine and make it executable.
+ViralMSA is written in Python 3 and depends on [BioPython](https://biopython.org/). You can simply download [ViralMSA.py](ViralMSA.py) to your machine and make it executable:
+
+```bash
+wget "https://raw.githubusercontent.com/niemasd/ViralMSA/master/ViralMSA.py"
+chmod a+x ViralMSA.py
+sudo mv ViralMSA.py /usr/local/bin/ViralMSA.py # optional step to install globally
+```
 
 ViralMSA also requires at least one of the following tools to perform the alignment:
 
