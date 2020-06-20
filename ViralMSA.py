@@ -19,7 +19,7 @@ from urllib.request import urlopen
 import argparse
 
 # useful constants
-VERSION = '1.0.5'
+VERSION = '1.0.6'
 RELEASES_URL = 'https://api.github.com/repos/niemasd/ViralMSA/tags'
 CIGAR_LETTERS = {'M','D','I','S','H','=','X'}
 
@@ -340,7 +340,7 @@ if __name__ == "__main__":
     parser.add_argument('-l', '--list_references', action="store_true", help="List all reference sequences")
     parser.add_argument('--omit_ref', action="store_true", help="Omit reference sequence from output alignment")
     parser.add_argument('--viralmsa_dir', required=False, type=str, default=abspath(expanduser("~/.viralmsa")), help="ViralMSA Cache Directory")
-    parser.add_argument('-u', '--update', action="store_true", help="Update ViralMSA")
+    parser.add_argument('-u', '--update', action="store_true", help="Update ViralMSA (current version: %s)" % VERSION)
     args = parser.parse_args()
     makedirs(args.viralmsa_dir, exist_ok=True)
     if args.threads < 1:
@@ -397,7 +397,10 @@ if __name__ == "__main__":
     else:
         print_log("Downloading reference genome from NCBI...")
         Entrez.email = args.email
-        handle = Entrez.efetch(db='nucleotide', rettype='fasta', id=args.reference)
+        try:
+            handle = Entrez.efetch(db='nucleotide', rettype='fasta', id=args.reference)
+        except:
+            raise RuntimeError("Encountered error when trying to download reference genome from NCBI. Perhaps the accession number is invalid?")
         seq = handle.read()
         if seq.count('>') != 1:
             print("ERROR: Reference genome must only have a single sequence", file=stderr); exit(1)
@@ -462,4 +465,4 @@ if __name__ == "__main__":
     aln.close()
     print_log("Multiple sequence alignment complete: %s" % out_aln_path)
     if len(output_IDs) < len(input_IDs):
-        print_log("WARNING: Some sequences from the input are missing from the output. Perhaps try a different aligner?")
+        print_log("WARNING: Some sequences from the input are missing from the output. Perhaps try a different aligner or reference genome?")
