@@ -3,9 +3,8 @@ ViralMSA is a tool to perform reference-guided multiple sequence alignment of vi
 
 Importantly, ViralMSA differs significantly from [VIRULIGN](https://doi.org/10.1093/bioinformatics/bty851), a codon-correct reference-guided alignment tool designed for viruses, in three key ways:
 
-1. VIRULIGN requires a thorough annotation of the reference genome, which may be difficult to obtain (especially towards the beginning of a novel outbreak) and does not provide the user a simple way to utilize different reference genomes for different viral strains. ViralMSA, on the other hand, only requires the reference genome assembly's GenBank accession number and can build any required index files on-the-fly
-2. ViralMSA in its default settings is orders of magnitude faster than VIRULIGN, which is critical for rapidly-growing epidemics
-3. VIRULIGN is codon-aware, making it appropriate for the alignment of coding sequences, whereas ViralMSA is appropriate for the alignment of full viral genomes
+1. ViralMSA in its default settings is orders of magnitude faster than VIRULIGN, which is critical for rapidly-growing epidemics
+2. VIRULIGN is codon-aware, making it appropriate for the alignment of coding sequences, whereas ViralMSA is appropriate for the alignment of full viral genomes
 
 ## Installation
 ViralMSA is written in Python 3 and depends on [BioPython](https://biopython.org/). You can simply download [ViralMSA.py](ViralMSA.py) to your machine and make it executable:
