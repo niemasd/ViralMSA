@@ -19,7 +19,7 @@ sudo mv ViralMSA.py /usr/local/bin/ViralMSA.py # optional step to install global
 
 ViralMSA also requires at least one of the following tools to perform the alignment:
 
-* [Minimap2](https://github.com/lh3/minimap2) (used by default)
+* [Minimap2](https://github.com/lh3/minimap2) (used by default; strongly recommended)
 * [bowtie2](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml)
 * [HISAT2](http://daehwankimlab.github.io/hisat2/)
 * [STAR](https://github.com/alexdobin/STAR)
