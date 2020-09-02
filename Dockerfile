@@ -23,6 +23,9 @@ RUN wget -O hisat2.zip "https://cloud.biohpc.swmed.edu/index.php/s/4pMgDq4oAF9QC
 RUN wget -qO- "https://github.com/alexdobin/STAR/archive/2.7.5c.tar.gz" | tar -zx && \
     mv STAR-*/bin/Linux_x86_64_static/* /usr/local/bin && rm -rf STAR-*
 
+# Set up ViralMSA
+RUN wget -O /usr/local/bin/ViralMSA.py "https://raw.githubusercontent.com/niemasd/ViralMSA/master/ViralMSA.py" && chmod a+x /usr/local/bin/ViralMSA.py
+
 # Clean up
 RUN rm -rf /root/.cache && \
     rm -rf /tmp/*
