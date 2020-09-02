@@ -244,7 +244,7 @@ def build_index_star(ref_genome_path, threads, verbose=True):
 # align genomes using minimap2
 def align_minimap2(seqs_path, out_sam_path, ref_genome_path, threads, verbose=True):
     index_path = '%s.mmi' % ref_genome_path
-    command = ['minimap2', '-t', str(threads), '--secondary=no', '-a', '-o', out_sam_path, index_path, seqs_path]
+    command = ['minimap2', '-t', str(threads), '--secondary=no', '--sam-hit-only', '-a', '-o', out_sam_path, index_path, seqs_path]
     if verbose:
         print_log("Aligning using Minimap2: %s" % ' '.join(command))
     log = open('%s.log' % out_sam_path, 'w'); call(command, stderr=log); log.close()
