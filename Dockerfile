@@ -4,7 +4,7 @@ MAINTAINER Niema Moshiri <niemamoshiri@gmail.com>
 
 # Set up environment and install dependencies
 RUN apt-get update && apt-get -y upgrade && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y bzip2 perl unzip && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y bzip2 perl unzip wget && \
     pip3 install biopython
 
 # Install Minimap2 (2.17)
