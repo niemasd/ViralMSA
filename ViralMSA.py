@@ -19,9 +19,10 @@ from urllib.request import urlopen
 import argparse
 
 # useful constants
-VERSION = '1.0.7'
+VERSION = '1.0.8'
 RELEASES_URL = 'https://api.github.com/repos/niemasd/ViralMSA/tags'
 CIGAR_LETTERS = {'M','D','I','S','H','=','X'}
+DEFAULT_BUFSIZE = 8192 # 8 KB
 
 # reference genomes for common viruses
 REFS = {
@@ -100,6 +101,10 @@ def update_viralmsa():
 # return the current time as a string
 def get_time():
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+# count the number of IDs in a FASTA file
+def count_IDs_fasta(fn):
+    return sum(l.startswith('>') for l in open(fn))
 
 # parse a CIGAR string
 def parse_cigar(s):
@@ -314,8 +319,8 @@ ALIGNERS = {
     },
 }
 
-# main content
-if __name__ == "__main__":
+# parse user args
+def parse_args():
     # check if user wants to update ViralMSA
     if '-u' in argv or '--update' in argv:
         update_viralmsa()
@@ -329,7 +334,7 @@ if __name__ == "__main__":
                 print("  - %s: %s" % (r, REF_NAMES[v][r]))
         exit(0)
 
-    # parse user args
+    # use argparse to parse user arguments
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-s', '--sequences', required=True, type=str, help="Input Sequences (FASTA format)")
     parser.add_argument('-r', '--reference', required=True, type=str, help="Reference")
@@ -337,46 +342,119 @@ if __name__ == "__main__":
     parser.add_argument('-o', '--output', required=True, type=str, help="Output Directory")
     parser.add_argument('-a', '--aligner', required=False, type=str, default='Minimap2', help="Aligner")
     parser.add_argument('-t', '--threads', required=False, type=int, default=cpu_count(), help="Number of Threads")
+    parser.add_argument('-b', '--buffer_size', required=False, type=int, default=DEFAULT_BUFSIZE, help="Output Stream Buffer Size (bytes)")
     parser.add_argument('-l', '--list_references', action="store_true", help="List all reference sequences")
     parser.add_argument('--omit_ref', action="store_true", help="Omit reference sequence from output alignment")
     parser.add_argument('--viralmsa_dir', required=False, type=str, default=abspath(expanduser("~/.viralmsa")), help="ViralMSA Cache Directory")
     parser.add_argument('-u', '--update', action="store_true", help="Update ViralMSA (current version: %s)" % VERSION)
     args = parser.parse_args()
-    makedirs(args.viralmsa_dir, exist_ok=True)
+
+    # check user args for validity
     if args.threads < 1:
         print("ERROR: Number of threads must be positive", file=stderr); exit(1)
+    if args.buffer_size < 1:
+        print("ERROR: Output buffer size must be positive", file=stderr); exit(1)
     args.aligner = args.aligner.lower()
     if args.aligner not in ALIGNERS:
         print("ERROR: Invalid aligner: %s (valid options: %s)" % (args.aligner, ', '.join(sorted(ALIGNERS.keys()))), file=stderr); exit(1)
-    ALIGNERS[args.aligner]['check']()
     args.sequences = abspath(expanduser(args.sequences))
     if not isfile(args.sequences):
         print("ERROR: Sequences file not found: %s" % args.sequences, file=stderr); exit(1)
     if args.sequences.lower().endswith('.gz'):
         print("ERROR: Sequences cannot be compressed: %s" % args.sequences, file=stderr); exit(1)
-    input_IDs = {l.strip()[1:] for l in open(args.sequences) if l.startswith('>')}
     args.output = abspath(expanduser(args.output))
     if isdir(args.output) or isfile(args.output):
         print("ERROR: Output directory exists: %s" % args.output, file=stderr); exit(1)
     if isfile(args.reference):
-        if sum(l.startswith('>') for l in open(args.reference)) != 1:
+        if count_IDs_fasta(args.reference) != 1:
             print("ERROR: Reference file (%s) must have exactly 1 sequence in the FASTA format" % args.reference, file=stderr); exit(1)
-        ref_seq = ''.join(l for l in open(args.reference) if not l.startswith('>'))
+        ref_seq = ''.join(l.strip() for l in open(args.reference, args.buffer_size) if not l.startswith('>'))
         h = md5(ref_seq.encode()).hexdigest()
         fn = args.reference
         args.reference = '%s_HASH_%s' % (fn.split('/')[-1].strip(), h)
-        ref_path = '%s/%s' % (args.viralmsa_dir, args.reference)
-        ref_genome_path = '%s/%s' % (ref_path, fn.split('/')[-1].strip())
-        if not isdir(ref_path):
-            makedirs(ref_path)
-            copy(fn, ref_genome_path)
+        args.ref_path = '%s/%s' % (args.viralmsa_dir, args.reference)
+        args.ref_genome_path = '%s/%s' % (args.ref_path, fn.split('/')[-1].strip())
+        if not isdir(args.ref_path):
+            makedirs(args.ref_path)
+            copy(fn, args.ref_genome_path)
     else:
         tmp = args.reference.lower().replace(' ','').replace('-','').replace('_','')
         if tmp in REFS:
             args.reference = REFS[tmp]
         args.reference = args.reference.upper()
-        ref_path = '%s/%s' % (args.viralmsa_dir, args.reference)
-        ref_genome_path = '%s/%s.fas' % (ref_path, args.reference)
+        args.ref_path = '%s/%s' % (args.viralmsa_dir, args.reference)
+        args.ref_genome_path = '%s/%s.fas' % (args.ref_path, args.reference)
+
+    # user args are valid, so return
+    return args
+
+# download reference genome
+def download_ref_genome(ref_path, ref_genome_path, email, bufsize=DEFAULT_BUFSIZE):
+    makedirs(ref_path, exist_ok=True); Entrez.email = email
+    try:
+        handle = Entrez.efetch(db='nucleotide', rettype='fasta', id=args.reference)
+    except:
+        raise RuntimeError("Encountered error when trying to download reference genome from NCBI. Perhaps the accession number is invalid?")
+    seq = handle.read()
+    if seq.count('>') != 1:
+        print("ERROR: Reference genome must only have a single sequence", file=stderr); exit(1)
+    f = open(ref_genome_path, 'w', buffering=bufsize); f.write(seq.strip()); f.write('\n'); f.close()
+
+# convert SAM to FASTA
+def sam_to_fasta(out_sam_path, out_aln_path, ref_genome_path, bufsize=DEFAULT_BUFSIZE):
+    aln = open(out_aln_path, 'w', buffering=bufsize); ref_seq = list()
+    for line in open(ref_genome_path):
+        l = line.strip()
+        if len(l) == 0:
+            continue
+        if l[0] != '>':
+            ref_seq.append(l)
+        elif not args.omit_ref:
+            aln.write(l); aln.write('\n')
+    if not args.omit_ref:
+        for l in ref_seq:
+            aln.write(l)
+        aln.write('\n')
+    ref_seq_len = sum(len(l) for l in ref_seq)
+    num_output_IDs = 0
+    for line in open(out_sam_path):
+        l = line.rstrip('\n')
+        if len(l) == 0 or l[0] == '@':
+            continue
+        parts = l.split('\t')
+        flags = int(parts[1])
+        if flags != 0 and flags != 16:
+            continue
+        ID = parts[0].strip(); num_output_IDs += 1
+        ref_ind = int(parts[3])-1
+        seq = parts[9].strip()
+        edits = parse_cigar(parts[5].strip()) # parts[5] is the CIGAR string
+        aln.write('>'); aln.write(ID); aln.write('\n')
+        if ref_ind > 0:
+            aln.write('-'*ref_ind) # write gaps before alignment
+        ind = 0; seq_len = ref_ind
+        for e, e_len in edits:
+            if e == 'M' or e == '=' or e == 'X': # (mis)match)
+                aln.write(seq[ind:ind+e_len]); ind += e_len; seq_len += e_len
+            elif e == 'D':                       # deletion (gap in query)
+                aln.write('-'*e_len); seq_len += e_len
+            elif e == 'I':                       # insertion (gap in reference; ignore)
+                ind += e_len
+            elif e == 'S' or e == 'H':           # starting/ending segment of query not in reference (i.e., span of insertions; ignore)
+                ind += e_len
+        if seq_len < ref_seq_len:
+            aln.write('-'*(ref_seq_len-seq_len)) # write gaps after alignment
+        aln.write('\n')
+    aln.close()
+    return num_output_IDs
+
+# main content
+if __name__ == "__main__":
+    # parse user args and prepare run
+    args = parse_args()
+    makedirs(args.viralmsa_dir, exist_ok=True)
+    ALIGNERS[args.aligner]['check']()
+    num_input_IDs = count_IDs_fasta(args.sequences)
 
     # print run information
     print_log("===== RUN INFORMATION =====")
@@ -391,78 +469,27 @@ if __name__ == "__main__":
 
     # download reference genome if not already downloaded
     print_log("===== REFERENCE GENOME =====")
-    makedirs(ref_path, exist_ok=True)
-    if isfile(ref_genome_path):
-        print_log("Reference genome found: %s" % ref_genome_path)
+    if isfile(args.ref_genome_path):
+        print_log("Reference genome found: %s" % args.ref_genome_path)
     else:
         print_log("Downloading reference genome from NCBI...")
-        Entrez.email = args.email
-        try:
-            handle = Entrez.efetch(db='nucleotide', rettype='fasta', id=args.reference)
-        except:
-            raise RuntimeError("Encountered error when trying to download reference genome from NCBI. Perhaps the accession number is invalid?")
-        seq = handle.read()
-        if seq.count('>') != 1:
-            print("ERROR: Reference genome must only have a single sequence", file=stderr); exit(1)
-        f = open(ref_genome_path, 'w'); f.write(seq.strip()); f.write('\n'); f.close()
-        print_log("Reference genome downloaded: %s" % ref_genome_path)
+        download_ref_genome(args.ref_path, args.ref_genome_path, args.email, bufsize=args.buffer_size)
+        print_log("Reference genome downloaded: %s" % args.ref_genome_path)
 
     # build aligner index (if needed)
-    ALIGNERS[args.aligner]['build_index'](ref_genome_path, args.threads)
+    ALIGNERS[args.aligner]['build_index'](args.ref_genome_path, args.threads)
     print_log()
 
     # align viral genomes against referencea
     print_log("===== ALIGNMENT =====")
     out_sam_path = '%s/%s.sam' % (args.output, args.sequences.split('/')[-1])
     makedirs(args.output)
-    ALIGNERS[args.aligner]['align'](args.sequences, out_sam_path, ref_genome_path, args.threads)
+    ALIGNERS[args.aligner]['align'](args.sequences, out_sam_path, args.ref_genome_path, args.threads)
 
     # convert SAM to MSA FASTA
     print_log("Converting SAM to FASTA...")
     out_aln_path = '%s/%s.aln' % (args.output, args.sequences.split('/')[-1])
-    aln = open(out_aln_path, 'w'); ref_seq = list()
-    for line in open(ref_genome_path):
-        l = line.strip()
-        if len(l) == 0:
-            continue
-        if l[0] != '>':
-            ref_seq.append(l)
-        elif not args.omit_ref:
-            aln.write(l); aln.write('\n')
-    ref_seq = ''.join(ref_seq)
-    if not args.omit_ref:
-        aln.write(ref_seq); aln.write('\n')
-    output_IDs = set()
-    for line in open(out_sam_path):
-        l = line.rstrip('\n')
-        if len(l) == 0 or l[0] == '@':
-            continue
-        parts = l.split('\t')
-        flags = int(parts[1])
-        if flags != 0 and flags != 16:
-            continue
-        ID = parts[0].strip(); output_IDs.add(ID)
-        ref_ind = int(parts[3])-1
-        cigar = parts[5].strip()
-        seq = parts[9].strip()
-        edits = parse_cigar(cigar)
-        aln.write('>'); aln.write(ID); aln.write('\n')
-        if ref_ind > 0:
-            aln.write('-'*ref_ind) # write gaps before alignment
-        ind = 0; seq_len = ref_ind
-        for e, e_len in edits:
-            if e == 'M' or e == '=' or e == 'X': # (mis)match)
-                aln.write(seq[ind:ind+e_len]); ind += e_len; seq_len += e_len
-            elif e == 'D':                       # deletion (gap in query)
-                aln.write('-'*e_len); seq_len += e_len
-            elif e == 'I':                       # insertion (gap in reference; ignore)
-                ind += e_len
-            elif e == 'S' or e == 'H':           # starting/ending segment of query not in reference (i.e., span of insertions; ignore)
-                ind += e_len
-        if seq_len < len(ref_seq):
-            aln.write('-'*(len(ref_seq)-seq_len)) # write gaps after alignment
-        aln.write('\n')
-    aln.close()
+    num_output_IDs = sam_to_fasta(out_sam_path, out_aln_path, args.ref_genome_path, bufsize=args.buffer_size)
     print_log("Multiple sequence alignment complete: %s" % out_aln_path)
-    if len(output_IDs) < len(input_IDs):
+    if num_output_IDs < num_input_IDs:
         print_log("WARNING: Some sequences from the input are missing from the output. Perhaps try a different aligner or reference genome?")
