@@ -30,17 +30,18 @@ ViralMSA can be used as follows:
 ```
 usage: ViralMSA.py [-h] -s SEQUENCES -r REFERENCE -e EMAIL -o OUTPUT [-a ALIGNER] [-t THREADS] [-l] [--omit_ref] [--viralmsa_dir VIRALMSA_DIR]
 
-  -h, --help                            show this help message and exit
-  -s SEQUENCES, --sequences SEQUENCES   Input Sequences (FASTA format) (default: None)
-  -r REFERENCE, --reference REFERENCE   Reference (default: None)
-  -e EMAIL, --email EMAIL               Email Address (for Entrez) (default: None)
-  -o OUTPUT, --output OUTPUT            Output Directory (default: None)
-  -a ALIGNER, --aligner ALIGNER         Aligner (default: Minimap2)
-  -t THREADS, --threads THREADS         Number of Threads (default: max)
-  -l, --list_references                 List all reference sequences (default: False)
-  --omit_ref                            Omit reference sequence from output alignment (default: False)
-  --viralmsa_dir VIRALMSA_DIR           ViralMSA Cache Directory (default: ~/.viralmsa)
-  -u, --update                          Update ViralMSA (default: False)
+  -h, --help                                  show this help message and exit
+  -s SEQUENCES, --sequences SEQUENCES         Input Sequences (FASTA format) (default: None)
+  -r REFERENCE, --reference REFERENCE         Reference (default: None)
+  -e EMAIL, --email EMAIL                     Email Address (for Entrez) (default: None)
+  -o OUTPUT, --output OUTPUT                  Output Directory (default: None)
+  -a ALIGNER, --aligner ALIGNER               Aligner (default: Minimap2)
+  -t THREADS, --threads THREADS               Number of Threads (default: max)
+  -b BUFFER_SIZE, --buffer_size BUFFER_SIZE   File Stream Buffer Size (bytes) (default: 1048576)
+  -l, --list_references                       List all reference sequences (default: False)
+  --omit_ref                                  Omit reference sequence from output alignment (default: False)
+  --viralmsa_dir VIRALMSA_DIR                 ViralMSA Cache Directory (default: ~/.viralmsa)
+  -u, --update                                Update ViralMSA (default: False)
 ```
 
 For the reference, you can provide a GenBank accession number, such as the following:
