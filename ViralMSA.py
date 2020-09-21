@@ -22,7 +22,7 @@ import argparse
 VERSION = '1.0.8'
 RELEASES_URL = 'https://api.github.com/repos/niemasd/ViralMSA/tags'
 CIGAR_LETTERS = {'M','D','I','S','H','=','X'}
-DEFAULT_BUFSIZE = 8192 # 8 KB
+DEFAULT_BUFSIZE = 1048576 # 1 MB #8192 # 8 KB
 
 # reference genomes for common viruses
 REFS = {
@@ -103,7 +103,7 @@ def get_time():
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 # count the number of IDs in a FASTA file
-def count_IDs_fasta(fn):
+def count_IDs_fasta(fn, bufsize=DEFAULT_BUFSIZE):
     return sum(l.startswith('>') for l in open(fn))
 
 # parse a CIGAR string
@@ -366,7 +366,7 @@ def parse_args():
     if isdir(args.output) or isfile(args.output):
         print("ERROR: Output directory exists: %s" % args.output, file=stderr); exit(1)
     if isfile(args.reference):
-        if count_IDs_fasta(args.reference) != 1:
+        if count_IDs_fasta(args.reference, bufsize=args.buffer_size) != 1:
             print("ERROR: Reference file (%s) must have exactly 1 sequence in the FASTA format" % args.reference, file=stderr); exit(1)
         ref_seq = ''.join(l.strip() for l in open(args.reference, args.buffer_size) if not l.startswith('>'))
         h = md5(ref_seq.encode()).hexdigest()
@@ -417,9 +417,8 @@ def sam_to_fasta(out_sam_path, out_aln_path, ref_genome_path, bufsize=DEFAULT_BU
         aln.write('\n')
     ref_seq_len = sum(len(l) for l in ref_seq)
     num_output_IDs = 0
-    for line in open(out_sam_path):
-        l = line.rstrip('\n')
-        if len(l) == 0 or l[0] == '@':
+    for l in open(out_sam_path):
+        if l == '\n' or l[0] == '@':
             continue
         parts = l.split('\t')
         flags = int(parts[1])
@@ -454,7 +453,7 @@ if __name__ == "__main__":
     args = parse_args()
     makedirs(args.viralmsa_dir, exist_ok=True)
     ALIGNERS[args.aligner]['check']()
-    num_input_IDs = count_IDs_fasta(args.sequences)
+    num_input_IDs = count_IDs_fasta(args.sequences, bufsize=args.buffer_size)
 
     # print run information
     print_log("===== RUN INFORMATION =====")
