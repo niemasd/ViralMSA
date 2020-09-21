@@ -404,13 +404,12 @@ def download_ref_genome(ref_path, ref_genome_path, email, bufsize=DEFAULT_BUFSIZ
 def sam_to_fasta(out_sam_path, out_aln_path, ref_genome_path, bufsize=DEFAULT_BUFSIZE):
     aln = open(out_aln_path, 'w', buffering=bufsize); ref_seq = list()
     for line in open(ref_genome_path):
-        l = line.strip()
-        if len(l) == 0:
+        if len(line) == 0:
             continue
-        if l[0] != '>':
-            ref_seq.append(l)
+        if line[0] != '>':
+            ref_seq.append(line.strip())
         elif not args.omit_ref:
-            aln.write(l); aln.write('\n')
+            aln.write(line)
     if not args.omit_ref:
         for l in ref_seq:
             aln.write(l)
@@ -428,15 +427,17 @@ def sam_to_fasta(out_sam_path, out_aln_path, ref_genome_path, bufsize=DEFAULT_BU
         ref_ind = int(parts[3])-1
         seq = parts[9].strip()
         edits = parse_cigar(parts[5].strip()) # parts[5] is the CIGAR string
-        aln.write('>'); aln.write(ID); aln.write('\n')
+        aln.write(">%s\n" % ID)
         if ref_ind > 0:
             aln.write('-'*ref_ind) # write gaps before alignment
         ind = 0; seq_len = ref_ind
         for e, e_len in edits:
             if e == 'M' or e == '=' or e == 'X': # (mis)match)
-                aln.write(seq[ind:ind+e_len]); ind += e_len; seq_len += e_len
+                aln.write(seq[ind:ind+e_len])
+                ind += e_len; seq_len += e_len
             elif e == 'D':                       # deletion (gap in query)
-                aln.write('-'*e_len); seq_len += e_len
+                aln.write('-'*e_len)
+                seq_len += e_len
             elif e == 'I':                       # insertion (gap in reference; ignore)
                 ind += e_len
             elif e == 'S' or e == 'H':           # starting/ending segment of query not in reference (i.e., span of insertions; ignore)
