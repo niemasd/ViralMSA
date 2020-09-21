@@ -342,7 +342,7 @@ def parse_args():
     parser.add_argument('-o', '--output', required=True, type=str, help="Output Directory")
     parser.add_argument('-a', '--aligner', required=False, type=str, default='Minimap2', help="Aligner")
     parser.add_argument('-t', '--threads', required=False, type=int, default=cpu_count(), help="Number of Threads")
-    parser.add_argument('-b', '--buffer_size', required=False, type=int, default=DEFAULT_BUFSIZE, help="Output Stream Buffer Size (bytes)")
+    parser.add_argument('-b', '--buffer_size', required=False, type=int, default=DEFAULT_BUFSIZE, help="File Stream Buffer Size (bytes)")
     parser.add_argument('-l', '--list_references', action="store_true", help="List all reference sequences")
     parser.add_argument('--omit_ref', action="store_true", help="Omit reference sequence from output alignment")
     parser.add_argument('--viralmsa_dir', required=False, type=str, default=abspath(expanduser("~/.viralmsa")), help="ViralMSA Cache Directory")
