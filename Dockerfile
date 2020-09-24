@@ -15,10 +15,6 @@ RUN wget "https://github.com/BenLangmead/bowtie2/releases/download/v2.4.1/bowtie
 RUN wget -O hisat2.zip "https://cloud.biohpc.swmed.edu/index.php/s/4pMgDq4oAF9QCfA/download" && \
     unzip hisat2.zip && mv hisat2-*/hisat2* /usr/local/bin && rm -rf hisat2*
 
-# Install MashMap (2.0)
-RUN wget -qO- "https://github.com/marbl/MashMap/releases/download/v2.0/mashmap-Linux64-v2.0.tar.gz" | tar -zx && 
-    mv mashmap-*/mashmap /usr/local/bin && rm -rf mashmap-*
-
 # Install Minimap2 (2.17)
 RUN wget -qO- "https://github.com/lh3/minimap2/releases/download/v2.17/minimap2-2.17_x64-linux.tar.bz2" | tar xj && \
     mv minimap2-*/minimap2 /usr/local/bin && rm -rf minimap2-*
