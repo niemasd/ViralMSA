@@ -19,7 +19,7 @@ from urllib.request import urlopen
 import argparse
 
 # useful constants
-VERSION = '1.0.8'
+VERSION = '1.0.9'
 RELEASES_URL = 'https://api.github.com/repos/niemasd/ViralMSA/tags'
 CIGAR_LETTERS = {'M','D','I','S','H','=','X'}
 DEFAULT_BUFSIZE = 1048576 # 1 MB #8192 # 8 KB
@@ -116,15 +116,6 @@ def parse_cigar(s):
         out.append((let, int(num[::-1])))
     return out[::-1]
 
-# check minimap2
-def check_minimap2():
-    try:
-        o = check_output(['minimap2', '-h'])
-    except:
-        o = None
-    if o is None or 'Usage: minimap2' not in o.decode():
-        print("ERROR: Minimap2 is not runnable in your PATH", file=stderr); exit(1)
-
 # check bowtie2
 def check_bowtie2():
     try:
@@ -155,6 +146,15 @@ def check_hisat2():
     if o is None or 'HISAT2 version' not in o.decode():
         print("ERROR: hisat2-build is not runnable in your PATH", file=stderr); exit(1)
 
+# check minimap2
+def check_minimap2():
+    try:
+        o = check_output(['minimap2', '-h'])
+    except:
+        o = None
+    if o is None or 'Usage: minimap2' not in o.decode():
+        print("ERROR: Minimap2 is not runnable in your PATH", file=stderr); exit(1)
+
 # check STAR
 def check_star():
     try:
@@ -164,19 +164,14 @@ def check_star():
     if o is None or 'Usage: STAR' not in o.decode():
         print("ERROR: STAR is not runnable in your PATH", file=stderr); exit(1)
 
-# build minimap2 index
-def build_index_minimap2(ref_genome_path, threads, verbose=True):
-    index_path = '%s.mmi' % ref_genome_path
-    if isfile(index_path):
-        if verbose:
-            print_log("Minimap2 index found: %s" % index_path)
-        return
-    command = ['minimap2', '-t', str(threads), '-d', index_path, ref_genome_path]
-    if verbose:
-        print_log("Building Minimap2 index: %s" % ' '.join(command))
-    log = open('%s.log' % index_path, 'w'); call(command, stderr=log); log.close()
-    if verbose:
-        print_log("Minimap2 index built: %s" % index_path)
+# check wfmash
+def check_wfmash():
+    try:
+        o = check_output(['wfmash', '-h'])
+    except:
+        o = None
+    if o is None or 'wfmash [target] [queries...] {OPTIONS}' not in o.decode():
+        print("ERROR: wfmash is not runnable in your PATH", file=stderr); exit(1)
 
 # build bowtie2 index
 def build_index_bowtie2(ref_genome_path, threads, verbose=True):
@@ -228,6 +223,20 @@ def build_index_hisat2(ref_genome_path, threads, verbose=True):
         print_log("HISAT2 index built: %s.hisat2.*.ht2" % ref_genome_path)
     chdir(orig_dir)
 
+# build minimap2 index
+def build_index_minimap2(ref_genome_path, threads, verbose=True):
+    index_path = '%s.mmi' % ref_genome_path
+    if isfile(index_path):
+        if verbose:
+            print_log("Minimap2 index found: %s" % index_path)
+        return
+    command = ['minimap2', '-t', str(threads), '-d', index_path, ref_genome_path]
+    if verbose:
+        print_log("Building Minimap2 index: %s" % ' '.join(command))
+    log = open('%s.log' % index_path, 'w'); call(command, stderr=log); log.close()
+    if verbose:
+        print_log("Minimap2 index built: %s" % index_path)
+
 # build STAR index
 def build_index_star(ref_genome_path, threads, verbose=True):
     delete_log = True # STAR by default creates Log.out in the running directory
@@ -246,15 +255,9 @@ def build_index_star(ref_genome_path, threads, verbose=True):
     if delete_log and isfile('Log.out'):
         remove('Log.out')
 
-# align genomes using minimap2
-def align_minimap2(seqs_path, out_sam_path, ref_genome_path, threads, verbose=True):
-    index_path = '%s.mmi' % ref_genome_path
-    command = ['minimap2', '-t', str(threads), '--secondary=no', '--sam-hit-only', '-a', '-o', out_sam_path, index_path, seqs_path]
-    if verbose:
-        print_log("Aligning using Minimap2: %s" % ' '.join(command))
-    log = open('%s.log' % out_sam_path, 'w'); call(command, stderr=log); log.close()
-    if verbose:
-        print_log("Minimap2 alignment complete: %s" % out_sam_path)
+# build wfmash index
+def build_index_wfmash(ref_genome_path, threads, verbose=True):
+    pass # no index needed
 
 # align genomes using bowtie2
 def align_bowtie2(seqs_path, out_sam_path, ref_genome_path, threads, verbose=True):
@@ -274,6 +277,16 @@ def align_hisat2(seqs_path, out_sam_path, ref_genome_path, threads, verbose=True
     if verbose:
         print_log("HISAT2 alignment complete: %s" % out_sam_path)
 
+# align genomes using minimap2
+def align_minimap2(seqs_path, out_sam_path, ref_genome_path, threads, verbose=True):
+    index_path = '%s.mmi' % ref_genome_path
+    command = ['minimap2', '-t', str(threads), '--secondary=no', '--sam-hit-only', '-a', '-o', out_sam_path, index_path, seqs_path]
+    if verbose:
+        print_log("Aligning using Minimap2: %s" % ' '.join(command))
+    log = open('%s.log' % out_sam_path, 'w'); call(command, stderr=log); log.close()
+    if verbose:
+        print_log("Minimap2 alignment complete: %s" % out_sam_path)
+
 # align genomes using STAR
 def align_star(seqs_path, out_sam_path, ref_genome_path, threads, verbose=True):
     delete_log = True # STAR by default creates Log.out in the running directory
@@ -291,6 +304,17 @@ def align_star(seqs_path, out_sam_path, ref_genome_path, threads, verbose=True):
         print_log("STAR alignment complete: %s" % out_sam_dir)
     if delete_log and isfile('Log.out'):
         remove('Log.out')
+
+# align genomes using wfmash
+def align_wfmash(seqs_path, out_sam_path, ref_genome_path, threads, verbose=True):
+    ref_genome_length = sum(len(l.strip()) for l in open(ref_genome_path) if not l.startswith('>'))
+    command = ['wfmash', '--threads=%d' % threads, '-s', str(int(0.9*ref_genome_length)), ref_genome_path, seqs_path]
+    if verbose:
+        print_log("Aligning using wfmash: %s" % ' '.join(command))
+    paf = open('%s.paf' % out_sam_path, 'w'); log = open('%s.log' % out_sam_path, 'w'); call(command, stdout=paf, stderr=log); paf.close(); log.close()
+    if verbose:
+        print_log("wfmash alignment complete: %s" % out_sam_path)
+    exit() # TODO
 
 # aligners
 ALIGNERS = {
@@ -317,6 +341,13 @@ ALIGNERS = {
         'build_index': build_index_star,
         'align':       align_star,
     },
+
+    # TODO: Uncomment once wfmash is implemented
+    #'wfmash': {
+    #    'check':       check_wfmash,
+    #    'build_index': build_index_wfmash,
+    #    'align':       align_wfmash,
+    #},
 }
 
 # parse user args
