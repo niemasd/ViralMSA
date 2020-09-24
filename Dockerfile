@@ -4,7 +4,7 @@ MAINTAINER Niema Moshiri <niemamoshiri@gmail.com>
 
 # Set up environment and install dependencies
 RUN apt-get update && apt-get -y upgrade && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y bzip2 perl unzip wget && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y bzip2 git gsl-bin libgsl0-dev perl unzip wget zlib1g-dev && \
     pip3 install biopython
 
 # Install bowtie2 (v.2.4.1)
@@ -22,6 +22,10 @@ RUN wget -qO- "https://github.com/lh3/minimap2/releases/download/v2.17/minimap2-
 # Install STAR (2.7.5c)
 RUN wget -qO- "https://github.com/alexdobin/STAR/archive/2.7.5c.tar.gz" | tar -zx && \
     mv STAR-*/bin/Linux_x86_64_static/* /usr/local/bin && rm -rf STAR-*
+
+# Install wfmash
+RUN git clone https://github.com/ekg/wfmash.git && \
+    cd wfmash && ./bootstrap.sh && ./configure && make && make install && cd .. && rm -rf wfmash
 
 # Set up ViralMSA
 RUN wget -O /usr/local/bin/ViralMSA.py "https://raw.githubusercontent.com/niemasd/ViralMSA/master/ViralMSA.py" && chmod a+x /usr/local/bin/ViralMSA.py
