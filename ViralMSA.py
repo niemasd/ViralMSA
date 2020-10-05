@@ -399,7 +399,7 @@ def parse_args():
     if isfile(args.reference):
         if count_IDs_fasta(args.reference, bufsize=args.buffer_size) != 1:
             print("ERROR: Reference file (%s) must have exactly 1 sequence in the FASTA format" % args.reference, file=stderr); exit(1)
-        ref_seq = ''.join(l.strip() for l in open(args.reference, args.buffer_size) if not l.startswith('>'))
+        ref_seq = ''.join(l.strip() for l in open(args.reference, 'r', args.buffer_size) if not l.startswith('>'))
         h = md5(ref_seq.encode()).hexdigest()
         fn = args.reference
         args.reference = '%s_HASH_%s' % (fn.split('/')[-1].strip(), h)
