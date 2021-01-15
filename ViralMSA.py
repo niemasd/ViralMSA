@@ -19,7 +19,7 @@ from urllib.request import urlopen
 import argparse
 
 # useful constants
-VERSION = '1.0.9'
+VERSION = '1.1.0'
 RELEASES_URL = 'https://api.github.com/repos/niemasd/ViralMSA/tags'
 CIGAR_LETTERS = {'M','D','I','S','H','=','X'}
 DEFAULT_BUFSIZE = 1048576 # 1 MB #8192 # 8 KB
@@ -40,7 +40,7 @@ REFS = {
     'hiv2':            'NC_001722', # HIV-2
     'ebolavirus':      'NC_002549', # Ebola Virus (Zaire ebolavirus)
     'restonvirus':     'NC_004161', # Reston Virus (Reston ebolavirus)
-    'sarscov2':        'MT072688',  # SARS-CoV-2 (COVID-19)
+    'sarscov2':        'NC_045512',  # SARS-CoV-2 (COVID-19)
     'sudanvirus':      'NC_006432', # Sudan Virus (Sudan ebolavirus)
     'taiforestvirus':  'NC_014372', # Tai Forest Virus (Tai Forest ebolavirus, Cote d'Ivoire ebolavirus)
 }
