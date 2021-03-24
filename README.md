@@ -82,3 +82,9 @@ The citation for HISAT2 is the following:
 The citation for STAR is the following:
 
 > Dobin A, Davis CA, Schlesinger F, Drehkow J, Zaleski C, Jha S, Batut P, Chaisson M, Gingeras TR (2013). "STAR: ultrafast universal RNA-seq aligner." *Bioinformatics*. 29(1):15-21. [doi:10.1093/bioinformatics/bts635](https://doi.org/10.1093/bioinformatics/bts635)
+
+# Common Issues
+## Weird ViralMSA output on sequences with many `N`s
+It seems as though, in some cases in which an input viral sequence has many `N`s within the sequence, Minimap2 splits the input sequence at each long consecutive chain of `N`s and produces an alignment for each fragment of the input sequence, with only one of these alignments (probably the longest one?) being labeled as the primary alignment (flag 0 in the SAM file) and all others being labeled as supplementary alignmens (flag 2048 in the SAM file). I'm hoping to find a way to fix this permanently by somehow merging the primary and supplementary alignments into a single alignment (see [this GitHub Issue](https://github.com/lh3/minimap2/issues/720)), but for now, a simple fix that seems to work well is to simply delete all `N`s from the sequence before running ViralMSA.
+
+TL;DR: If you are getting a weird ViralMSA output on sequences with many `N`s, try deleting the `N`s (not replacing with `-`: just deleting) before running ViralMSA.
