@@ -19,7 +19,7 @@ from urllib.request import urlopen
 import argparse
 
 # useful constants
-VERSION = '1.1.11'
+VERSION = '1.1.12'
 RELEASES_URL = 'https://api.github.com/repos/niemasd/ViralMSA/tags'
 CIGAR_LETTERS = {'M','D','I','S','H','=','X'}
 DEFAULT_BUFSIZE = 1048576 # 1 MB #8192 # 8 KB
@@ -280,7 +280,7 @@ def align_hisat2(seqs_path, out_sam_path, ref_genome_path, threads, verbose=True
 # align genomes using minimap2
 def align_minimap2(seqs_path, out_sam_path, ref_genome_path, threads, verbose=True):
     index_path = '%s.mmi' % ref_genome_path
-    command = ['minimap2', '-t', str(threads), '--secondary=no', '--sam-hit-only', '-a', '-o', out_sam_path, index_path, seqs_path]
+    command = ['minimap2', '-t', str(threads), '--score-N=0', '--secondary=no', '--sam-hit-only', '-a', '-o', out_sam_path, index_path, seqs_path]
     if verbose:
         print_log("Aligning using Minimap2: %s" % ' '.join(command))
     log = open('%s.log' % out_sam_path, 'w'); call(command, stderr=log); log.close()
