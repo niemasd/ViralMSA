@@ -24,8 +24,8 @@ RUN wget -qO- "https://github.com/alexdobin/STAR/archive/2.7.5c.tar.gz" | tar -z
     mv STAR-*/bin/Linux_x86_64_static/* /usr/local/bin && rm -rf STAR-*
 
 # Install wfmash
-RUN git clone https://github.com/ekg/wfmash.git && \
-    cd wfmash && ./bootstrap.sh && ./configure && make && make install && cd .. && rm -rf wfmash
+#RUN git clone https://github.com/ekg/wfmash.git && \
+#    cd wfmash && ./bootstrap.sh && ./configure && make && make install && cd .. && rm -rf wfmash
 
 # Set up ViralMSA
 RUN wget -O /usr/local/bin/ViralMSA.py "https://raw.githubusercontent.com/niemasd/ViralMSA/master/ViralMSA.py" && chmod a+x /usr/local/bin/ViralMSA.py
