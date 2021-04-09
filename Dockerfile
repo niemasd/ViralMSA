@@ -12,7 +12,7 @@ RUN wget "https://github.com/BenLangmead/bowtie2/releases/download/v2.4.1/bowtie
     unzip bowtie2-*.zip && mv bowtie2-2.4.1-linux-x86_64/bowtie2* /usr/local/bin && rm -rf bowtie2-*
 
 # Install HISAT2 (2.2.1)
-RUN wget -O hisat2.zip "https://cloud.biohpc.swmed.edu/index.php/s/4pMgDq4oAF9QCfA/download" && \
+RUN wget -O hisat2.zip "https://cloud.biohpc.swmed.edu/index.php/s/oTtGWbWjaxsQ2Ho/download" && \
     unzip hisat2.zip && mv hisat2-*/hisat2* /usr/local/bin && rm -rf hisat2*
 
 # Install Minimap2 (2.17)
