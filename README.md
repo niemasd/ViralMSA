@@ -31,10 +31,10 @@ ViralMSA can be used as follows:
 usage: ViralMSA.py [-h] -s SEQUENCES -r REFERENCE -e EMAIL -o OUTPUT [-a ALIGNER] [-t THREADS] [-l] [--omit_ref] [--viralmsa_dir VIRALMSA_DIR]
 
   -h, --help                                  show this help message and exit
-  -s SEQUENCES, --sequences SEQUENCES         Input Sequences (FASTA format) (default: None)
-  -r REFERENCE, --reference REFERENCE         Reference (default: None)
-  -e EMAIL, --email EMAIL                     Email Address (for Entrez) (default: None)
-  -o OUTPUT, --output OUTPUT                  Output Directory (default: None)
+  -s SEQUENCES, --sequences SEQUENCES         Input Sequences (FASTA format)
+  -r REFERENCE, --reference REFERENCE         Reference
+  -e EMAIL, --email EMAIL                     Email Address (for Entrez)
+  -o OUTPUT, --output OUTPUT                  Output Directory
   -a ALIGNER, --aligner ALIGNER               Aligner (default: Minimap2)
   -t THREADS, --threads THREADS               Number of Threads (default: max)
   -b BUFFER_SIZE, --buffer_size BUFFER_SIZE   File Stream Buffer Size (bytes) (default: 1048576)
