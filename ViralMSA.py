@@ -19,7 +19,7 @@ from urllib.request import urlopen
 import argparse
 
 # useful constants
-VERSION = '1.1.12'
+VERSION = '1.1.13'
 RELEASES_URL = 'https://api.github.com/repos/niemasd/ViralMSA/tags'
 CIGAR_LETTERS = {'M','D','I','S','H','=','X'}
 DEFAULT_BUFSIZE = 1048576 # 1 MB #8192 # 8 KB
@@ -164,6 +164,15 @@ def check_star():
     if o is None or 'Usage: STAR' not in o.decode():
         print("ERROR: STAR is not runnable in your PATH", file=stderr); exit(1)
 
+# check unimap
+def check_unimap():
+    try:
+        o = check_output(['unimap', '-h'])
+    except:
+        o = None
+    if o is None or 'Usage: unimap' not in o.decode():
+        print("ERROR: Unimap is not runnable in your PATH", file=stderr); exit(1)
+
 # check wfmash
 def check_wfmash():
     try:
@@ -255,6 +264,20 @@ def build_index_star(ref_genome_path, threads, verbose=True):
     if delete_log and isfile('Log.out'):
         remove('Log.out')
 
+# build unimap index
+def build_index_unimap(ref_genome_path, threads, verbose=True):
+    index_path = '%s.umi' % ref_genome_path
+    if isfile(index_path):
+        if verbose:
+            print_log("Unimap index found: %s" % index_path)
+        return
+    command = ['unimap', '-t', str(threads), '-d', index_path, ref_genome_path]
+    if verbose:
+        print_log("Building Unimap index: %s" % ' '.join(command))
+    log = open('%s.log' % index_path, 'w'); call(command, stderr=log); log.close()
+    if verbose:
+        print_log("Unimap index build: %s" % index_path)
+
 # build wfmash index
 def build_index_wfmash(ref_genome_path, threads, verbose=True):
     pass # no index needed
@@ -305,6 +328,16 @@ def align_star(seqs_path, out_sam_path, ref_genome_path, threads, verbose=True):
     if delete_log and isfile('Log.out'):
         remove('Log.out')
 
+# align genomes using unimap
+def align_unimap(seqs_path, out_sam_path, ref_genome_path, threads, verbose=True):
+    index_path = '%s.umi' % ref_genome_path
+    command = ['unimap', '-t', str(threads), '--score-N=0', '--secondary=no', '--sam-hit-only', '-a', '--cs', '-o', out_sam_path, index_path, seqs_path]
+    if verbose:
+        print_log("Aligning using Unimap: %s" % ' '.join(command))
+    log = open('%s.log' % out_sam_path, 'w'); call(command, stderr=log); log.close()
+    if verbose:
+        print_log("Unimap alignment complete: %s" % out_sam_path)
+
 # align genomes using wfmash
 def align_wfmash(seqs_path, out_sam_path, ref_genome_path, threads, verbose=True):
     ref_genome_length = sum(len(l.strip()) for l in open(ref_genome_path) if not l.startswith('>'))
@@ -340,6 +373,12 @@ ALIGNERS = {
         'check':       check_star,
         'build_index': build_index_star,
         'align':       align_star,
+    },
+
+    'unimap': {
+        'check':       check_unimap,
+        'build_index': build_index_unimap,
+        'align':       align_unimap,
     },
 
     # TODO: Uncomment once wfmash is implemented
