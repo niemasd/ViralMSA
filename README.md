@@ -21,8 +21,9 @@ ViralMSA also requires at least one of the following tools to perform the alignm
 
 * [Minimap2](https://github.com/lh3/minimap2) (used by default; strongly recommended)
 * [bowtie2](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml)
-* [HISAT2](http://daehwankimlab.github.io/hisat2/)
+* [HISAT2](http://daehwankimlab.github.io/hisat2)
 * [STAR](https://github.com/alexdobin/STAR)
+* [Unimap](https://github.com/lh3/unimap)
 
 ## Usage
 ViralMSA can be used as follows:
@@ -82,6 +83,10 @@ The citation for HISAT2 is the following:
 The citation for STAR is the following:
 
 > Dobin A, Davis CA, Schlesinger F, Drehkow J, Zaleski C, Jha S, Batut P, Chaisson M, Gingeras TR (2013). "STAR: ultrafast universal RNA-seq aligner." *Bioinformatics*. 29(1):15-21. [doi:10.1093/bioinformatics/bts635](https://doi.org/10.1093/bioinformatics/bts635)
+
+The citation for Unimap is the following:
+
+> Li H (2021). "Unimap: A fork of minimap2 optimized for assembly-to-reference alignment." https://github.com/lh3/unimap
 
 # Common Issues
 ## Weird ViralMSA output on sequences with many `N`s
