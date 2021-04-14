@@ -27,6 +27,10 @@ RUN wget -qO- "https://github.com/alexdobin/STAR/archive/2.7.5c.tar.gz" | tar -z
 #RUN git clone https://github.com/ekg/wfmash.git && \
 #    cd wfmash && ./bootstrap.sh && ./configure && make && make install && cd .. && rm -rf wfmash
 
+# Install Unimap (latest)
+RUN git clone https://github.com/lh3/unimap && \
+    cd unimap && make && mv unimap /usr/local/bin && cd .. && rm -rf unimap
+
 # Set up ViralMSA
 RUN wget -O /usr/local/bin/ViralMSA.py "https://raw.githubusercontent.com/niemasd/ViralMSA/master/ViralMSA.py" && chmod a+x /usr/local/bin/ViralMSA.py
 
