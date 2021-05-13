@@ -396,7 +396,7 @@ def run_gui():
     try:
         # imports
         from tkinter import Button, END, Entry, Frame, Label, OptionMenu, StringVar, Tk
-        from tkinter.filedialog import askopenfilename
+        from tkinter.filedialog import askdirectory, askopenfilename
 
         # helper function to make a popup
         def gui_popup(message, title=None):
@@ -447,28 +447,57 @@ def run_gui():
         entry_email.insert(END, entry_email_default)
         entry_email.pack()
 
+        # handle output folder selection
+        button_out_prefix = "Output Directory:\n"
+        button_out_nofolder = "<none selected>"
+        def find_directory_out():
+            dn = askdirectory(title="Select Output Directory")
+            if len(dn) == 0:
+                button_out.configure(text="%s%s" % (button_out_prefix,button_out_nofolder))
+            else:
+                button_out.configure(text="%s%s" % (button_out_prefix,dn))
+        button_out = Button(frame, text="%s%s" % (button_out_prefix,button_out_nofolder), command=find_directory_out)
+        button_out.pack(padx=3, pady=3)
+
         # add run button
         def finish_applet():
+            valid = True
             # check sequences
-            if button_seqs['text'] == "%s%s" % (button_seqs_prefix,button_seqs_nofile):
-                gui_popup("ERROR: Input Sequences file not selected", title="ERROR"); clear_argv(); return
-            else:
-                argv.append('-s'); argv.append(button_seqs['text'].lstrip(button_seqs_prefix).strip())
-            # check reference
-            if dropdown_ref_var.get() == dropdown_ref_default:
-                gui_popup("ERROR: Reference not selected", title="ERROR"); clear_argv(); return
-            else:
-                argv.append('-r'); argv.append([v for k in REF_NAMES for v in REF_NAMES[k] if REF_NAMES[k][v] == dropdown_ref_var.get()][0])
-            # check email
-            if '@' not in entry_email.get():
-                gui_popup("ERROR: Email Address not entered", title="ERROR"); clear_argv(); return
-            else:
-                argv.append('-e'); argv.append(entry_email.get())
-            # close applet to run ViralMSA
             try:
-                root.destroy()
+                if button_seqs['text'] == "%s%s" % (button_seqs_prefix,button_seqs_nofile):
+                    gui_popup("ERROR: Input Sequences file not selected", title="ERROR"); valid = False
             except:
                 pass
+            # check reference
+            try:
+                if dropdown_ref_var.get() == dropdown_ref_default:
+                   gui_popup("ERROR: Reference not selected", title="ERROR"); valid = False
+            except:
+                pass
+            # check email
+            try:
+                if '@' not in entry_email.get():
+                    gui_popup("ERROR: Email Address not entered", title="ERROR"); valid = False
+            except:
+                pass
+            # check output directory
+            try:
+                if button_out['text'] == "%s%s" % (button_out_prefix,button_out_nofolder):
+                    gui_popup("ERROR: Output Directory not selected", title="ERROR"); valid = False
+                elif isdir(button_out['text'].lstrip(button_out_prefix).strip()):
+                    gui_popup("ERROR: Output Directory already exists", title="ERROR"); valid = False
+            except:
+                pass
+            # close applet to run ViralMSA
+            if valid:
+                argv.append('-s'); argv.append(button_seqs['text'].lstrip(button_seqs_prefix).strip())
+                argv.append('-r'); argv.append([v for k in REF_NAMES for v in REF_NAMES[k] if REF_NAMES[k][v] == dropdown_ref_var.get()][0])
+                argv.append('-e'); argv.append(entry_email.get())
+                argv.append('-o'); argv.append(button_out['text'].lstrip(button_out_prefix).strip())
+                try:
+                    root.destroy()
+                except:
+                    pass
         button_run = Button(frame, text="Run", command=finish_applet)
         button_run.pack(padx=3, pady=3)
 
@@ -476,8 +505,7 @@ def run_gui():
         root.title("ViralMSA %s" % VERSION)
         root.mainloop()
         print(argv)
-    except Exception as e:
-        print(e)
+    except:
         print("ERROR: Unable to import Tkinter", file=stderr); exit(1)
     exit(1) # TODO DELETE WHEN DONE
 
