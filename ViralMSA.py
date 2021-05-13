@@ -25,6 +25,7 @@ CIGAR_LETTERS = {'M','D','I','S','H','=','X'}
 DEFAULT_BUFSIZE = 1048576 # 1 MB #8192 # 8 KB
 DEFAULT_ALIGNER = 'Minimap2'
 DEFAULT_THREADS = cpu_count()
+global LOGFILE; LOGFILE = None
 
 # reference genomes for common viruses
 REFS = {
@@ -78,7 +79,10 @@ REF_NAMES = {
 
 # print to long (prefixed by current time)
 def print_log(s='', end='\n'):
-    print("[%s] %s" % (get_time(), s), end=end); stdout.flush()
+    tmp = "[%s] %s" % (get_time(), s)
+    print(tmp, end=end); stdout.flush()
+    if LOGFILE is not None:
+        print(tmp, file=LOGFILE, end=end); LOGFILE.flush()
 
 # convert a ViralMSA version string to a tuple of integers
 def parse_version(s):
@@ -397,7 +401,7 @@ def run_gui():
         tmp = argv[0]; argv.clear(); argv.append(tmp)
     try:
         # imports
-        from tkinter import Button, END, Entry, Frame, Label, OptionMenu, StringVar, Tk
+        from tkinter import Button, Checkbutton, END, Entry, Frame, IntVar, Label, OptionMenu, StringVar, Tk
         from tkinter.filedialog import askdirectory, askopenfilename
 
         # helper function to make a popup
@@ -475,6 +479,11 @@ def run_gui():
         dropdown_threads = OptionMenu(frame, dropdown_threads_var, *[("%s%d" % (dropdown_threads_prefix,i)) for i in range(1,DEFAULT_THREADS+1)])
         dropdown_threads.pack()
 
+        # handle omit reference toggle
+        check_omitref_var = IntVar(frame)
+        check_omitref = Checkbutton(frame, text="Omit reference sequence from output MSA", variable=check_omitref_var, onvalue=1, offvalue=0)
+        check_omitref.pack()
+
         # add run button
         def finish_applet():
             valid = True
@@ -512,6 +521,8 @@ def run_gui():
                 argv.append('-o'); argv.append(button_out['text'].lstrip(button_out_prefix).strip())
                 argv.append('-a'); argv.append(dropdown_aligner_var.get().lstrip(dropdown_aligner_prefix).strip())
                 argv.append('-t'); argv.append(dropdown_threads_var.get().lstrip(dropdown_threads_prefix).strip())
+                if check_omitref_var.get() == 1:
+                    argv.append('--omit_ref')
                 try:
                     root.destroy()
                 except:
@@ -526,9 +537,6 @@ def run_gui():
         print("ERROR: Unable to import Tkinter", file=stderr); exit(1)
     if len(argv) == 1:
         exit()
-    else:
-        print(argv) # TODO DELETE WHEN DONE
-    exit(1) # TODO DELETE WHEN DONE
 
 # parse user args
 def parse_args():
@@ -668,6 +676,8 @@ if __name__ == "__main__":
     # parse user args and prepare run
     args = parse_args()
     makedirs(args.viralmsa_dir, exist_ok=True)
+    makedirs(args.output)
+    LOGFILE = open("%s/viralmsa.log" % args.output, 'w')
     ALIGNERS[args.aligner]['check']()
     num_input_IDs = count_IDs_fasta(args.sequences, bufsize=args.buffer_size)
 
@@ -698,7 +708,6 @@ if __name__ == "__main__":
     # align viral genomes against referencea
     print_log("===== ALIGNMENT =====")
     out_sam_path = '%s/%s.sam' % (args.output, args.sequences.split('/')[-1])
-    makedirs(args.output)
     ALIGNERS[args.aligner]['align'](args.sequences, out_sam_path, args.ref_genome_path, args.threads)
 
     # convert SAM to MSA FASTA
@@ -708,3 +717,4 @@ if __name__ == "__main__":
     print_log("Multiple sequence alignment complete: %s" % out_aln_path)
     if num_output_IDs < num_input_IDs:
         print_log("WARNING: Some sequences from the input are missing from the output. Perhaps try a different aligner or reference genome?")
+    LOGFILE.close()
