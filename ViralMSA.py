@@ -391,9 +391,11 @@ ALIGNERS = {
 
 # handle GUI (updates argv)
 def run_gui():
+    def clear_argv():
+        tmp = argv[0]; argv.clear(); argv.append(tmp)
     try:
         # imports
-        from tkinter import Button, Frame, Label, OptionMenu, StringVar, Tk
+        from tkinter import Button, END, Entry, Frame, Label, OptionMenu, StringVar, Tk
         from tkinter.filedialog import askopenfilename
 
         # helper function to make a popup
@@ -424,15 +426,11 @@ def run_gui():
         button_seqs_prefix = "Input Sequences:\n"
         button_seqs_nofile = "<none selected>"
         def find_filename_seqs():
-            try:
-                tmp_ind = argv.index('-s'); argv.pop(tmp_ind); argv.pop(tmp_ind)
-            except:
-                pass
             fn = askopenfilename(title="Select Input Sequences (FASTA format)",filetypes=(("FASTA Files",("*.fasta","*.fas")),("All Files","*.*")))
             if len(fn) == 0:
                 button_seqs.configure(text="%s%s" % (button_seqs_prefix,button_seqs_nofile))
             else:
-                argv.append('-s'); argv.append(fn); button_seqs.configure(text="%s%s" % (button_seqs_prefix,fn))
+                button_seqs.configure(text="%s%s" % (button_seqs_prefix,fn))
         button_seqs = Button(frame, text="%s%s" % (button_seqs_prefix,button_seqs_nofile), command=find_filename_seqs)
         button_seqs.pack(padx=3, pady=3)
 
@@ -440,19 +438,32 @@ def run_gui():
         dropdown_ref_default = "Select Reference"
         dropdown_ref_var = StringVar(frame)
         dropdown_ref_var.set(dropdown_ref_default)
-        dropdown_ref = OptionMenu(frame, dropdown_ref_var, *[REF_NAMES[k][v] for k in REF_NAMES for v in REF_NAMES[k]])
+        dropdown_ref = OptionMenu(frame, dropdown_ref_var, *sorted(REF_NAMES[k][v] for k in REF_NAMES for v in REF_NAMES[k]))
         dropdown_ref.pack()
+
+        # handle user email
+        entry_email_default = "Enter Email Address"
+        entry_email = Entry(frame, width=30)
+        entry_email.insert(END, entry_email_default)
+        entry_email.pack()
 
         # add run button
         def finish_applet():
             # check sequences
-            if '-s' not in argv:
-                gui_popup("ERROR: Input Sequences file not selected", title="ERROR"); return
+            if button_seqs['text'] == "%s%s" % (button_seqs_prefix,button_seqs_nofile):
+                gui_popup("ERROR: Input Sequences file not selected", title="ERROR"); clear_argv(); return
+            else:
+                argv.append('-s'); argv.append(button_seqs['text'].lstrip(button_seqs_prefix).strip())
             # check reference
             if dropdown_ref_var.get() == dropdown_ref_default:
-                gui_popup("ERROR: Reference not selected", title="ERROR"); return
+                gui_popup("ERROR: Reference not selected", title="ERROR"); clear_argv(); return
             else:
                 argv.append('-r'); argv.append([v for k in REF_NAMES for v in REF_NAMES[k] if REF_NAMES[k][v] == dropdown_ref_var.get()][0])
+            # check email
+            if '@' not in entry_email.get():
+                gui_popup("ERROR: Email Address not entered", title="ERROR"); clear_argv(); return
+            else:
+                argv.append('-e'); argv.append(entry_email.get())
             # close applet to run ViralMSA
             try:
                 root.destroy()
