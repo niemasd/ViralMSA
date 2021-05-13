@@ -19,7 +19,7 @@ from urllib.request import urlopen
 import argparse
 
 # useful constants
-VERSION = '1.1.13'
+VERSION = '1.1.14'
 RELEASES_URL = 'https://api.github.com/repos/niemasd/ViralMSA/tags'
 CIGAR_LETTERS = {'M','D','I','S','H','=','X'}
 DEFAULT_BUFSIZE = 1048576 # 1 MB #8192 # 8 KB
@@ -389,8 +389,93 @@ ALIGNERS = {
     #},
 }
 
+# handle GUI (updates argv)
+def run_gui():
+    try:
+        # imports
+        from tkinter import Button, Frame, Label, OptionMenu, StringVar, Tk
+        from tkinter.filedialog import askopenfilename
+
+        # helper function to make a popup
+        def gui_popup(message, title=None):
+            popup = Tk()
+            if title:
+                popup.wm_title(title)
+            label = Label(popup, text=message)
+            label.pack()
+            button_close = Button(popup, text="Close", command=popup.destroy)
+            button_close.pack(padx=3, pady=3)
+            popup.mainloop()
+
+        # create applet
+        root = Tk()
+        root.geometry("600x400")
+        #root.configure(background='white')
+
+        # set up main frame
+        frame = Frame(root)
+        frame.pack()
+
+        # add header
+        header = Label(frame, text="ViralMSA %s" % VERSION, font=('Arial',24))
+        header.pack()
+
+        # handle input FASTA selection
+        button_seqs_prefix = "Input Sequences:\n"
+        button_seqs_nofile = "<none selected>"
+        def find_filename_seqs():
+            try:
+                tmp_ind = argv.index('-s'); argv.pop(tmp_ind); argv.pop(tmp_ind)
+            except:
+                pass
+            fn = askopenfilename(title="Select Input Sequences (FASTA format)",filetypes=(("FASTA Files",("*.fasta","*.fas")),("All Files","*.*")))
+            if len(fn) == 0:
+                button_seqs.configure(text="%s%s" % (button_seqs_prefix,button_seqs_nofile))
+            else:
+                argv.append('-s'); argv.append(fn); button_seqs.configure(text="%s%s" % (button_seqs_prefix,fn))
+        button_seqs = Button(frame, text="%s%s" % (button_seqs_prefix,button_seqs_nofile), command=find_filename_seqs)
+        button_seqs.pack(padx=3, pady=3)
+
+        # handle reference
+        dropdown_ref_default = "Select Reference"
+        dropdown_ref_var = StringVar(frame)
+        dropdown_ref_var.set(dropdown_ref_default)
+        dropdown_ref = OptionMenu(frame, dropdown_ref_var, *[REF_NAMES[k][v] for k in REF_NAMES for v in REF_NAMES[k]])
+        dropdown_ref.pack()
+
+        # add run button
+        def finish_applet():
+            # check sequences
+            if '-s' not in argv:
+                gui_popup("ERROR: Input Sequences file not selected", title="ERROR"); return
+            # check reference
+            if dropdown_ref_var.get() == dropdown_ref_default:
+                gui_popup("ERROR: Reference not selected", title="ERROR"); return
+            else:
+                argv.append('-r'); argv.append([v for k in REF_NAMES for v in REF_NAMES[k] if REF_NAMES[k][v] == dropdown_ref_var.get()][0])
+            # close applet to run ViralMSA
+            try:
+                root.destroy()
+            except:
+                pass
+        button_run = Button(frame, text="Run", command=finish_applet)
+        button_run.pack(padx=3, pady=3)
+
+        # add title and execute GUI
+        root.title("ViralMSA %s" % VERSION)
+        root.mainloop()
+        print(argv)
+    except Exception as e:
+        print(e)
+        print("ERROR: Unable to import Tkinter", file=stderr); exit(1)
+    exit(1) # TODO DELETE WHEN DONE
+
 # parse user args
 def parse_args():
+    # check if user wants to run the GUI
+    if len(argv) == 1:
+        run_gui()
+
     # check if user wants to update ViralMSA
     if '-u' in argv or '--update' in argv:
         update_viralmsa()
