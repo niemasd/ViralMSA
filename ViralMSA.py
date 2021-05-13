@@ -23,6 +23,8 @@ VERSION = '1.1.14'
 RELEASES_URL = 'https://api.github.com/repos/niemasd/ViralMSA/tags'
 CIGAR_LETTERS = {'M','D','I','S','H','=','X'}
 DEFAULT_BUFSIZE = 1048576 # 1 MB #8192 # 8 KB
+DEFAULT_ALIGNER = 'Minimap2'
+DEFAULT_THREADS = cpu_count()
 
 # reference genomes for common viruses
 REFS = {
@@ -459,6 +461,20 @@ def run_gui():
         button_out = Button(frame, text="%s%s" % (button_out_prefix,button_out_nofolder), command=find_directory_out)
         button_out.pack(padx=3, pady=3)
 
+        # handle aligner selection
+        dropdown_aligner_prefix = "Aligner: "
+        dropdown_aligner_var = StringVar(frame)
+        dropdown_aligner_var.set("%s%s" % (dropdown_aligner_prefix,DEFAULT_ALIGNER.lower()))
+        dropdown_aligner = OptionMenu(frame, dropdown_aligner_var, *sorted(("%s%s" % (dropdown_aligner_prefix,a)) for a in ALIGNERS))
+        dropdown_aligner.pack()
+
+        # handle threads selection
+        dropdown_threads_prefix = "Threads: "
+        dropdown_threads_var = StringVar(frame)
+        dropdown_threads_var.set("%s%s" % (dropdown_threads_prefix,DEFAULT_THREADS))
+        dropdown_threads = OptionMenu(frame, dropdown_threads_var, *[("%s%d" % (dropdown_threads_prefix,i)) for i in range(1,DEFAULT_THREADS+1)])
+        dropdown_threads.pack()
+
         # add run button
         def finish_applet():
             valid = True
@@ -494,6 +510,8 @@ def run_gui():
                 argv.append('-r'); argv.append([v for k in REF_NAMES for v in REF_NAMES[k] if REF_NAMES[k][v] == dropdown_ref_var.get()][0])
                 argv.append('-e'); argv.append(entry_email.get())
                 argv.append('-o'); argv.append(button_out['text'].lstrip(button_out_prefix).strip())
+                argv.append('-a'); argv.append(dropdown_aligner_var.get().lstrip(dropdown_aligner_prefix).strip())
+                argv.append('-t'); argv.append(dropdown_threads_var.get().lstrip(dropdown_threads_prefix).strip())
                 try:
                     root.destroy()
                 except:
@@ -504,9 +522,12 @@ def run_gui():
         # add title and execute GUI
         root.title("ViralMSA %s" % VERSION)
         root.mainloop()
-        print(argv)
     except:
         print("ERROR: Unable to import Tkinter", file=stderr); exit(1)
+    if len(argv) == 1:
+        exit()
+    else:
+        print(argv) # TODO DELETE WHEN DONE
     exit(1) # TODO DELETE WHEN DONE
 
 # parse user args
@@ -534,8 +555,8 @@ def parse_args():
     parser.add_argument('-r', '--reference', required=True, type=str, help="Reference")
     parser.add_argument('-e', '--email', required=True, type=str, help="Email Address (for Entrez)")
     parser.add_argument('-o', '--output', required=True, type=str, help="Output Directory")
-    parser.add_argument('-a', '--aligner', required=False, type=str, default='Minimap2', help="Aligner")
-    parser.add_argument('-t', '--threads', required=False, type=int, default=cpu_count(), help="Number of Threads")
+    parser.add_argument('-a', '--aligner', required=False, type=str, default=DEFAULT_ALIGNER, help="Aligner")
+    parser.add_argument('-t', '--threads', required=False, type=int, default=DEFAULT_THREADS, help="Number of Threads")
     parser.add_argument('-b', '--buffer_size', required=False, type=int, default=DEFAULT_BUFSIZE, help="File Stream Buffer Size (bytes)")
     parser.add_argument('-l', '--list_references', action="store_true", help="List all reference sequences")
     parser.add_argument('--omit_ref', action="store_true", help="Omit reference sequence from output alignment")
