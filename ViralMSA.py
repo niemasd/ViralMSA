@@ -13,17 +13,17 @@ from multiprocessing import cpu_count
 from os import chdir,getcwd,makedirs,remove
 from os.path import abspath,expanduser,isdir,isfile,split
 from shutil import copy,move
-from subprocess import call,check_output,PIPE,Popen,STDOUT
+from subprocess import call,CalledProcessError,check_output,PIPE,Popen,STDOUT
 from sys import argv,stderr,stdout
 from urllib.request import urlopen
 import argparse
 
 # useful constants
-VERSION = '1.1.14'
+VERSION = '1.1.15'
 RELEASES_URL = 'https://api.github.com/repos/niemasd/ViralMSA/tags'
 CIGAR_LETTERS = {'M','D','I','S','H','=','X'}
 DEFAULT_BUFSIZE = 1048576 # 1 MB #8192 # 8 KB
-DEFAULT_ALIGNER = 'Minimap2'
+DEFAULT_ALIGNER = 'minimap2'
 DEFAULT_THREADS = cpu_count()
 global LOGFILE; LOGFILE = None
 
@@ -43,7 +43,7 @@ REFS = {
     'hiv2':            'NC_001722', # HIV-2
     'ebolavirus':      'NC_002549', # Ebola Virus (Zaire ebolavirus)
     'restonvirus':     'NC_004161', # Reston Virus (Reston ebolavirus)
-    'sarscov2':        'NC_045512',  # SARS-CoV-2 (COVID-19)
+    'sarscov2':        'NC_045512', # SARS-CoV-2 (COVID-19)
     'sudanvirus':      'NC_006432', # Sudan Virus (Sudan ebolavirus)
     'taiforestvirus':  'NC_014372', # Tai Forest Virus (Tai Forest ebolavirus, Cote d'Ivoire ebolavirus)
 }
@@ -152,6 +152,18 @@ def check_hisat2():
     if o is None or 'HISAT2 version' not in o.decode():
         print("ERROR: hisat2-build is not runnable in your PATH", file=stderr); exit(1)
 
+# check LRA
+def check_lra():
+    try:
+        o = check_output(['lra', '-h'])
+    except CalledProcessError as cpe:
+        o = cpe.output
+    except:
+        o = None
+    if o is None or 'lra (long sequence alignment)' not in o.decode():
+        print(o.decode())
+        print("ERROR: LRA is not runnable in your PATH", file=stderr); exit(1)
+
 # check minimap2
 def check_minimap2():
     try:
@@ -238,6 +250,29 @@ def build_index_hisat2(ref_genome_path, threads, verbose=True):
         print_log("HISAT2 index built: %s.hisat2.*.ht2" % ref_genome_path)
     chdir(orig_dir)
 
+# build LRA index
+def build_index_lra(ref_genome_path, threads, verbose=True):
+    lra_ref_genome_path = '%s.lra' % ref_genome_path
+    gli_index_path = '%s.gli' % lra_ref_genome_path
+    mmi_index_path = '%s.mmi' % lra_ref_genome_path
+    if isfile(lra_ref_genome_path) and isfile(gli_index_path) and isfile(mmi_index_path):
+        if verbose:
+            print_log("LRA index files found: %s and %s" % (gli_index_path, mmi_index_path))
+        return
+    elif isfile(lra_ref_genome_path):
+        raise RuntimeError("Corrupt LRA index. Please delete the following and try again: %s" % lra_ref_genome_path)
+    elif isfile(gli_index_path):
+        raise RuntimeError("Corrupt LRA index. Please delete the following and try again: %s" % gli_index_path)
+    elif isfile(mmi_index_path):
+        raise RuntimeError("Corrupt LRA index. Please delete the following and try again: %s" % mmi_index_path)
+    copy(ref_genome_path, lra_ref_genome_path)
+    command = ['lra', 'index', '-CONTIG', lra_ref_genome_path]
+    if verbose:
+        print_log("Building LRA index: %s" % ' '.join(command))
+    log = open('%s.log' % lra_ref_genome_path, 'w'); call(command, stderr=log); log.close()
+    if verbose:
+        print_log("LRA index built: %s and %s" % (gli_index_path, mmi_index_path))
+
 # build minimap2 index
 def build_index_minimap2(ref_genome_path, threads, verbose=True):
     index_path = '%s.mmi' % ref_genome_path
@@ -306,6 +341,16 @@ def align_hisat2(seqs_path, out_sam_path, ref_genome_path, threads, verbose=True
     if verbose:
         print_log("HISAT2 alignment complete: %s" % out_sam_path)
 
+# align genomes using LRA
+def align_lra(seqs_path, out_sam_path, ref_genome_path, threads, verbose=True):
+    lra_ref_genome_path = '%s.lra' % ref_genome_path
+    command = ['lra', 'align', '-t', str(threads), '-CONTIG', '-p', 's', lra_ref_genome_path, seqs_path]
+    if verbose:
+        print_log("Aligning using LRA: %s" % ' '.join(command))
+    out_sam_file = open(out_sam_path, 'w'); log = open('%s.log' % out_sam_path, 'w'); call(command, stdout=out_sam_file, stderr=log); out_sam_file.close(); log.close()
+    if verbose:
+        print_log("LRA alignment complete: %s" % out_sam_path)
+
 # align genomes using minimap2
 def align_minimap2(seqs_path, out_sam_path, ref_genome_path, threads, verbose=True):
     index_path = '%s.mmi' % ref_genome_path
@@ -367,6 +412,12 @@ ALIGNERS = {
         'check':       check_hisat2,
         'build_index': build_index_hisat2,
         'align':       align_hisat2,
+    },
+
+    'lra': {
+        'check':       check_lra,
+        'build_index': build_index_lra,
+        'align':       align_lra,
     },
 
     'minimap2': {
@@ -563,7 +614,7 @@ def parse_args():
     parser.add_argument('-r', '--reference', required=True, type=str, help="Reference")
     parser.add_argument('-e', '--email', required=True, type=str, help="Email Address (for Entrez)")
     parser.add_argument('-o', '--output', required=True, type=str, help="Output Directory")
-    parser.add_argument('-a', '--aligner', required=False, type=str, default=DEFAULT_ALIGNER, help="Aligner")
+    parser.add_argument('-a', '--aligner', required=False, type=str, default=DEFAULT_ALIGNER, help="Aligner (options: %s)" % ', '.join(sorted(ALIGNERS.keys())))
     parser.add_argument('-t', '--threads', required=False, type=int, default=DEFAULT_THREADS, help="Number of Threads")
     parser.add_argument('-b', '--buffer_size', required=False, type=int, default=DEFAULT_BUFSIZE, help="File Stream Buffer Size (bytes)")
     parser.add_argument('-l', '--list_references', action="store_true", help="List all reference sequences")
