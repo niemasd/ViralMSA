@@ -19,7 +19,7 @@ from urllib.request import urlopen
 import argparse
 
 # useful constants
-VERSION = '1.1.15'
+VERSION = '1.1.16'
 RELEASES_URL = 'https://api.github.com/repos/niemasd/ViralMSA/tags'
 CIGAR_LETTERS = {'M','D','I','S','H','=','X'}
 DEFAULT_BUFSIZE = 1048576 # 1 MB #8192 # 8 KB
@@ -255,9 +255,13 @@ def build_index_lra(ref_genome_path, threads, verbose=True):
     lra_ref_genome_path = '%s.lra' % ref_genome_path
     gli_index_path = '%s.gli' % lra_ref_genome_path
     mmi_index_path = '%s.mmi' % lra_ref_genome_path
-    if isfile(lra_ref_genome_path) and isfile(gli_index_path) and isfile(mmi_index_path):
+    mms_index_path = '%s.mms' % lra_ref_genome_path
+    if isfile(lra_ref_genome_path) and isfile(gli_index_path) and (isfile(mmi_index_path) or isfile(mms_index_path)):
         if verbose:
-            print_log("LRA index files found: %s and %s" % (gli_index_path, mmi_index_path))
+            if isfile(mmi_index_path):
+                print_log("LRA index files found: %s and %s" % (gli_index_path, mmi_index_path))
+            else:
+                print_log("LRA index files found: %s and %s" % (gli_index_path, mms_index_path))
         return
     elif isfile(lra_ref_genome_path):
         raise RuntimeError("Corrupt LRA index. Please delete the following and try again: %s" % lra_ref_genome_path)
@@ -265,13 +269,18 @@ def build_index_lra(ref_genome_path, threads, verbose=True):
         raise RuntimeError("Corrupt LRA index. Please delete the following and try again: %s" % gli_index_path)
     elif isfile(mmi_index_path):
         raise RuntimeError("Corrupt LRA index. Please delete the following and try again: %s" % mmi_index_path)
+    elif isfile(mms_index_path):
+        raise RuntimeError("Corrupt LRA index. Please delete the following and try again: %s" % mms_index_path)
     copy(ref_genome_path, lra_ref_genome_path)
     command = ['lra', 'index', '-CONTIG', lra_ref_genome_path]
     if verbose:
         print_log("Building LRA index: %s" % ' '.join(command))
     log = open('%s.log' % lra_ref_genome_path, 'w'); call(command, stderr=log); log.close()
     if verbose:
-        print_log("LRA index built: %s and %s" % (gli_index_path, mmi_index_path))
+        if isfile(mmi_index_path):
+            print_log("LRA index built: %s and %s" % (gli_index_path, mmi_index_path))
+        else:
+            print_log("LRA index built: %s and %s" % (gli_index_path, mms_index_path))
 
 # build minimap2 index
 def build_index_minimap2(ref_genome_path, threads, verbose=True):
