@@ -19,8 +19,8 @@ RUN wget "https://github.com/BenLangmead/bowtie2/releases/download/v2.4.3/bowtie
 #RUN wget -O hisat2.zip "https://cloud.biohpc.swmed.edu/index.php/s/oTtGWbWjaxsQ2Ho/download" && \
 #    unzip hisat2.zip && mv hisat2-*/hisat2* /usr/local/bin && rm -rf hisat2*
 
-# Install Minimap2 v2.20
-RUN wget -qO- "https://github.com/lh3/minimap2/archive/refs/tags/v2.20.tar.gz" | tar -zx && \
+# Install Minimap2 v2.22
+RUN wget -qO- "https://github.com/lh3/minimap2/archive/refs/tags/v2.22.tar.gz" | tar -zx && \
     cd minimap2-* && \
     make && \
     chmod a+x minimap2 && \
