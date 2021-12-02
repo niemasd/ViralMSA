@@ -15,9 +15,13 @@ RUN wget "https://github.com/BenLangmead/bowtie2/releases/download/v2.4.3/bowtie
     cd .. && \
     rm -rf bowtie2-2.4.3 bowtie2-2.4.3-source.zip
 
-# Install HISAT2 (2.2.1) TODO NEED TO COMPILE FROM SCRATCH
-#RUN wget -O hisat2.zip "https://cloud.biohpc.swmed.edu/index.php/s/oTtGWbWjaxsQ2Ho/download" && \
-#    unzip hisat2.zip && mv hisat2-*/hisat2* /usr/local/bin && rm -rf hisat2*
+# Install HISAT2 v2.2.1
+RUN wget -qO- "https://github.com/DaehwanKimLab/hisat2/archive/refs/tags/v2.2.1.tar.gz" | tar -zx && \
+    cd hisat2-* && \
+    make && \
+    mv hisat2 hisat2-* hisat2_*.py /usr/local/bin/ && \
+    cd .. && \
+    rm -rf hisat2-*
 
 # Install Minimap2 v2.22
 RUN wget -qO- "https://github.com/lh3/minimap2/archive/refs/tags/v2.22.tar.gz" | tar -zx && \
