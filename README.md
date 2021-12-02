@@ -83,6 +83,10 @@ Please also cite the read mapper you selected.
 
 > Kim D, Paggi JM, Park C, Bennett C, Salzberg SL (2019). "Graph-based genome alignment and genotyping with HISAT2 and HISAT-genotype." *Nat Biotechnol*. 37:907-915. [doi:10.1038/s41587-019-0201-4](https://doi.org/10.1038/s41587-019-0201-4)
 
+* LRA
+
+> Ren J, Chaisson MJP (2021). "lra: A long read aligner for sequences and contigs." *PLoS Comput Biol*. 17(6): e1009078. [doi:10.1371/journal.pcbi.1009078](https://doi.org/10.1371/journal.pcbi.1009078)
+
 * STAR
 
 > Dobin A, Davis CA, Schlesinger F, Drehkow J, Zaleski C, Jha S, Batut P, Chaisson M, Gingeras TR (2013). "STAR: ultrafast universal RNA-seq aligner." *Bioinformatics*. 29(1):15-21. [doi:10.1093/bioinformatics/bts635](https://doi.org/10.1093/bioinformatics/bts635)
