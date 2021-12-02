@@ -22,6 +22,7 @@ ViralMSA also requires at least one of the following tools to perform the alignm
 * [Minimap2](https://github.com/lh3/minimap2) (used by default; strongly recommended)
 * [bowtie2](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml)
 * [HISAT2](http://daehwankimlab.github.io/hisat2)
+* [LRA](https://github.com/ChaissonLab/LRA)
 * [STAR](https://github.com/alexdobin/STAR)
 * [Unimap](https://github.com/lh3/unimap)
 
