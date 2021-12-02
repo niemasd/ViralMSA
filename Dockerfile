@@ -32,7 +32,7 @@ RUN wget -qO- "https://github.com/lh3/minimap2/archive/refs/tags/v2.22.tar.gz" |
     cd .. && \
     rm -rf minimap2-*
 
-# Install STAR (2.7.5c) TODO NEED TO COMPILE FROM SCRATCH
+# Install STAR v2.7.5c
 RUN wget -qO- "https://github.com/alexdobin/STAR/archive/refs/tags/2.7.9a.tar.gz" | tar -zx && \
     mv STAR-*/bin/Linux_*_static/* /usr/local/bin/ && \
     rm -rf STAR-*
