@@ -85,7 +85,7 @@ Please also cite the read mapper you selected.
 
 * LRA
 
-> Ren J, Chaisson MJP (2021). "lra: A long read aligner for sequences and contigs." *PLoS Comput Biol*. 17(6): e1009078. [doi:10.1371/journal.pcbi.1009078](https://doi.org/10.1371/journal.pcbi.1009078)
+> Ren J, Chaisson MJP (2021). "lra: A long read aligner for sequences and contigs." *PLoS Comput Biol*. 17(6):e1009078. [doi:10.1371/journal.pcbi.1009078](https://doi.org/10.1371/journal.pcbi.1009078)
 
 * STAR
 
