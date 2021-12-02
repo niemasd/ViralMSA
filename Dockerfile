@@ -33,12 +33,9 @@ RUN wget -qO- "https://github.com/lh3/minimap2/archive/refs/tags/v2.22.tar.gz" |
     rm -rf minimap2-*
 
 # Install STAR (2.7.5c) TODO NEED TO COMPILE FROM SCRATCH
-#RUN wget -qO- "https://github.com/alexdobin/STAR/archive/2.7.5c.tar.gz" | tar -zx && \
-#    mv STAR-*/bin/Linux_x86_64_static/* /usr/local/bin && rm -rf STAR-*
-
-# Install wfmash TODO NEED TO COMPILE FROM SCRATCH
-#RUN git clone https://github.com/ekg/wfmash.git && \
-#    cd wfmash && ./bootstrap.sh && ./configure && make && make install && cd .. && rm -rf wfmash
+RUN wget -qO- "https://github.com/alexdobin/STAR/archive/refs/tags/2.7.9a.tar.gz" | tar -zx && \
+    mv STAR-*/bin/Linux_*_static/* /usr/local/bin/ && \
+    rm -rf STAR-*
 
 # Install Unimap (latest)
 RUN wget "https://github.com/lh3/unimap/archive/refs/heads/master.zip" && \
