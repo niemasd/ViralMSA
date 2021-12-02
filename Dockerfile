@@ -1,5 +1,5 @@
 # Minimal Docker image for ViralMSA using Alpine base
-FROM alpine:latest
+FROM alpine:3.13.5
 MAINTAINER Niema Moshiri <niemamoshiri@gmail.com>
 
 # Set up environment and install dependencies
