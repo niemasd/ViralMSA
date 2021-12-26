@@ -23,8 +23,8 @@ RUN wget -qO- "https://github.com/DaehwanKimLab/hisat2/archive/refs/tags/v2.2.1.
     cd .. && \
     rm -rf hisat2-*
 
-# Install Minimap2 v2.22
-RUN wget -qO- "https://github.com/lh3/minimap2/archive/refs/tags/v2.22.tar.gz" | tar -zx && \
+# Install Minimap2 v2.24
+RUN wget -qO- "https://github.com/lh3/minimap2/archive/refs/tags/v2.24.tar.gz" | tar -zx && \
     cd minimap2-* && \
     make && \
     chmod a+x minimap2 && \
