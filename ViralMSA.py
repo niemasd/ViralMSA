@@ -19,13 +19,24 @@ from urllib.request import urlopen
 import argparse
 
 # useful constants
-VERSION = '1.1.16'
+VERSION = '1.1.17'
 RELEASES_URL = 'https://api.github.com/repos/niemasd/ViralMSA/tags'
 CIGAR_LETTERS = {'M','D','I','S','H','=','X'}
 DEFAULT_BUFSIZE = 1048576 # 1 MB #8192 # 8 KB
 DEFAULT_ALIGNER = 'minimap2'
 DEFAULT_THREADS = cpu_count()
 global LOGFILE; LOGFILE = None
+
+# citations
+CITATION = {
+    'bowtie2':  'Bowtie2: Langmead B, Salzberg SL (2012). "Fast gapped-read alignment with Bowtie 2." Nat Methods. 9(4):357-359. doi:10.1038/nmeth.1923',
+    'hisat2':   'HISAT2: Kim D, Paggi JM, Park C, Bennett C, Salzberg SL (2019). "Graph-based genome alignment and genotyping with HISAT2 and HISAT-genotype." Nat Biotechnol. 37:907-915. doi:10.1038/s41587-019-0201-4',
+    'lra':      'LRA: Ren J, Chaisson MJP (2021). "lra: A long read aligner for sequences and contigs." PLoS Comput Biol. 17(6):e1009078. doi:10.1371/journal.pcbi.1009078',
+    'minimap2': 'Minimap2: Li H (2018). "Minimap2: pairwise alignment for nucleotide sequences." Bioinformatics. 34(18):3094–3100. doi:10.1093/bioinformatics/bty191',
+    'star':     'STAR: Dobin A, Davis CA, Schlesinger F, Drehkow J, Zaleski C, Jha S, Batut P, Chaisson M, Gingeras TR (2013). "STAR: ultrafast universal RNA-seq aligner." Bioinformatics. 29(1):15-21. doi:10.1093/bioinformatics/bts635',
+    'unimap':   'Unimap: Li H (2021). "Unimap: A fork of minimap2 optimized for assembly-to-reference alignment." https://github.com/lh3/unimap',
+    'viralmsa': 'ViralMSA: Moshiri N (2021). "ViralMSA: Massively scalable reference-guided multiple sequence alignment of viral genomes." Bioinformatics. 37(5):714–716. doi:10.1093/bioinformatics/btaa743',
+}
 
 # reference genomes for common viruses
 REFS = {
@@ -777,4 +788,10 @@ if __name__ == "__main__":
     print_log("Multiple sequence alignment complete: %s" % out_aln_path)
     if num_output_IDs < num_input_IDs:
         print_log("WARNING: Some sequences from the input are missing from the output. Perhaps try a different aligner or reference genome?")
+    print_log()
+
+    # print citations and finish
+    print_log("===== CITATIONS =====")
+    print_log(CITATION['viralmsa'])
+    print_log(CITATION[args.aligner])
     LOGFILE.close()
