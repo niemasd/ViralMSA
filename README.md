@@ -67,7 +67,7 @@ ViralMSA.py -e email@address.com -s sequences.fas -o output -r my_reference.fas
 # Citing ViralMSA
 If you use ViralMSA in your work, please cite:
 
-> **Moshiri N** (2020). "ViralMSA: Massively scalable reference-guided multiple sequence alignment of viral genomes." *Bioinformatics*. btaa743. [doi:10.1093/bioinformatics/btaa743](https://doi.org/10.1093/bioinformatics/btaa743)
+> **Moshiri N** (2021). "ViralMSA: Massively scalable reference-guided multiple sequence alignment of viral genomes." *Bioinformatics*. 37(5):714–716. [doi:10.1093/bioinformatics/btaa743](https://doi.org/10.1093/bioinformatics/btaa743)
 
 Please also cite the read mapper you selected.
 
