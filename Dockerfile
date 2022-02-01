@@ -4,7 +4,7 @@ MAINTAINER Niema Moshiri <niemamoshiri@gmail.com>
 
 # Set up environment and install dependencies
 RUN apt-get update && apt-get -y upgrade && \
-    DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get install -y g++ libboost-all-dev make unzip wget zlib1g-dev
+    DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get install -y cmake g++-10 gcc-10 libboost-all-dev libgsl-dev libjemalloc-dev make unzip wget zlib1g-dev
 
 # Install Bowtie2 v2.4.3
 RUN wget "https://github.com/BenLangmead/bowtie2/releases/download/v2.4.3/bowtie2-2.4.3-source.zip" && \
@@ -58,6 +58,16 @@ RUN wget "https://github.com/lh3/unimap/archive/refs/heads/master.zip" && \
     mv unimap /usr/local/bin/unimap && \
     cd .. && \
     rm -rf master.zip unimap-master && \
+    rm -rf /root/.cache /tmp/*
+
+# Install wfmash v0.7.0
+RUN wget -qO- "https://github.com/ekg/wfmash/releases/download/v0.7.0/wfmash-v0.7.0.tar.gz" | tar -zx && \
+    cd wfmash-* && \
+    cmake -H. -Bbuild -DCMAKE_C_COMPILER="$(which gcc-10)" -DCMAKE_CXX_COMPILER="$(which g++-10)" && \
+    cmake --build build -- && \
+    mv build/bin/wfmash /usr/local/bin/wfmash && \
+    cd .. && \
+    rm -rf wfmash-* && \
     rm -rf /root/.cache /tmp/*
 
 # Set up ViralMSA
