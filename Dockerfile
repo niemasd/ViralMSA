@@ -1,10 +1,10 @@
-# Minimal Docker image for ViralMSA using Alpine base
-FROM alpine:3.13.5
+# Minimal Docker image for ViralMSA using Ubuntu base
+FROM ubuntu:20.04
 MAINTAINER Niema Moshiri <niemamoshiri@gmail.com>
 
 # Set up environment and install dependencies
-RUN apk update && \
-    apk add bash gcc g++ make musl-dev perl python3 unzip zlib-dev
+RUN apt-get update && apt-get -y upgrade && \
+    apt-get install -y g++ make unzip wget zlib1g-dev
 
 # Install Bowtie2 v2.4.3
 RUN wget "https://github.com/BenLangmead/bowtie2/releases/download/v2.4.3/bowtie2-2.4.3-source.zip" && \
