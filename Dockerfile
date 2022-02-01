@@ -20,7 +20,7 @@ RUN wget "https://github.com/BenLangmead/bowtie2/releases/download/v2.4.3/bowtie
 RUN wget -qO- "https://github.com/Illumina/DRAGMAP/archive/refs/tags/1.2.1.tar.gz" | tar -zx && \
     cd DRAGMAP-* && \
     HAS_GTEST=0 make && \
-    make install && \
+    HAS_GTEST=0 make install && \
     cd .. && \
     rm -rf DRAGMAP-* && \
     rm -rf /root/.cache /tmp/*
