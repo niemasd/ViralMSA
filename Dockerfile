@@ -4,16 +4,25 @@ MAINTAINER Niema Moshiri <niemamoshiri@gmail.com>
 
 # Set up environment and install dependencies
 RUN apt-get update && apt-get -y upgrade && \
-    apt-get install -y g++ make unzip wget zlib1g-dev
+    DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get install -y g++ libboost-all-dev make unzip wget zlib1g-dev
 
 # Install Bowtie2 v2.4.3
 RUN wget "https://github.com/BenLangmead/bowtie2/releases/download/v2.4.3/bowtie2-2.4.3-source.zip" && \
-    unzip bowtie2-2.4.3-source.zip && \
-    cd bowtie2-2.4.3 && \
+    unzip bowtie2-*-source.zip && \
+    cd bowtie2-* && \
     make && \
     make install && \
     cd .. && \
-    rm -rf bowtie2-2.4.3 bowtie2-2.4.3-source.zip && \
+    rm -rf bowtie2-* && \
+    rm -rf /root/.cache /tmp/*
+
+# Install DRAGMAP v1.2.1
+RUN wget -qO- "https://github.com/Illumina/DRAGMAP/archive/refs/tags/1.2.1.tar.gz" | tar -zx && \
+    cd DRAGMAP-* && \
+    make && \
+    make install && \
+    cd .. && \
+    rm -rf DRAGMAP-* && \
     rm -rf /root/.cache /tmp/*
 
 # Install HISAT2 v2.2.1
