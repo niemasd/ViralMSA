@@ -30,6 +30,7 @@ global LOGFILE; LOGFILE = None
 # citations
 CITATION = {
     'bowtie2':  'Bowtie2: Langmead B, Salzberg SL (2012). "Fast gapped-read alignment with Bowtie 2." Nat Methods. 9(4):357-359. doi:10.1038/nmeth.1923',
+    'dragmap':  'DRAGMAP: https://github.com/Illumina/DRAGMAP',
     'hisat2':   'HISAT2: Kim D, Paggi JM, Park C, Bennett C, Salzberg SL (2019). "Graph-based genome alignment and genotyping with HISAT2 and HISAT-genotype." Nat Biotechnol. 37:907-915. doi:10.1038/s41587-019-0201-4',
     'lra':      'LRA: Ren J, Chaisson MJP (2021). "lra: A long read aligner for sequences and contigs." PLoS Comput Biol. 17(6):e1009078. doi:10.1371/journal.pcbi.1009078',
     'minimap2': 'Minimap2: Li H (2018). "Minimap2: pairwise alignment for nucleotide sequences." Bioinformatics. 34(18):3094–3100. doi:10.1093/bioinformatics/bty191',
@@ -148,6 +149,15 @@ def check_bowtie2():
     if o is None or 'Bowtie 2 version' not in o.decode():
         print("ERROR: bowtie2-build is not runnable in your PATH", file=stderr); exit(1)
 
+# check DRAGMAP
+def check_dragmap():
+    try:
+        o = check_output(['dragen-os', '-h'])
+    except:
+        o = None
+    if o is None or 'dragenos -r <reference> -b <base calls> [optional arguments]' not in o.decode():
+        print("ERROR: dragen-os is not runnable in your PATH", file=stderr); exit(1)
+
 # check HISAT2
 def check_hisat2():
     try:
@@ -235,6 +245,10 @@ def build_index_bowtie2(ref_genome_path, threads, verbose=True):
     if verbose:
         print_log("bowtie2 index built: %s.bowtie2.*.bt2" % ref_genome_path)
     chdir(orig_dir)
+
+# build DRAGMAP index
+def build_index_dragmap(ref_genome_path, threads, verbose=True):
+    print("ERROR: NOT YET IMPLEMENTED", file=stderr); exit(1) # TODO
 
 # build HISAT2 index
 def build_index_hisat2(ref_genome_path, threads, verbose=True):
@@ -352,6 +366,10 @@ def align_bowtie2(seqs_path, out_sam_path, ref_genome_path, threads, verbose=Tru
     if verbose:
         print_log("bowtie2 alignment complete: %s" % out_sam_path)
 
+# align genomes using DRAGMAP
+def align_dragmap(seqs_path, out_sam_path, ref_genome_path, threads, verbose=True):
+    print("ERROR: NOT YET IMPLEMENTED", file=stderr); exit(1) # TODO
+
 # align genomes using HISAT2
 def align_hisat2(seqs_path, out_sam_path, ref_genome_path, threads, verbose=True):
     command = ['hisat2', '--very-sensitive', '-p', str(threads), '-f', '-x', '%s.hisat2' % ref_genome_path, '-U', seqs_path, '-S', out_sam_path]
@@ -427,6 +445,13 @@ ALIGNERS = {
         'build_index': build_index_bowtie2,
         'align':       align_bowtie2,
     },
+
+    # TODO: Uncomment once dragmap is implemented
+    #'dragmap': {
+    #    'check':       check_dragmap,
+    #    'build_index': build_index_dragmap,
+    #    'align':       align_dragmap,
+    #},
 
     'hisat2': {
         'check':       check_hisat2,
