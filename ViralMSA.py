@@ -19,7 +19,7 @@ from urllib.request import urlopen
 import argparse
 
 # useful constants
-VERSION = '1.1.17'
+VERSION = '1.1.18'
 RELEASES_URL = 'https://api.github.com/repos/niemasd/ViralMSA/tags'
 CIGAR_LETTERS = {'M','D','I','S','H','=','X'}
 DEFAULT_BUFSIZE = 1048576 # 1 MB #8192 # 8 KB
@@ -33,10 +33,11 @@ CITATION = {
     'dragmap':  'DRAGMAP: https://github.com/Illumina/DRAGMAP',
     'hisat2':   'HISAT2: Kim D, Paggi JM, Park C, Bennett C, Salzberg SL (2019). "Graph-based genome alignment and genotyping with HISAT2 and HISAT-genotype." Nat Biotechnol. 37:907-915. doi:10.1038/s41587-019-0201-4',
     'lra':      'LRA: Ren J, Chaisson MJP (2021). "lra: A long read aligner for sequences and contigs." PLoS Comput Biol. 17(6):e1009078. doi:10.1371/journal.pcbi.1009078',
-    'minimap2': 'Minimap2: Li H (2018). "Minimap2: pairwise alignment for nucleotide sequences." Bioinformatics. 34(18):3094–3100. doi:10.1093/bioinformatics/bty191',
+    'minimap2': 'Minimap2: Li H (2018). "Minimap2: pairwise alignment for nucleotide sequences." Bioinformatics. 34(18):3094-3100. doi:10.1093/bioinformatics/bty191',
     'star':     'STAR: Dobin A, Davis CA, Schlesinger F, Drehkow J, Zaleski C, Jha S, Batut P, Chaisson M, Gingeras TR (2013). "STAR: ultrafast universal RNA-seq aligner." Bioinformatics. 29(1):15-21. doi:10.1093/bioinformatics/bts635',
     'unimap':   'Unimap: Li H (2021). "Unimap: A fork of minimap2 optimized for assembly-to-reference alignment." https://github.com/lh3/unimap',
     'viralmsa': 'ViralMSA: Moshiri N (2021). "ViralMSA: Massively scalable reference-guided multiple sequence alignment of viral genomes." Bioinformatics. 37(5):714–716. doi:10.1093/bioinformatics/btaa743',
+    'wfmash':   'wfmash: Jain C, Koren S, Dilthey A, Phillippy AM, Aluru S (2018). "A Fast Adaptive Algorithm for Computing Whole-Genome Homology Maps". Bioinformatics. 34(17):i748-i756. doi:10.1093/bioinformatics/bty597',
 }
 
 # reference genomes for common viruses
@@ -221,6 +222,20 @@ def check_wfmash():
     if o is None or 'wfmash [target] [queries...] {OPTIONS}' not in o.decode():
         print("ERROR: wfmash is not runnable in your PATH", file=stderr); exit(1)
 
+# build FAIDX index (multiple tools might need this)
+def build_index_faidx(ref_genome_path, threads, verbose=True):
+    index_path = '%s.fai' % ref_genome_path
+    if isfile(index_path):
+        if verbose:
+            print_log("FAIDX index found: %s" % index_path)
+        return
+    command = ['samtools', 'faidx', ref_genome_path]
+    if verbose:
+        print_log("Building FAIDX index: %s" % ' '.join(command))
+    log = open('%s.log' % index_path, 'w'); call(command, stderr=log); log.close()
+    if verbose:
+        print_log("FAIDX index built: %s" % index_path)
+
 # build bowtie2 index
 def build_index_bowtie2(ref_genome_path, threads, verbose=True):
     exts = ['1.bt2', '2.bt2', '3.bt2', '4.bt2', 'rev.1.bt2', 'rev.2.bt2']
@@ -351,11 +366,11 @@ def build_index_unimap(ref_genome_path, threads, verbose=True):
         print_log("Building Unimap index: %s" % ' '.join(command))
     log = open('%s.log' % index_path, 'w'); call(command, stderr=log); log.close()
     if verbose:
-        print_log("Unimap index build: %s" % index_path)
+        print_log("Unimap index built: %s" % index_path)
 
 # build wfmash index
 def build_index_wfmash(ref_genome_path, threads, verbose=True):
-    pass # no index needed
+    build_index_faidx(ref_genome_path, threads, verbose=True)
 
 # align genomes using bowtie2
 def align_bowtie2(seqs_path, out_sam_path, ref_genome_path, threads, verbose=True):
@@ -430,13 +445,12 @@ def align_unimap(seqs_path, out_sam_path, ref_genome_path, threads, verbose=True
 # align genomes using wfmash
 def align_wfmash(seqs_path, out_sam_path, ref_genome_path, threads, verbose=True):
     ref_genome_length = sum(len(l.strip()) for l in open(ref_genome_path) if not l.startswith('>'))
-    command = ['wfmash', '--threads=%d' % threads, '-s', str(int(0.9*ref_genome_length)), ref_genome_path, seqs_path]
+    command = ['wfmash', '-N', '--sam-format', '--threads=%d' % threads, ref_genome_path, seqs_path]
     if verbose:
         print_log("Aligning using wfmash: %s" % ' '.join(command))
-    paf = open('%s.paf' % out_sam_path, 'w'); log = open('%s.log' % out_sam_path, 'w'); call(command, stdout=paf, stderr=log); paf.close(); log.close()
+    sam = open(out_sam_path, 'w'); log = open('%s.log' % out_sam_path, 'w'); call(command, stdout=sam, stderr=log); sam.close(); log.close()
     if verbose:
         print_log("wfmash alignment complete: %s" % out_sam_path)
-    exit() # TODO
 
 # aligners
 ALIGNERS = {
@@ -483,12 +497,11 @@ ALIGNERS = {
         'align':       align_unimap,
     },
 
-    # TODO: Uncomment once wfmash is implemented
-    #'wfmash': {
-    #    'check':       check_wfmash,
-    #    'build_index': build_index_wfmash,
-    #    'align':       align_wfmash,
-    #},
+    'wfmash': {
+        'check':       check_wfmash,
+        'build_index': build_index_wfmash,
+        'align':       align_wfmash,
+    },
 }
 
 # handle GUI (updates argv)
