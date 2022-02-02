@@ -25,6 +25,7 @@ ViralMSA also requires at least one of the following tools to perform the alignm
 * [LRA](https://github.com/ChaissonLab/LRA)
 * [STAR](https://github.com/alexdobin/STAR)
 * [Unimap](https://github.com/lh3/unimap)
+* [wfmash](https://github.com/ekg/wfmash)
 
 ## Usage
 ViralMSA can be used as follows:
