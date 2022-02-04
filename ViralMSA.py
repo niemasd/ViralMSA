@@ -15,13 +15,13 @@ from multiprocessing import cpu_count
 from os import chdir, getcwd, makedirs, remove
 from os.path import abspath, expanduser, isdir, isfile, split
 from shutil import copy, move
-from subprocess import call, CalledProcessError, check_output, PIPE, Popen, STDOUT
+from subprocess import call, CalledProcessError, check_output, DEVNULL, PIPE, Popen, STDOUT
 from sys import argv, stderr, stdout
 from urllib.request import urlopen
 import argparse
 
 # useful constants
-VERSION = '1.1.19'
+VERSION = '1.1.20'
 RELEASES_URL = 'https://api.github.com/repos/niemasd/ViralMSA/tags'
 CIGAR_LETTERS = {'M','D','I','S','H','=','X'}
 DEFAULT_BUFSIZE = 1048576 # 1 MB #8192 # 8 KB
@@ -36,6 +36,7 @@ CITATION = {
     'hisat2':   'HISAT2: Kim D, Paggi JM, Park C, Bennett C, Salzberg SL (2019). "Graph-based genome alignment and genotyping with HISAT2 and HISAT-genotype." Nat Biotechnol. 37:907-915. doi:10.1038/s41587-019-0201-4',
     'lra':      'LRA: Ren J, Chaisson MJP (2021). "lra: A long read aligner for sequences and contigs." PLoS Comput Biol. 17(6):e1009078. doi:10.1371/journal.pcbi.1009078',
     'minimap2': 'Minimap2: Li H (2018). "Minimap2: pairwise alignment for nucleotide sequences." Bioinformatics. 34(18):3094-3100. doi:10.1093/bioinformatics/bty191',
+    'ngmlr':    'NGMLR: Sedlazeck FJ, Rescheneder P, Smolka M, Fang H, Nattestad M, von Haeseler A, Schatz MC (2018). "Accurate detection of complex structural variations using single-molecule sequencing." Nat Methods. 15:461-468. doi:10.1038/s41592-018-0001-7',
     'star':     'STAR: Dobin A, Davis CA, Schlesinger F, Drehkow J, Zaleski C, Jha S, Batut P, Chaisson M, Gingeras TR (2013). "STAR: ultrafast universal RNA-seq aligner." Bioinformatics. 29(1):15-21. doi:10.1093/bioinformatics/bts635',
     'unimap':   'Unimap: Li H (2021). "Unimap: A fork of minimap2 optimized for assembly-to-reference alignment." https://github.com/lh3/unimap',
     'viralmsa': 'ViralMSA: Moshiri N (2021). "ViralMSA: Massively scalable reference-guided multiple sequence alignment of viral genomes." Bioinformatics. 37(5):714–716. doi:10.1093/bioinformatics/btaa743',
@@ -226,6 +227,15 @@ def check_minimap2():
     if o is None or 'Usage: minimap2' not in o.decode():
         print("ERROR: Minimap2 is not runnable in your PATH", file=stderr); exit(1)
 
+# check NGMLR
+def check_ngmlr():
+    try:
+        o = check_output(['ngmlr', '-h'], stderr=STDOUT)
+    except:
+        o = None
+    if o is None or 'Usage: ngmlr' not in o.decode():
+        print("ERROR: NGMLR is not runnable in your PATH", file=stderr); exit(1)
+
 # check STAR
 def check_star():
     try:
@@ -378,6 +388,25 @@ def build_index_minimap2(ref_genome_path, threads, verbose=True):
     if verbose:
         print_log("Minimap2 index built: %s" % index_path)
 
+# build NGMLR index
+def build_index_ngmlr(ref_genome_path, threads, verbose=True):
+    enc_index_path = '%s-enc.2.ngm' % ref_genome_path
+    ht_index_path = '%s-ht-13-2.2.ngm' % ref_genome_path
+    if isfile(enc_index_path) and isfile(ht_index_path):
+        if verbose:
+            print_log("NGMLR index files found: %s and %s" % (enc_index_path, ht_index_path))
+        return
+    elif isfile(enc_index_path):
+        raise RuntimeError("Corrupt NGMLR index. Please delete the following and try again: %s" % enc_index_path)
+    elif isfile(ht_index_path):
+        raise RuntimeError("Corrupt NGMLR index. Please delete the following and try again: %s" % ht_index_path)
+    command = ['ngmlr', '-x', 'pacbio', '-i', '0', '--no-smallinv', '-t', str(threads), '-r', ref_genome_path]
+    if verbose:
+        print_log("Building NGMLR index: %s" % ' '.join(command))
+    log = open('%s.NGMLR.log' % ref_genome_path, 'w'); call(command, stdin=DEVNULL, stderr=log, stdout=DEVNULL); log.close()
+    if verbose:
+        print_log("NGMLR index built: %s and %s" % (enc_index_path, ht_index_path))
+
 # build STAR index
 def build_index_star(ref_genome_path, threads, verbose=True):
     delete_log = True # STAR by default creates Log.out in the running directory
@@ -467,6 +496,15 @@ def align_minimap2(seqs_path, out_sam_path, ref_genome_path, threads, verbose=Tr
     if verbose:
         print_log("Minimap2 alignment complete: %s" % out_sam_path)
 
+# align genomes using NGMLR
+def align_ngmlr(seqs_path, out_sam_path, ref_genome_path, threads, verbose=True):
+    command = ['ngmlr', '--skip-write', '-x', 'pacbio', '-i', '0', '--no-smallinv', '-t', str(threads), '-r', ref_genome_path, '-q', seqs_path, '-o', out_sam_path]
+    if verbose:
+        print_log("Aligning using NGMLR: %s" % ' '.join(command))
+    log = open('%s.log' % out_sam_path, 'w'); call(command, stderr=log); log.close()
+    if verbose:
+        print_log("NGMLR alignment complete: %s" % out_sam_path)
+
 # align genomes using STAR
 def align_star(seqs_path, out_sam_path, ref_genome_path, threads, verbose=True):
     delete_log = True # STAR by default creates Log.out in the running directory
@@ -535,6 +573,12 @@ ALIGNERS = {
         'check':       check_minimap2,
         'build_index': build_index_minimap2,
         'align':       align_minimap2,
+    },
+
+    'ngmlr': {
+        'check':       check_ngmlr,
+        'build_index': build_index_ngmlr,
+        'align':       align_ngmlr,
     },
 
     'star': {
