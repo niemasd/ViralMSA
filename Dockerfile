@@ -4,7 +4,7 @@ MAINTAINER Niema Moshiri <niemamoshiri@gmail.com>
 
 # Set up environment and install dependencies
 RUN apt-get update && apt-get -y upgrade && \
-    DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get install -y cmake g++-10 gcc-10 libboost-all-dev libgsl-dev libjemalloc-dev make unzip wget zlib1g-dev
+    DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get install -y cmake g++ g++-10 gcc-10 libboost-all-dev libgsl-dev libjemalloc-dev make unzip wget zlib1g-dev
 
 # Install Bowtie2 v2.4.3
 RUN wget "https://github.com/BenLangmead/bowtie2/releases/download/v2.4.3/bowtie2-2.4.3-source.zip" && \
