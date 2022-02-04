@@ -44,6 +44,18 @@ RUN wget -qO- "https://github.com/lh3/minimap2/archive/refs/tags/v2.24.tar.gz" |
     rm -rf minimap2-* && \
     rm -rf /root/.cache /tmp/*
 
+# Install NGMLR v0.2.7
+RUN wget -qO- "https://github.com/philres/ngmlr/archive/refs/tags/v0.2.7.tar.gz" | tar -zx && \
+    cd ngmlr-* && \
+    mkdir -p build && \
+    cd build && \
+    cmake .. && \
+    make && \
+    mv ../bin/ngmlr-*/ngmlr /usr/local/bin/ngmlr && \
+    cd ../.. && \
+    rm -rf ngmlr-* && \
+    rm -rf /root/.cache /tmp/*
+
 # Install STAR v2.7.5c
 RUN wget -qO- "https://github.com/alexdobin/STAR/archive/refs/tags/2.7.9a.tar.gz" | tar -zx && \
     mv STAR-*/bin/Linux_*_static/* /usr/local/bin/ && \
