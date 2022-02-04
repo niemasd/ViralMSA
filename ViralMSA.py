@@ -6,20 +6,22 @@ ViralMSA: Reference-guided multiple sequence alignment of viral genomes
 # imports
 from Bio import Entrez
 from datetime import datetime
+from gzip import open as gopen
 from hashlib import md5
+from io import BufferedReader, TextIOWrapper
 from json import load as jload
 from math import log2
 from multiprocessing import cpu_count
-from os import chdir,getcwd,makedirs,remove
-from os.path import abspath,expanduser,isdir,isfile,split
-from shutil import copy,move
-from subprocess import call,CalledProcessError,check_output,PIPE,Popen,STDOUT
-from sys import argv,stderr,stdout
+from os import chdir, getcwd, makedirs, remove
+from os.path import abspath, expanduser, isdir, isfile, split
+from shutil import copy, move
+from subprocess import call, CalledProcessError, check_output, PIPE, Popen, STDOUT
+from sys import argv, stderr, stdout
 from urllib.request import urlopen
 import argparse
 
 # useful constants
-VERSION = '1.1.18'
+VERSION = '1.1.19'
 RELEASES_URL = 'https://api.github.com/repos/niemasd/ViralMSA/tags'
 CIGAR_LETTERS = {'M','D','I','S','H','=','X'}
 DEFAULT_BUFSIZE = 1048576 # 1 MB #8192 # 8 KB
@@ -123,7 +125,7 @@ def get_time():
 
 # count the number of IDs in a FASTA file
 def count_IDs_fasta(fn, bufsize=DEFAULT_BUFSIZE):
-    return sum(l.startswith('>') for l in open(fn))
+    return sum(l.startswith('>') for l in open(fn, buffering=bufsize))
 
 # parse a CIGAR string
 def parse_cigar(s):
@@ -134,6 +136,35 @@ def parse_cigar(s):
             num += s[ind]; ind -= 1
         out.append((let, int(num[::-1])))
     return out[::-1]
+
+# convert FASTA to FASTQ
+def fasta2fastq(fa_path, fq_path, qual='~', bufsize=DEFAULT_BUFSIZE):
+    if fa_path.lower().endswith('.gz'):
+        fa_file = TextIOWrapper(BufferedReader(gopen(fa_path, 'rb', buffering=bufsize)))
+    else:
+        fa_file = open(fa_path, 'r', buffering=bufsize)
+    if fq_path.lower().endswith('.gz'):
+        gzip_out = True; fq_file = gopen(fq_path, 'wb', 9)
+    else:
+        gzip_out = False; fq_file = open(fq_path, 'w', buffering=bufsize)
+    seq_len = 0
+    for line_num, line in enumerate(fa_file):
+        if line.startswith('>'):
+            if line_num == 0:
+                curr = '@%s\n' % line[1:].rstrip()
+            else:
+                curr = '\n+\n%s\n@%s\n' % (qual*seq_len, line[1:].rstrip()); seq_len = 0
+        else:
+            curr = line.rstrip(); seq_len += len(curr)
+        if gzip_out:
+            fq_file.write(curr.encode())
+        else:
+            fq_file.write(curr)
+    curr = '\n+\n%s\n' % (qual*seq_len)
+    if gzip_out:
+        fq_file.write(curr.encode())
+    else:
+        fq_file.write(curr)
 
 # check bowtie2
 def check_bowtie2():
@@ -263,7 +294,18 @@ def build_index_bowtie2(ref_genome_path, threads, verbose=True):
 
 # build DRAGMAP index
 def build_index_dragmap(ref_genome_path, threads, verbose=True):
-    print("ERROR: NOT YET IMPLEMENTED", file=stderr); exit(1) # TODO
+    index_path = '%s.DRAGMAP' % ref_genome_path
+    if isdir(index_path):
+        if verbose:
+            print_log("DRAGMAP index found: %s" % index_path)
+        return
+    makedirs(index_path, exist_ok=False)
+    command = ['dragen-os', '--build-hash-table', 'true', '--ht-reference', ref_genome_path, '--ht-num-threads', str(threads), '--output-directory', index_path]
+    if verbose:
+        print_log("Building DRAGMAP index: %s" % ' '.join(command))
+    log = open('%s/index.log' % index_path, 'w'); call(command, stdout=log, stderr=STDOUT); log.close()
+    if verbose:
+        print_log("DRAGMAP index built: %s" % index_path)
 
 # build HISAT2 index
 def build_index_hisat2(ref_genome_path, threads, verbose=True):
@@ -342,9 +384,13 @@ def build_index_star(ref_genome_path, threads, verbose=True):
     if isfile('Log.out'):
         delete_log = False # don't delete it (it existed before running ViralMSA)
     index_path = '%s.STAR' % ref_genome_path
+    if isdir(index_path):
+        if verbose:
+            print_log("STAR index found: %s" % index_path)
+        return
     genome_length = sum(len(l.strip()) for l in open(ref_genome_path) if not l.startswith('>'))
     genomeSAindexNbases = min(14, int(log2(genome_length)/2)-1)
-    makedirs(index_path, exist_ok=True)
+    makedirs(index_path, exist_ok=False)
     command = ['STAR', '--runMode', 'genomeGenerate', '--runThreadN', str(threads), '--genomeDir', index_path, '--genomeFastaFiles', ref_genome_path, '--genomeSAindexNbases', str(genomeSAindexNbases)]
     if verbose:
         print_log("Building STAR index: %s" % ' '.join(command))
@@ -383,7 +429,14 @@ def align_bowtie2(seqs_path, out_sam_path, ref_genome_path, threads, verbose=Tru
 
 # align genomes using DRAGMAP
 def align_dragmap(seqs_path, out_sam_path, ref_genome_path, threads, verbose=True):
-    print("ERROR: NOT YET IMPLEMENTED", file=stderr); exit(1) # TODO
+    tmp_fq_path = '%s.fastq.gz' % out_sam_path
+    fasta2fastq(seqs_path, tmp_fq_path)
+    command = ['dragen-os', '--num-threads', str(threads), '--Aligner.sw-all', '1', '-r', '%s.DRAGMAP' % ref_genome_path, '-1', tmp_fq_path]
+    if verbose:
+        print_log("Aligning using DRAGMAP: %s" % ' '.join(command))
+    out = open(out_sam_path, 'w'); log = open('%s.log' % out_sam_path, 'w'); call(command, stdout=out, stderr=log); out.close(); log.close()
+    if verbose:
+        print_log("DRAGMAP alignment complete: %s" % out_sam_path)
 
 # align genomes using HISAT2
 def align_hisat2(seqs_path, out_sam_path, ref_genome_path, threads, verbose=True):
@@ -460,12 +513,11 @@ ALIGNERS = {
         'align':       align_bowtie2,
     },
 
-    # TODO: Uncomment once dragmap is implemented
-    #'dragmap': {
-    #    'check':       check_dragmap,
-    #    'build_index': build_index_dragmap,
-    #    'align':       align_dragmap,
-    #},
+    'dragmap': {
+        'check':       check_dragmap,
+        'build_index': build_index_dragmap,
+        'align':       align_dragmap,
+    },
 
     'hisat2': {
         'check':       check_hisat2,
