@@ -102,6 +102,8 @@ Please also cite the read mapper you selected.
 
 > Jain C, Koren S, Dilthey A, Phillippy AM, Aluru S (2018). "A Fast Adaptive Algorithm for Computing Whole-Genome Homology Maps". *Bioinformatics*. 34(17):i748-i756. [doi:10.1093/bioinformatics/bty597](https://doi.org/10.1093/bioinformatics/bty597)
 
+> Marco-Sola S, Moure JC, Moreto M, Espinosa A (2021). "Fast gap-affine pairwise alignment using the wavefront algorithm". *Bioinformatics*. 37(4):456-463. [doi:10.1093/bioinformatics/btaa777](https://doi.org/10.1093/bioinformatics/btaa777)
+
 # Common Issues
 ## Weird ViralMSA output on sequences with many `N`s
 It seems as though, in some cases in which an input viral sequence has many `N`s within the sequence, Minimap2 splits the input sequence at each long consecutive chain of `N`s and produces an alignment for each fragment of the input sequence, with only one of these alignments (probably the longest one?) being labeled as the primary alignment (flag 0 in the SAM file) and all others being labeled as supplementary alignments (flag 2048 in the SAM file). This issue should be fixed in [ViralMSA 1.1.12](https://github.com/niemasd/ViralMSA/releases/tag/1.1.12), but if you run into this issue, a simple fix that seems to work well is to simply shorten the streches of `N`s in the sequence to be at most ~100 before running ViralMSA.
