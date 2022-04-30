@@ -15,7 +15,7 @@ from multiprocessing import cpu_count
 from os import chdir, getcwd, makedirs, remove
 from os.path import abspath, expanduser, isdir, isfile, split
 from shutil import copy, move
-from subprocess import call, CalledProcessError, check_output, DEVNULL, PIPE, Popen, STDOUT
+from subprocess import call, CalledProcessError, check_output, DEVNULL, PIPE, Popen, run, STDOUT
 from sys import argv, stderr, stdout
 from urllib.request import urlopen
 import argparse
@@ -29,18 +29,24 @@ DEFAULT_ALIGNER = 'minimap2'
 DEFAULT_THREADS = cpu_count()
 global LOGFILE; LOGFILE = None
 
+# read mappers that output PAF
+ALIGNERS_PAF = {
+    'minigraph',
+}
+
 # citations
 CITATION = {
-    'bowtie2':  'Bowtie2: Langmead B, Salzberg SL (2012). "Fast gapped-read alignment with Bowtie 2." Nat Methods. 9(4):357-359. doi:10.1038/nmeth.1923',
-    'dragmap':  'DRAGMAP: https://github.com/Illumina/DRAGMAP',
-    'hisat2':   'HISAT2: Kim D, Paggi JM, Park C, Bennett C, Salzberg SL (2019). "Graph-based genome alignment and genotyping with HISAT2 and HISAT-genotype." Nat Biotechnol. 37:907-915. doi:10.1038/s41587-019-0201-4',
-    'lra':      'LRA: Ren J, Chaisson MJP (2021). "lra: A long read aligner for sequences and contigs." PLoS Comput Biol. 17(6):e1009078. doi:10.1371/journal.pcbi.1009078',
-    'minimap2': 'Minimap2: Li H (2018). "Minimap2: pairwise alignment for nucleotide sequences." Bioinformatics. 34(18):3094-3100. doi:10.1093/bioinformatics/bty191',
-    'ngmlr':    'NGMLR: Sedlazeck FJ, Rescheneder P, Smolka M, Fang H, Nattestad M, von Haeseler A, Schatz MC (2018). "Accurate detection of complex structural variations using single-molecule sequencing." Nat Methods. 15:461-468. doi:10.1038/s41592-018-0001-7',
-    'star':     'STAR: Dobin A, Davis CA, Schlesinger F, Drehkow J, Zaleski C, Jha S, Batut P, Chaisson M, Gingeras TR (2013). "STAR: ultrafast universal RNA-seq aligner." Bioinformatics. 29(1):15-21. doi:10.1093/bioinformatics/bts635',
-    'unimap':   'Unimap: Li H (2021). "Unimap: A fork of minimap2 optimized for assembly-to-reference alignment." https://github.com/lh3/unimap',
-    'viralmsa': 'ViralMSA: Moshiri N (2021). "ViralMSA: Massively scalable reference-guided multiple sequence alignment of viral genomes." Bioinformatics. 37(5):714–716. doi:10.1093/bioinformatics/btaa743',
-    'wfmash':   'wfmash: Jain C, Koren S, Dilthey A, Phillippy AM, Aluru S (2018). "A Fast Adaptive Algorithm for Computing Whole-Genome Homology Maps". Bioinformatics. 34(17):i748-i756. doi:10.1093/bioinformatics/bty597. Marco-Sola S, Moure JC, Moreto M, Espinosa A (2021). "Fast gap-affine pairwise alignment using the wavefront algorithm". Bioinformatics. 37(4):456-463. doi:10.1093/bioinformatics/btaa777',
+    'bowtie2':   'Bowtie2: Langmead B, Salzberg SL (2012). "Fast gapped-read alignment with Bowtie 2." Nat Methods. 9(4):357-359. doi:10.1038/nmeth.1923',
+    'dragmap':   'DRAGMAP: https://github.com/Illumina/DRAGMAP',
+    'hisat2':    'HISAT2: Kim D, Paggi JM, Park C, Bennett C, Salzberg SL (2019). "Graph-based genome alignment and genotyping with HISAT2 and HISAT-genotype." Nat Biotechnol. 37:907-915. doi:10.1038/s41587-019-0201-4',
+    'lra':       'LRA: Ren J, Chaisson MJP (2021). "lra: A long read aligner for sequences and contigs." PLoS Comput Biol. 17(6):e1009078. doi:10.1371/journal.pcbi.1009078',
+    'minigraph': 'Minigraph: https://github.com/lh3/minigraph',
+    'minimap2':  'Minimap2: Li H (2018). "Minimap2: pairwise alignment for nucleotide sequences." Bioinformatics. 34(18):3094-3100. doi:10.1093/bioinformatics/bty191',
+    'ngmlr':     'NGMLR: Sedlazeck FJ, Rescheneder P, Smolka M, Fang H, Nattestad M, von Haeseler A, Schatz MC (2018). "Accurate detection of complex structural variations using single-molecule sequencing." Nat Methods. 15:461-468. doi:10.1038/s41592-018-0001-7',
+    'star':      'STAR: Dobin A, Davis CA, Schlesinger F, Drehkow J, Zaleski C, Jha S, Batut P, Chaisson M, Gingeras TR (2013). "STAR: ultrafast universal RNA-seq aligner." Bioinformatics. 29(1):15-21. doi:10.1093/bioinformatics/bts635',
+    'unimap':    'Unimap: Li H (2021). "Unimap: A fork of minimap2 optimized for assembly-to-reference alignment." https://github.com/lh3/unimap',
+    'viralmsa':  'ViralMSA: Moshiri N (2021). "ViralMSA: Massively scalable reference-guided multiple sequence alignment of viral genomes." Bioinformatics. 37(5):714–716. doi:10.1093/bioinformatics/btaa743',
+    'wfmash':    'wfmash: Jain C, Koren S, Dilthey A, Phillippy AM, Aluru S (2018). "A Fast Adaptive Algorithm for Computing Whole-Genome Homology Maps". Bioinformatics. 34(17):i748-i756. doi:10.1093/bioinformatics/bty597. Marco-Sola S, Moure JC, Moreto M, Espinosa A (2021). "Fast gap-affine pairwise alignment using the wavefront algorithm". Bioinformatics. 37(4):456-463. doi:10.1093/bioinformatics/btaa777',
 }
 
 # reference genomes for common viruses
@@ -218,6 +224,15 @@ def check_lra():
         print(o.decode())
         print("ERROR: LRA is not runnable in your PATH", file=stderr); exit(1)
 
+# check minigraph
+def check_minigraph():
+    try:
+        o = run(['minigraph'], stdout=PIPE, stderr=PIPE).stderr
+    except:
+        o = None
+    if o is None or 'Usage: minigraph' not in o.decode():
+        print("ERROR: Minigraph is not runnable in your PATH", file=stderr); exit(1)
+
 # check minimap2
 def check_minimap2():
     try:
@@ -374,6 +389,10 @@ def build_index_lra(ref_genome_path, threads, verbose=True):
         else:
             print_log("LRA index built: %s and %s" % (gli_index_path, mms_index_path))
 
+# build minigraph index
+def build_index_minigraph(ref_genome_path, threads, verbose=True):
+    pass # Minigraph doesn't seem to do anything with a ref genome with 1 sequence
+
 # build minimap2 index
 def build_index_minimap2(ref_genome_path, threads, verbose=True):
     index_path = '%s.mmi' % ref_genome_path
@@ -448,100 +467,109 @@ def build_index_wfmash(ref_genome_path, threads, verbose=True):
     build_index_faidx(ref_genome_path, threads, verbose=True)
 
 # align genomes using bowtie2
-def align_bowtie2(seqs_path, out_sam_path, ref_genome_path, threads, verbose=True):
-    command = ['bowtie2', '--very-sensitive', '-p', str(threads), '-f', '-x', '%s.bowtie2' % ref_genome_path, '-U', seqs_path, '-S', out_sam_path]
+def align_bowtie2(seqs_path, out_aln_path, ref_genome_path, threads, verbose=True):
+    command = ['bowtie2', '--very-sensitive', '-p', str(threads), '-f', '-x', '%s.bowtie2' % ref_genome_path, '-U', seqs_path, '-S', out_aln_path]
     if verbose:
         print_log("Aligning using bowtie2: %s" % ' '.join(command))
-    log = open('%s.log' % out_sam_path, 'w'); call(command, stderr=log); log.close()
+    log = open('%s.log' % out_aln_path, 'w'); call(command, stderr=log); log.close()
     if verbose:
-        print_log("bowtie2 alignment complete: %s" % out_sam_path)
+        print_log("bowtie2 alignment complete: %s" % out_aln_path)
 
 # align genomes using DRAGMAP
-def align_dragmap(seqs_path, out_sam_path, ref_genome_path, threads, verbose=True):
-    tmp_fq_path = '%s.fastq.gz' % out_sam_path
+def align_dragmap(seqs_path, out_aln_path, ref_genome_path, threads, verbose=True):
+    tmp_fq_path = '%s.fastq.gz' % out_aln_path
     fasta2fastq(seqs_path, tmp_fq_path)
     command = ['dragen-os', '--num-threads', str(threads), '--Aligner.sw-all', '1', '-r', '%s.DRAGMAP' % ref_genome_path, '-1', tmp_fq_path]
     if verbose:
         print_log("Aligning using DRAGMAP: %s" % ' '.join(command))
-    out = open(out_sam_path, 'w'); log = open('%s.log' % out_sam_path, 'w'); call(command, stdout=out, stderr=log); out.close(); log.close()
+    out = open(out_aln_path, 'w'); log = open('%s.log' % out_aln_path, 'w'); call(command, stdout=out, stderr=log); out.close(); log.close()
     if verbose:
-        print_log("DRAGMAP alignment complete: %s" % out_sam_path)
+        print_log("DRAGMAP alignment complete: %s" % out_aln_path)
 
 # align genomes using HISAT2
-def align_hisat2(seqs_path, out_sam_path, ref_genome_path, threads, verbose=True):
-    command = ['hisat2', '--very-sensitive', '-p', str(threads), '-f', '-x', '%s.hisat2' % ref_genome_path, '-U', seqs_path, '-S', out_sam_path]
+def align_hisat2(seqs_path, out_aln_path, ref_genome_path, threads, verbose=True):
+    command = ['hisat2', '--very-sensitive', '-p', str(threads), '-f', '-x', '%s.hisat2' % ref_genome_path, '-U', seqs_path, '-S', out_aln_path]
     if verbose:
         print_log("Aligning using HISAT2: %s" % ' '.join(command))
-    log = open('%s.log' % out_sam_path, 'w'); call(command, stderr=log); log.close()
+    log = open('%s.log' % out_aln_path, 'w'); call(command, stderr=log); log.close()
     if verbose:
-        print_log("HISAT2 alignment complete: %s" % out_sam_path)
+        print_log("HISAT2 alignment complete: %s" % out_aln_path)
 
 # align genomes using LRA
-def align_lra(seqs_path, out_sam_path, ref_genome_path, threads, verbose=True):
+def align_lra(seqs_path, out_aln_path, ref_genome_path, threads, verbose=True):
     lra_ref_genome_path = '%s.lra' % ref_genome_path
     command = ['lra', 'align', '-t', str(threads), '-CONTIG', '-p', 's', lra_ref_genome_path, seqs_path]
     if verbose:
         print_log("Aligning using LRA: %s" % ' '.join(command))
-    out_sam_file = open(out_sam_path, 'w'); log = open('%s.log' % out_sam_path, 'w'); call(command, stdout=out_sam_file, stderr=log); out_sam_file.close(); log.close()
+    out_sam_file = open(out_aln_path, 'w'); log = open('%s.log' % out_aln_path, 'w'); call(command, stdout=out_sam_file, stderr=log); out_sam_file.close(); log.close()
     if verbose:
-        print_log("LRA alignment complete: %s" % out_sam_path)
+        print_log("LRA alignment complete: %s" % out_aln_path)
+
+# align genomes using minigraph
+def align_minigraph(seqs_path, out_paf_path, ref_genome_path, threads, verbose=True):
+    command = ['minigraph', '-c', '-t', str(threads), '--secondary=no', '-l', '0', '-d', '0', '-L', '0', '-o', out_paf_path, ref_genome_path, seqs_path]
+    if verbose:
+        print_log("Aligning using Minigraph: %s" % ' '.join(command))
+    log = open('%s.log' % out_paf_path, 'w'); call(command, stderr=log); log.close()
+    if verbose:
+        print_log("Minigraph alignment complete: %s" % out_paf_path)
 
 # align genomes using minimap2
-def align_minimap2(seqs_path, out_sam_path, ref_genome_path, threads, verbose=True):
+def align_minimap2(seqs_path, out_aln_path, ref_genome_path, threads, verbose=True):
     index_path = '%s.mmi' % ref_genome_path
-    command = ['minimap2', '-t', str(threads), '--score-N=0', '--secondary=no', '--sam-hit-only', '-a', '-o', out_sam_path, index_path, seqs_path]
+    command = ['minimap2', '-t', str(threads), '--score-N=0', '--secondary=no', '--sam-hit-only', '-a', '-o', out_aln_path, index_path, seqs_path]
     if verbose:
         print_log("Aligning using Minimap2: %s" % ' '.join(command))
-    log = open('%s.log' % out_sam_path, 'w'); call(command, stderr=log); log.close()
+    log = open('%s.log' % out_aln_path, 'w'); call(command, stderr=log); log.close()
     if verbose:
-        print_log("Minimap2 alignment complete: %s" % out_sam_path)
+        print_log("Minimap2 alignment complete: %s" % out_aln_path)
 
 # align genomes using NGMLR
-def align_ngmlr(seqs_path, out_sam_path, ref_genome_path, threads, verbose=True):
-    command = ['ngmlr', '--skip-write', '-x', 'pacbio', '-i', '0', '--no-smallinv', '-t', str(threads), '-r', ref_genome_path, '-q', seqs_path, '-o', out_sam_path]
+def align_ngmlr(seqs_path, out_aln_path, ref_genome_path, threads, verbose=True):
+    command = ['ngmlr', '--skip-write', '-x', 'pacbio', '-i', '0', '--no-smallinv', '-t', str(threads), '-r', ref_genome_path, '-q', seqs_path, '-o', out_aln_path]
     if verbose:
         print_log("Aligning using NGMLR: %s" % ' '.join(command))
-    log = open('%s.log' % out_sam_path, 'w'); call(command, stderr=log); log.close()
+    log = open('%s.log' % out_aln_path, 'w'); call(command, stderr=log); log.close()
     if verbose:
-        print_log("NGMLR alignment complete: %s" % out_sam_path)
+        print_log("NGMLR alignment complete: %s" % out_aln_path)
 
 # align genomes using STAR
-def align_star(seqs_path, out_sam_path, ref_genome_path, threads, verbose=True):
+def align_star(seqs_path, out_aln_path, ref_genome_path, threads, verbose=True):
     delete_log = True # STAR by default creates Log.out in the running directory
     if isfile('Log.out'):
         delete_log = False # don't delete it (it existed before running ViralMSA)
     index_path = '%s.STAR' % ref_genome_path
-    out_sam_dir, out_sam_fn = split(out_sam_path)
-    out_file_prefix = '%s.' % '.'.join(out_sam_path.split('.')[:-1])
+    out_sam_dir, out_sam_fn = split(out_aln_path)
+    out_file_prefix = '%s.' % '.'.join(out_aln_path.split('.')[:-1])
     command = ['STAR', '--runThreadN', str(threads), '--genomeDir', index_path, '--readFilesIn', seqs_path, '--outFileNamePrefix', out_file_prefix, '--outFilterMismatchNmax', '9999999999']
     if verbose:
         print_log("Aligning using STAR: %s" % ' '.join(command))
     log = open('%s/STAR.log' % out_sam_dir, 'w'); call(command, stdout=log); log.close()
-    move('%sAligned.out.sam' % out_file_prefix, out_sam_path)
+    move('%sAligned.out.sam' % out_file_prefix, out_aln_path)
     if verbose:
         print_log("STAR alignment complete: %s" % out_sam_dir)
     if delete_log and isfile('Log.out'):
         remove('Log.out')
 
 # align genomes using unimap
-def align_unimap(seqs_path, out_sam_path, ref_genome_path, threads, verbose=True):
+def align_unimap(seqs_path, out_aln_path, ref_genome_path, threads, verbose=True):
     index_path = '%s.umi' % ref_genome_path
-    command = ['unimap', '-t', str(threads), '--score-N=0', '--secondary=no', '--sam-hit-only', '-a', '--cs', '-o', out_sam_path, index_path, seqs_path]
+    command = ['unimap', '-t', str(threads), '--score-N=0', '--secondary=no', '--sam-hit-only', '-a', '--cs', '-o', out_aln_path, index_path, seqs_path]
     if verbose:
         print_log("Aligning using Unimap: %s" % ' '.join(command))
-    log = open('%s.log' % out_sam_path, 'w'); call(command, stderr=log); log.close()
+    log = open('%s.log' % out_aln_path, 'w'); call(command, stderr=log); log.close()
     if verbose:
-        print_log("Unimap alignment complete: %s" % out_sam_path)
+        print_log("Unimap alignment complete: %s" % out_aln_path)
 
 # align genomes using wfmash
-def align_wfmash(seqs_path, out_sam_path, ref_genome_path, threads, verbose=True):
+def align_wfmash(seqs_path, out_aln_path, ref_genome_path, threads, verbose=True):
     ref_genome_length = sum(len(l.strip()) for l in open(ref_genome_path) if not l.startswith('>'))
     command = ['wfmash', '-N', '--sam-format', '--threads=%d' % threads, ref_genome_path, seqs_path]
     if verbose:
         print_log("Aligning using wfmash: %s" % ' '.join(command))
-    sam = open(out_sam_path, 'w'); log = open('%s.log' % out_sam_path, 'w'); call(command, stdout=sam, stderr=log); sam.close(); log.close()
+    sam = open(out_aln_path, 'w'); log = open('%s.log' % out_aln_path, 'w'); call(command, stdout=sam, stderr=log); sam.close(); log.close()
     if verbose:
-        print_log("wfmash alignment complete: %s" % out_sam_path)
+        print_log("wfmash alignment complete: %s" % out_aln_path)
 
 # aligners
 ALIGNERS = {
@@ -568,6 +596,13 @@ ALIGNERS = {
         'build_index': build_index_lra,
         'align':       align_lra,
     },
+
+    # Minigraph still doesn't work (only outputs PAF without sequences)
+    #'minigraph': {
+    #    'check':       check_minigraph,
+    #    'build_index': build_index_minigraph,
+    #    'align':       align_minigraph,
+    #},
 
     'minimap2': {
         'check':       check_minimap2,
@@ -828,52 +863,62 @@ def download_ref_genome(ref_path, ref_genome_path, email, bufsize=DEFAULT_BUFSIZ
         print("ERROR: Reference genome must only have a single sequence", file=stderr); exit(1)
     f = open(ref_genome_path, 'w', buffering=bufsize); f.write(seq.strip()); f.write('\n'); f.close()
 
-# convert SAM to FASTA
-def sam_to_fasta(out_sam_path, out_aln_path, ref_genome_path, bufsize=DEFAULT_BUFSIZE):
-    aln = open(out_aln_path, 'w', buffering=bufsize); ref_seq = list()
+# convert alignment (SAM/PAF) to FASTA
+def aln_to_fasta(out_aln_path, out_msa_path, ref_genome_path, bufsize=DEFAULT_BUFSIZE):
+    if out_aln_path.lower().endswith('.sam'):
+        aln_type = 's' # SAM
+    elif out_aln_path.lower().endswith('.paf'):
+        aln_type = 'p' # PAF
+    else:
+        print("ERROR: Invalid alignment extension: %s" % out_aln_path, file=stderr); exit(1)
+    msa = open(out_msa_path, 'w', buffering=bufsize); ref_seq = list()
     for line in open(ref_genome_path):
         if len(line) == 0:
             continue
         if line[0] != '>':
             ref_seq.append(line.strip())
         elif not args.omit_ref:
-            aln.write(line)
+            msa.write(line)
     if not args.omit_ref:
         for l in ref_seq:
-            aln.write(l)
-        aln.write('\n')
+            msa.write(l)
+        msa.write('\n')
     ref_seq_len = sum(len(l) for l in ref_seq)
     num_output_IDs = 0
-    for l in open(out_sam_path):
+    for l in open(out_aln_path):
         if l == '\n' or l[0] == '@':
             continue
         parts = l.split('\t')
-        flags = int(parts[1])
-        if flags != 0 and flags != 16:
-            continue
-        ID = parts[0].strip(); num_output_IDs += 1
-        ref_ind = int(parts[3])-1
-        seq = parts[9].strip()
-        edits = parse_cigar(parts[5].strip()) # parts[5] is the CIGAR string
-        aln.write(">%s\n" % ID)
+        if aln_type == 's': # SAM
+            flags = int(parts[1])
+            if flags != 0 and flags != 16:
+                continue
+            ID = parts[0].strip(); num_output_IDs += 1
+            ref_ind = int(parts[3])-1
+            seq = parts[9].strip()
+            cigar = parts[5].strip()
+        elif aln_type == 'p': # PAF
+            raise RuntimeError("PAF alignments are not yet supported")
+        edits = parse_cigar(cigar)
+        msa.write(">%s\n" % ID)
         if ref_ind > 0:
-            aln.write('-'*ref_ind) # write gaps before alignment
+            msa.write('-'*ref_ind) # write gaps before alignment
         ind = 0; seq_len = ref_ind
         for e, e_len in edits:
             if e == 'M' or e == '=' or e == 'X': # (mis)match)
-                aln.write(seq[ind:ind+e_len])
+                msa.write(seq[ind:ind+e_len])
                 ind += e_len; seq_len += e_len
             elif e == 'D':                       # deletion (gap in query)
-                aln.write('-'*e_len)
+                msa.write('-'*e_len)
                 seq_len += e_len
             elif e == 'I':                       # insertion (gap in reference; ignore)
                 ind += e_len
             elif e == 'S' or e == 'H':           # starting/ending segment of query not in reference (i.e., span of insertions; ignore)
                 ind += e_len
         if seq_len < ref_seq_len:
-            aln.write('-'*(ref_seq_len-seq_len)) # write gaps after alignment
-        aln.write('\n')
-    aln.close()
+            msa.write('-'*(ref_seq_len-seq_len)) # write gaps after alignment
+        msa.write('\n')
+    msa.close()
     return num_output_IDs
 
 # main content
@@ -912,13 +957,16 @@ if __name__ == "__main__":
 
     # align viral genomes against referencea
     print_log("===== ALIGNMENT =====")
-    out_sam_path = '%s/%s.sam' % (args.output, args.sequences.split('/')[-1])
-    ALIGNERS[args.aligner]['align'](args.sequences, out_sam_path, args.ref_genome_path, args.threads)
+    if args.aligner in ALIGNERS_PAF:
+        out_aln_path = '%s/%s.paf' % (args.output, args.sequences.split('/')[-1])
+    else:
+        out_aln_path = '%s/%s.sam' % (args.output, args.sequences.split('/')[-1])
+    ALIGNERS[args.aligner]['align'](args.sequences, out_aln_path, args.ref_genome_path, args.threads)
 
-    # convert SAM to MSA FASTA
-    print_log("Converting SAM to FASTA...")
-    out_aln_path = '%s/%s.aln' % (args.output, args.sequences.split('/')[-1])
-    num_output_IDs = sam_to_fasta(out_sam_path, out_aln_path, args.ref_genome_path, bufsize=args.buffer_size)
+    # convert alignment (SAM/PAF) to MSA FASTA
+    print_log("Converting alignment to FASTA...")
+    out_msa_path = '%s/%s.aln' % (args.output, args.sequences.split('/')[-1])
+    num_output_IDs = aln_to_fasta(out_aln_path, out_msa_path, args.ref_genome_path, bufsize=args.buffer_size)
     print_log("Multiple sequence alignment complete: %s" % out_aln_path)
     if num_output_IDs < num_input_IDs:
         print_log("WARNING: Some sequences from the input are missing from the output. Perhaps try a different aligner or reference genome?")
