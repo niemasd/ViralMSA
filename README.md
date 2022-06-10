@@ -21,6 +21,7 @@ ViralMSA also requires at least one of the following tools to perform the alignm
 * [STAR](https://github.com/alexdobin/STAR)
 * [Unimap](https://github.com/lh3/unimap)
 * [wfmash](https://github.com/ekg/wfmash)
+* [Winnowmap](https://github.com/marbl/Winnowmap)
 
 ## Usage
 ViralMSA can be used as follows:
@@ -104,6 +105,10 @@ Please also cite the read mapper you selected.
 > Jain C, Koren S, Dilthey A, Phillippy AM, Aluru S (2018). "A Fast Adaptive Algorithm for Computing Whole-Genome Homology Maps". *Bioinformatics*. 34(17):i748-i756. [doi:10.1093/bioinformatics/bty597](https://doi.org/10.1093/bioinformatics/bty597)
 
 > Marco-Sola S, Moure JC, Moreto M, Espinosa A (2021). "Fast gap-affine pairwise alignment using the wavefront algorithm". *Bioinformatics*. 37(4):456-463. [doi:10.1093/bioinformatics/btaa777](https://doi.org/10.1093/bioinformatics/btaa777)
+
+* Winnowmap
+
+> Jain C, Rhie A, Hansen NF, Koren S, Phillippy AM (2022). "Long-read mapping to repetitive reference sequences using Winnowmap2". *Nature Methods*. 19:705-710. [doi:10.1038/s41592-022-01457-8](https://doi.org/10.1038/s41592-022-01457-8)
 
 # Common Issues
 ## Weird ViralMSA output on sequences with many `N`s
