@@ -29,6 +29,10 @@ DEFAULT_ALIGNER = 'minimap2'
 DEFAULT_THREADS = cpu_count()
 global LOGFILE; LOGFILE = None
 
+# mapper-specific options
+WINNOWMAP_K = 15 # using Minimap2's default of k=15
+WINNOWMAP_DISTINCT = 0.9998
+
 # read mappers that output PAF
 ALIGNERS_PAF = {
     'minigraph',
@@ -47,6 +51,7 @@ CITATION = {
     'unimap':    'Unimap: Li H (2021). "Unimap: A fork of minimap2 optimized for assembly-to-reference alignment." https://github.com/lh3/unimap',
     'viralmsa':  'ViralMSA: Moshiri N (2021). "ViralMSA: Massively scalable reference-guided multiple sequence alignment of viral genomes." Bioinformatics. 37(5):714–716. doi:10.1093/bioinformatics/btaa743',
     'wfmash':    'wfmash: Jain C, Koren S, Dilthey A, Phillippy AM, Aluru S (2018). "A Fast Adaptive Algorithm for Computing Whole-Genome Homology Maps". Bioinformatics. 34(17):i748-i756. doi:10.1093/bioinformatics/bty597. Marco-Sola S, Moure JC, Moreto M, Espinosa A (2021). "Fast gap-affine pairwise alignment using the wavefront algorithm". Bioinformatics. 37(4):456-463. doi:10.1093/bioinformatics/btaa777',
+    'winnowmap': 'Winnowmap2: Jain C, Rhie A, Hansen NF, Koren S, Phillippy AM (2022). "Long-read mapping to repetitive reference sequences using Winnowmap2". Nature Methods. 19:705-710. doi:10.1038/s41592-022-01457-8',
 }
 
 # reference genomes for common viruses
@@ -278,6 +283,21 @@ def check_wfmash():
     if o is None or 'wfmash [target] [queries...] {OPTIONS}' not in o.decode():
         print("ERROR: wfmash is not runnable in your PATH", file=stderr); exit(1)
 
+# check Winnowmap
+def check_winnowmap():
+    try:
+        o = check_output(['winnowmap', '-h'])
+    except:
+        o = None
+    if o is None or 'Usage: winnowmap' not in o.decode():
+        print("ERROR: Winnowmap is not runnable in your PATH", file=stderr); exit(1)
+    try:
+        o = run(['meryl'], stdout=PIPE, stderr=PIPE).stderr
+    except:
+        o = None
+    if o is None or 'usage: meryl' not in o.decode():
+        print("ERROR: meryl is not runnable in your PATH", file=stderr); exit(1)
+
 # build FAIDX index (multiple tools might need this)
 def build_index_faidx(ref_genome_path, threads, verbose=True):
     index_path = '%s.fai' % ref_genome_path
@@ -466,6 +486,31 @@ def build_index_unimap(ref_genome_path, threads, verbose=True):
 def build_index_wfmash(ref_genome_path, threads, verbose=True):
     build_index_faidx(ref_genome_path, threads, verbose=True)
 
+# build Winnowmap index
+def build_index_winnowmap(ref_genome_path, threads, verbose=True):
+    db_path = '%s.meryl.db' % ref_genome_path
+    index_path = '%s.meryl.k%d.txt' % (ref_genome_path, WINNOWMAP_K)
+    if isdir(db_path):
+        if verbose:
+            print_log("Meryl DB found: %s" % db_path)
+    else:
+        command = ['meryl', 'count', 'k=%d' % WINNOWMAP_K, 'output', db_path, ref_genome_path]
+        if verbose:
+            print_log("Building Meryl DB: %s" % ' '.join(command))
+        log = open('%s.log' % db_path, 'w'); call(command, stderr=log); log.close()
+        if verbose:
+            print_log("Meryl DB built: %s" % db_path)
+    if isfile(index_path):
+        if verbose:
+            print_log("Winnowmap index (Meryl %d-mers) found: %s" % (WINNOWMAP_K, index_path))
+        return
+    command = ['meryl', 'print', 'greater-than', 'distinct=%s' % WINNOWMAP_DISTINCT, db_path]
+    if verbose:
+        print_log("Building Winnowmap index (Meryl %d-mers): %s" % (WINNOWMAP_K, ' '.join(command)))
+    out = open(index_path, 'w'); log = open('%s.log' % index_path, 'w'); call(command, stdout=out, stderr=log); out.close(); log.close()
+    if verbose:
+        print_log("Winnowmap index (Meryl %d-mers) built: %s" % (WINNOWMAP_K, index_path))
+
 # align genomes using bowtie2
 def align_bowtie2(seqs_path, out_aln_path, ref_genome_path, threads, verbose=True):
     command = ['bowtie2', '--very-sensitive', '-p', str(threads), '-f', '-x', '%s.bowtie2' % ref_genome_path, '-U', seqs_path, '-S', out_aln_path]
@@ -571,6 +616,16 @@ def align_wfmash(seqs_path, out_aln_path, ref_genome_path, threads, verbose=True
     if verbose:
         print_log("wfmash alignment complete: %s" % out_aln_path)
 
+# align genomes using Winnowmap
+def align_winnowmap(seqs_path, out_aln_path, ref_genome_path, threads, verbose=True):
+    index_path = '%s.meryl.k%d.txt' % (ref_genome_path, WINNOWMAP_K)
+    command = ['winnowmap', '-k', str(WINNOWMAP_K), '-W', index_path, '-t', str(threads), '--score-N=0', '--secondary=no', '--sam-hit-only', '-a', '-o', out_aln_path, ref_genome_path, seqs_path]
+    if verbose:
+        print_log("Aligning using Winnowmap: %s" % ' '.join(command))
+    log = open('%s.log' % out_aln_path, 'w'); call(command, stderr=log); log.close()
+    if verbose:
+        print_log("Winnowmap alignment complete: %s" % out_aln_path)
+
 # aligners
 ALIGNERS = {
     'bowtie2': {
@@ -632,6 +687,12 @@ ALIGNERS = {
         'check':       check_wfmash,
         'build_index': build_index_wfmash,
         'align':       align_wfmash,
+    },
+
+    'winnowmap': {
+        'check':       check_winnowmap,
+        'build_index': build_index_winnowmap,
+        'align':       align_winnowmap,
     },
 }
 
@@ -967,7 +1028,7 @@ if __name__ == "__main__":
     print_log("Converting alignment to FASTA...")
     out_msa_path = '%s/%s.aln' % (args.output, args.sequences.split('/')[-1])
     num_output_IDs = aln_to_fasta(out_aln_path, out_msa_path, args.ref_genome_path, bufsize=args.buffer_size)
-    print_log("Multiple sequence alignment complete: %s" % out_aln_path)
+    print_log("Multiple sequence alignment complete: %s" % out_msa_path)
     if num_output_IDs < num_input_IDs:
         print_log("WARNING: Some sequences from the input are missing from the output. Perhaps try a different aligner or reference genome?")
     print_log()
