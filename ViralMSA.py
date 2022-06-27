@@ -21,7 +21,7 @@ from urllib.request import urlopen
 import argparse
 
 # useful constants
-VERSION = '1.1.21'
+VERSION = '1.1.22'
 RELEASES_URL = 'https://api.github.com/repos/niemasd/ViralMSA/tags'
 CIGAR_LETTERS = {'M','D','I','S','H','=','X'}
 DEFAULT_BUFSIZE = 1048576 # 1 MB #8192 # 8 KB
@@ -58,6 +58,7 @@ CITATION = {
 REFS = {
     'bombalivirus':    'NC_039345', # Bombali Virus (Bombali ebolavirus)
     'bundibugyovirus': 'NC_014373', # Bundibugyo Virus (Bundibugyo ebolavirus)
+    'ebolavirus':      'NC_002549', # Ebola Virus (Zaire ebolavirus)
     'hcv1':            'NC_004102', # HCV genotype 1
     'hcv1h77':         'NC_038882', # HCV genotpye 1 (isolate H77)
     'hcv2':            'NC_009823', # HCV genotype 2
@@ -68,7 +69,7 @@ REFS = {
     'hcv7':            'NC_030791', # HCV genotype 7
     'hiv1':            'NC_001802', # HIV-1
     'hiv2':            'NC_001722', # HIV-2
-    'ebolavirus':      'NC_002549', # Ebola Virus (Zaire ebolavirus)
+    'monkeypox':       'NC_063383', # Monkeypox Virus
     'restonvirus':     'NC_004161', # Reston Virus (Reston ebolavirus)
     'sarscov2':        'NC_045512', # SARS-CoV-2 (COVID-19)
     'sudanvirus':      'NC_006432', # Sudan Virus (Sudan ebolavirus)
