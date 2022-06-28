@@ -46,7 +46,7 @@ usage: ViralMSA.py [-h] -s SEQUENCES -r REFERENCE -e EMAIL -o OUTPUT [-a ALIGNER
 For the reference genome, you can provide a GenBank accession number, such as the following:
 
 ```
-ViralMSA.py -e email@address.com -s sequences.fas -o output -r MT072688
+ViralMSA.py -e email@address.com -s sequences.fas -o output -r NC_045512
 ```
 
 For specific viruses of interest, you can simply use their name, and we have provided what we believe would be a good choice of reference genome, such as the following:
