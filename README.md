@@ -43,7 +43,7 @@ usage: ViralMSA.py [-h] -s SEQUENCES -r REFERENCE -e EMAIL -o OUTPUT [-a ALIGNER
   -u, --update                                Update ViralMSA (default: False)
 ```
 
-For the reference, you can provide a GenBank accession number, such as the following:
+For the reference genome, you can provide a GenBank accession number, such as the following:
 
 ```
 ViralMSA.py -e email@address.com -s sequences.fas -o output -r MT072688
