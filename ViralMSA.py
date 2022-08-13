@@ -21,7 +21,7 @@ from urllib.request import urlopen
 import argparse
 
 # useful constants
-VERSION = '1.1.22'
+VERSION = '1.1.23'
 RELEASES_URL = 'https://api.github.com/repos/niemasd/ViralMSA/tags'
 CIGAR_LETTERS = {'M','D','I','S','H','=','X'}
 DEFAULT_BUFSIZE = 1048576 # 1 MB #8192 # 8 KB
@@ -98,12 +98,19 @@ REF_NAMES = {
     
     'HIV': {
         'hiv1':            'HIV-1',
+        'hiv2':            'HIV-2',
+    },
+
+    'Monkeypox': {
+        'monkeypox':       'Monkeypox Virus',
     },
     
     'SARS-CoV-2': {
         'sarscov2':        'SARS-CoV-2 (COVID-19)',
     }
 }
+tmp = set(REFS.keys()) - {k2 for k1 in REF_NAMES for k2 in REF_NAMES[k1]}
+assert len(tmp) == 0, "Value(s) in REFS missing in REF_NAMES: %s" % str(tmp)
 
 # print to long (prefixed by current time)
 def print_log(s='', end='\n'):
