@@ -112,7 +112,7 @@ REF_NAMES = {
 tmp = set(REFS.keys()) - {k2 for k1 in REF_NAMES for k2 in REF_NAMES[k1]}
 assert len(tmp) == 0, "Value(s) in REFS missing in REF_NAMES: %s" % str(tmp)
 
-# print to long (prefixed by current time)
+# print to log (prefixed by current time)
 def print_log(s='', end='\n'):
     tmp = "[%s] %s" % (get_time(), s)
     print(tmp, end=end); stdout.flush()
