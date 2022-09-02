@@ -21,7 +21,7 @@ from urllib.request import urlopen
 import argparse
 
 # useful constants
-VERSION = '1.1.23'
+VERSION = '1.1.24'
 RELEASES_URL = 'https://api.github.com/repos/niemasd/ViralMSA/tags'
 CIGAR_LETTERS = {'M','D','I','S','H','=','X'}
 DEFAULT_BUFSIZE = 1048576 # 1 MB #8192 # 8 KB
@@ -46,6 +46,7 @@ CITATION = {
     'lra':       'LRA: Ren J, Chaisson MJP (2021). "lra: A long read aligner for sequences and contigs." PLoS Comput Biol. 17(6):e1009078. doi:10.1371/journal.pcbi.1009078',
     'minigraph': 'Minigraph: https://github.com/lh3/minigraph',
     'minimap2':  'Minimap2: Li H (2018). "Minimap2: pairwise alignment for nucleotide sequences." Bioinformatics. 34(18):3094-3100. doi:10.1093/bioinformatics/bty191',
+    'mm2-fast':  'mm2-fast: Kalikar S, Jain C, Vasimuddin M, Misra S (2022). "Accelerating minimap2 for long-read sequencing applications on modern CPUs." Nat Comput Sci. 2:78-83. doi:10.1038/s43588-022-00201-8',
     'ngmlr':     'NGMLR: Sedlazeck FJ, Rescheneder P, Smolka M, Fang H, Nattestad M, von Haeseler A, Schatz MC (2018). "Accurate detection of complex structural variations using single-molecule sequencing." Nat Methods. 15:461-468. doi:10.1038/s41592-018-0001-7',
     'star':      'STAR: Dobin A, Davis CA, Schlesinger F, Drehkow J, Zaleski C, Jha S, Batut P, Chaisson M, Gingeras TR (2013). "STAR: ultrafast universal RNA-seq aligner." Bioinformatics. 29(1):15-21. doi:10.1093/bioinformatics/bts635',
     'unimap':    'Unimap: Li H (2021). "Unimap: A fork of minimap2 optimized for assembly-to-reference alignment." https://github.com/lh3/unimap',
@@ -255,6 +256,15 @@ def check_minimap2():
     if o is None or 'Usage: minimap2' not in o.decode():
         print("ERROR: Minimap2 is not runnable in your PATH", file=stderr); exit(1)
 
+# check mm2-fast
+def check_mm2fast():
+    try:
+        o = check_output(['mm2-fast', '-h'])
+    except:
+        o = None
+    if o is None or 'Usage: ' not in o.decode():
+        print("ERROR: mm2-fast is not runnable in your PATH", file=stderr); exit(1)
+
 # check NGMLR
 def check_ngmlr():
     try:
@@ -435,6 +445,20 @@ def build_index_minimap2(ref_genome_path, threads, verbose=True):
     if verbose:
         print_log("Minimap2 index built: %s" % index_path)
 
+# build mm2-fast index
+def build_index_mm2fast(ref_genome_path, threads, verbose=True):
+    index_path = '%s.mm2fast.mmi' % ref_genome_path
+    if isfile(index_path):
+        if verbose:
+            print_log("mm2-fast index found: %s" % index_path)
+        return
+    command = ['mm2-fast', '-t', str(threads), '-d', index_path, ref_genome_path]
+    if verbose:
+        print_log("Building mm2-fast index: %s" % ' '.join(command))
+    log = open('%s.log' % index_path, 'w'); call(command, stderr=log); log.close()
+    if verbose:
+        print_log("mm2-fast index built: %s" % index_path)
+
 # build NGMLR index
 def build_index_ngmlr(ref_genome_path, threads, verbose=True):
     enc_index_path = '%s-enc.2.ngm' % ref_genome_path
@@ -577,6 +601,16 @@ def align_minimap2(seqs_path, out_aln_path, ref_genome_path, threads, verbose=Tr
     if verbose:
         print_log("Minimap2 alignment complete: %s" % out_aln_path)
 
+# align genomes using mm2-fast
+def align_mm2fast(seqs_path, out_aln_path, ref_genome_path, threads, verbose=True):
+    index_path = '%s.mm2fast.mmi' % ref_genome_path
+    command = ['mm2-fast', '-t', str(threads), '--score-N=0', '--secondary=no', '--sam-hit-only', '-a', '-o', out_aln_path, index_path, seqs_path]
+    if verbose:
+        print_log("Aligning using mm2-fast: %s" % ' '.join(command))
+    log = open('%s.log' % out_aln_path, 'w'); call(command, stderr=log); log.close()
+    if verbose:
+        print_log("mm2-fast alignment complete: %s" % out_aln_path)
+
 # align genomes using NGMLR
 def align_ngmlr(seqs_path, out_aln_path, ref_genome_path, threads, verbose=True):
     command = ['ngmlr', '--skip-write', '-x', 'pacbio', '-i', '0', '--no-smallinv', '-t', str(threads), '-r', ref_genome_path, '-q', seqs_path, '-o', out_aln_path]
@@ -671,6 +705,12 @@ ALIGNERS = {
         'check':       check_minimap2,
         'build_index': build_index_minimap2,
         'align':       align_minimap2,
+    },
+
+    'mm2-fast': {
+        'check':       check_mm2fast,
+        'build_index': build_index_mm2fast,
+        'align':       align_mm2fast,
     },
 
     'ngmlr': {
