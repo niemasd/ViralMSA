@@ -17,6 +17,7 @@ ViralMSA also requires at least one of the following tools to perform the alignm
 * [DRAGMAP](https://github.com/Illumina/DRAGMAP)
 * [HISAT2](http://daehwankimlab.github.io/hisat2)
 * [LRA](https://github.com/ChaissonLab/LRA)
+* [mm2-fast](https://github.com/bwa-mem2/mm2-fast)
 * [NGMLR](https://github.com/philres/ngmlr)
 * [STAR](https://github.com/alexdobin/STAR)
 * [Unimap](https://github.com/lh3/unimap)
@@ -87,6 +88,10 @@ Please also cite the read mapper you selected.
 * LRA
 
 > Ren J, Chaisson MJP (2021). "lra: A long read aligner for sequences and contigs." *PLoS Comput Biol*. 17(6):e1009078. [doi:10.1371/journal.pcbi.1009078](https://doi.org/10.1371/journal.pcbi.1009078)
+
+* mm2-fast
+
+> Kalikar S, Jain C, Vasimuddin M, Misra S (2022). "Accelerating minimap2 for long-read sequencing applications on modern CPUs." *Nat Comput Sci*. 2:78-83. [doi:10.1038/s43588-022-00201-8](https://doi.org/10.1038/s43588-022-00201-8)
 
 * NGMLR
 
