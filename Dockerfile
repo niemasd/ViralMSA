@@ -41,7 +41,7 @@ RUN apt-get update && apt-get -y upgrade && \
     rm -rf minimap2-* && \
 
     # Install mm2-fast v1.0pre1
-    wget -qO0 "https://github.com/bwa-mem2/mm2-fast/releases/download/mm2-fast-v1.0pre1/Source_code_including_submodules.tar.gz" | tar -zx && \
+    wget -qO- "https://github.com/bwa-mem2/mm2-fast/releases/download/mm2-fast-v1.0pre1/Source_code_including_submodules.tar.gz" | tar -zx && \
     cd mm2-fast-* && \
     make && \
     mv minimap2 /usr/local/bin/mm2-fast && \
