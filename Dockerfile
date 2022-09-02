@@ -46,7 +46,7 @@ RUN apt-get update && apt-get -y upgrade && \
     make && \
     mv minimap2 /usr/local/bin/mm2-fast && \
     cd .. && \
-    rm -rf mm2-fast-* && \
+    rm -rf mm2-fast* && \
 
     # Install NGMLR v0.2.7
     wget -qO- "https://github.com/philres/ngmlr/archive/refs/tags/v0.2.7.tar.gz" | tar -zx && \
