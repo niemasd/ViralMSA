@@ -69,7 +69,7 @@ If you use ViralMSA in your work, please cite:
 
 Please also cite the read mapper you selected.
 
-* Minimap2 (the default selection)
+* **Minimap2 (the default selection)**
 
 > Li H (2018). "Minimap2: pairwise alignment for nucleotide sequences." *Bioinformatics*. 34(18):3094–3100. [doi:10.1093/bioinformatics/bty191](https://doi.org/10.1093/bioinformatics/bty191)
 
