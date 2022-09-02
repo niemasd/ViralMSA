@@ -62,56 +62,56 @@ If you have a local reference genome you would like to use, you can provide the 
 ViralMSA.py -e email@address.com -s sequences.fas -o output -r my_reference.fas
 ```
 
-# Citing ViralMSA
+## Citing ViralMSA
 If you use ViralMSA in your work, please cite:
 
 > Moshiri N (2021). "ViralMSA: Massively scalable reference-guided multiple sequence alignment of viral genomes." *Bioinformatics*. 37(5):714–716. [doi:10.1093/bioinformatics/btaa743](https://doi.org/10.1093/bioinformatics/btaa743)
 
 Please also cite the read mapper you selected.
 
-* **Minimap2 (the default selection)**
+### **Minimap2 (the default selection)**
 
 > Li H (2018). "Minimap2: pairwise alignment for nucleotide sequences." *Bioinformatics*. 34(18):3094–3100. [doi:10.1093/bioinformatics/bty191](https://doi.org/10.1093/bioinformatics/bty191)
 
-* bowtie2
+### bowtie2
 
 > Langmead B, Salzberg SL (2012). "Fast gapped-read alignment with Bowtie 2." *Nat Methods*. 9(4):357-359. [doi:10.1038/nmeth.1923](https://doi.org/10.1038/nmeth.1923)
 
-* DRAGMAP
+### DRAGMAP
 
 > https://github.com/Illumina/DRAGMAP
 
-* HISAT2
+### HISAT2
 
 > Kim D, Paggi JM, Park C, Bennett C, Salzberg SL (2019). "Graph-based genome alignment and genotyping with HISAT2 and HISAT-genotype." *Nat Biotechnol*. 37:907-915. [doi:10.1038/s41587-019-0201-4](https://doi.org/10.1038/s41587-019-0201-4)
 
-* LRA
+### LRA
 
 > Ren J, Chaisson MJP (2021). "lra: A long read aligner for sequences and contigs." *PLoS Comput Biol*. 17(6):e1009078. [doi:10.1371/journal.pcbi.1009078](https://doi.org/10.1371/journal.pcbi.1009078)
 
-* mm2-fast
+### mm2-fast
 
 > Kalikar S, Jain C, Vasimuddin M, Misra S (2022). "Accelerating minimap2 for long-read sequencing applications on modern CPUs." *Nat Comput Sci*. 2:78-83. [doi:10.1038/s43588-022-00201-8](https://doi.org/10.1038/s43588-022-00201-8)
 
-* NGMLR
+### NGMLR
 
 > Sedlazeck FJ, Rescheneder P, Smolka M, Fang H, Nattestad M, von Haeseler A, Schatz MC (2018). "Accurate detection of complex structural variations using single-molecule sequencing." *Nat Methods*. 15:461-468. [doi:10.1038/s41592-018-0001-7](https://doi.org/10.1038/s41592-018-0001-7)
 
-* STAR
+### STAR
 
 > Dobin A, Davis CA, Schlesinger F, Drehkow J, Zaleski C, Jha S, Batut P, Chaisson M, Gingeras TR (2013). "STAR: ultrafast universal RNA-seq aligner." *Bioinformatics*. 29(1):15-21. [doi:10.1093/bioinformatics/bts635](https://doi.org/10.1093/bioinformatics/bts635)
 
-* Unimap
+### Unimap
 
 > Li H (2021). "Unimap: A fork of minimap2 optimized for assembly-to-reference alignment." https://github.com/lh3/unimap
 
-* wfmash
+### wfmash
 
 > Jain C, Koren S, Dilthey A, Phillippy AM, Aluru S (2018). "A Fast Adaptive Algorithm for Computing Whole-Genome Homology Maps". *Bioinformatics*. 34(17):i748-i756. [doi:10.1093/bioinformatics/bty597](https://doi.org/10.1093/bioinformatics/bty597)
 
 > Marco-Sola S, Moure JC, Moreto M, Espinosa A (2021). "Fast gap-affine pairwise alignment using the wavefront algorithm". *Bioinformatics*. 37(4):456-463. [doi:10.1093/bioinformatics/btaa777](https://doi.org/10.1093/bioinformatics/btaa777)
 
-* Winnowmap
+### Winnowmap
 
 > Jain C, Rhie A, Hansen NF, Koren S, Phillippy AM (2022). "Long-read mapping to repetitive reference sequences using Winnowmap2". *Nature Methods*. 19:705-710. [doi:10.1038/s41592-022-01457-8](https://doi.org/10.1038/s41592-022-01457-8)
 
