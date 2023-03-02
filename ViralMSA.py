@@ -973,7 +973,7 @@ def download_ref_genome(ref_path, ref_genome_path, email, bufsize=DEFAULT_BUFSIZ
     f = open(ref_genome_path, 'w', buffering=bufsize); f.write(seq.strip()); f.write('\n'); f.close()
 
 # convert alignment (SAM/PAF) to FASTA
-def aln_to_fasta(out_aln_path, out_msa_path, ref_genome_path, bufsize=DEFAULT_BUFSIZE):
+def aln_to_fasta(out_aln_path, out_msa_path, ref_genome_path, omit_ref=False, bufsize=DEFAULT_BUFSIZE):
     if out_aln_path.lower().endswith('.sam'):
         aln_type = 's' # SAM
     elif out_aln_path.lower().endswith('.paf'):
@@ -986,9 +986,9 @@ def aln_to_fasta(out_aln_path, out_msa_path, ref_genome_path, bufsize=DEFAULT_BU
             continue
         if line[0] != '>':
             ref_seq.append(line.strip())
-        elif not args.omit_ref:
+        elif not omit_ref:
             msa.write(line)
-    if not args.omit_ref:
+    if not omit_ref:
         for l in ref_seq:
             msa.write(l)
         msa.write('\n')
@@ -1075,7 +1075,7 @@ def main():
     # convert alignment (SAM/PAF) to MSA FASTA
     print_log("Converting alignment to FASTA...")
     out_msa_path = '%s/%s.aln' % (args.output, args.sequences.split('/')[-1])
-    num_output_IDs = aln_to_fasta(out_aln_path, out_msa_path, args.ref_genome_path, bufsize=args.buffer_size)
+    num_output_IDs = aln_to_fasta(out_aln_path, out_msa_path, args.ref_genome_path, omit_ref=args.omit_ref, bufsize=args.buffer_size)
     print_log("Multiple sequence alignment complete: %s" % out_msa_path)
     if num_output_IDs < num_input_IDs:
         print_log("WARNING: Some sequences from the input are missing from the output. Perhaps try a different aligner or reference genome?")
