@@ -21,7 +21,7 @@ from urllib.request import urlopen
 import argparse
 
 # useful constants
-VERSION = '1.1.24'
+VERSION = '1.1.25'
 RELEASES_URL = 'https://api.github.com/repos/niemasd/ViralMSA/tags'
 CIGAR_LETTERS = {'M','D','I','S','H','=','X'}
 DEFAULT_BUFSIZE = 1048576 # 1 MB #8192 # 8 KB
@@ -1031,7 +1031,7 @@ def aln_to_fasta(out_aln_path, out_msa_path, ref_genome_path, bufsize=DEFAULT_BU
     return num_output_IDs
 
 # main content
-if __name__ == "__main__":
+def main():
     # parse user args and prepare run
     args = parse_args()
     makedirs(args.viralmsa_dir, exist_ok=True)
@@ -1086,3 +1086,7 @@ if __name__ == "__main__":
     print_log(CITATION['viralmsa'])
     print_log(CITATION[args.aligner])
     LOGFILE.close()
+
+# run tool
+if __name__ == "__main__":
+    main()
