@@ -16,12 +16,12 @@ from os import chdir, getcwd, makedirs, remove
 from os.path import abspath, expanduser, isdir, isfile, split
 from shutil import copy, move
 from subprocess import call, CalledProcessError, check_output, DEVNULL, PIPE, Popen, run, STDOUT
-from sys import argv, stderr, stdout
 from urllib.request import urlopen
 import argparse
+import sys
 
 # useful constants
-VERSION = '1.1.24'
+VERSION = '1.1.25'
 RELEASES_URL = 'https://api.github.com/repos/niemasd/ViralMSA/tags'
 CIGAR_LETTERS = {'M','D','I','S','H','=','X'}
 DEFAULT_BUFSIZE = 1048576 # 1 MB #8192 # 8 KB
@@ -116,7 +116,7 @@ assert len(tmp) == 0, "Value(s) in REFS missing in REF_NAMES: %s" % str(tmp)
 # print to log (prefixed by current time)
 def print_log(s='', end='\n'):
     tmp = "[%s] %s" % (get_time(), s)
-    print(tmp, end=end); stdout.flush()
+    print(tmp, end=end); sys.stdout.flush()
     if LOGFILE is not None:
         print(tmp, file=LOGFILE, end=end); LOGFILE.flush()
 
@@ -137,7 +137,7 @@ def update_viralmsa():
         with open(__file__, 'wb') as f:
             f.write(content)
     except PermissionError:
-        print("ERROR: Received a permission error when updating ViralMSA. Perhaps try running as root?", file=stderr); exit(1)
+        print("ERROR: Received a permission error when updating ViralMSA. Perhaps try running as root?", file=sys.stderr); exit(1)
     print("Successfully updated ViralMSA %s --> %s" % (old_version, new_version)); exit(0)
 
 # return the current time as a string
@@ -194,13 +194,13 @@ def check_bowtie2():
     except:
         o = None
     if o is None or 'Bowtie 2 version' not in o.decode():
-        print("ERROR: bowtie2 is not runnable in your PATH", file=stderr); exit(1)
+        print("ERROR: bowtie2 is not runnable in your PATH", file=sys.stderr); exit(1)
     try:
         o = check_output(['bowtie2-build', '-h'])
     except:
         o = None
     if o is None or 'Bowtie 2 version' not in o.decode():
-        print("ERROR: bowtie2-build is not runnable in your PATH", file=stderr); exit(1)
+        print("ERROR: bowtie2-build is not runnable in your PATH", file=sys.stderr); exit(1)
 
 # check DRAGMAP
 def check_dragmap():
@@ -209,7 +209,7 @@ def check_dragmap():
     except:
         o = None
     if o is None or 'dragenos -r <reference> -b <base calls> [optional arguments]' not in o.decode():
-        print("ERROR: dragen-os is not runnable in your PATH", file=stderr); exit(1)
+        print("ERROR: dragen-os is not runnable in your PATH", file=sys.stderr); exit(1)
 
 # check HISAT2
 def check_hisat2():
@@ -218,13 +218,13 @@ def check_hisat2():
     except:
         o = None
     if o is None or 'HISAT2 version' not in o.decode():
-        print("ERROR: hisat2 is not runnable in your PATH", file=stderr); exit(1)
+        print("ERROR: hisat2 is not runnable in your PATH", file=sys.stderr); exit(1)
     try:
         o = check_output(['hisat2-build', '-h'])
     except:
         o = None
     if o is None or 'HISAT2 version' not in o.decode():
-        print("ERROR: hisat2-build is not runnable in your PATH", file=stderr); exit(1)
+        print("ERROR: hisat2-build is not runnable in your PATH", file=sys.stderr); exit(1)
 
 # check LRA
 def check_lra():
@@ -236,7 +236,7 @@ def check_lra():
         o = None
     if o is None or 'lra (long sequence alignment)' not in o.decode():
         print(o.decode())
-        print("ERROR: LRA is not runnable in your PATH", file=stderr); exit(1)
+        print("ERROR: LRA is not runnable in your PATH", file=sys.stderr); exit(1)
 
 # check minigraph
 def check_minigraph():
@@ -245,7 +245,7 @@ def check_minigraph():
     except:
         o = None
     if o is None or 'Usage: minigraph' not in o.decode():
-        print("ERROR: Minigraph is not runnable in your PATH", file=stderr); exit(1)
+        print("ERROR: Minigraph is not runnable in your PATH", file=sys.stderr); exit(1)
 
 # check minimap2
 def check_minimap2():
@@ -254,7 +254,7 @@ def check_minimap2():
     except:
         o = None
     if o is None or 'Usage: minimap2' not in o.decode():
-        print("ERROR: Minimap2 is not runnable in your PATH", file=stderr); exit(1)
+        print("ERROR: Minimap2 is not runnable in your PATH", file=sys.stderr); exit(1)
 
 # check mm2-fast
 def check_mm2fast():
@@ -263,7 +263,7 @@ def check_mm2fast():
     except:
         o = None
     if o is None or 'Usage: ' not in o.decode():
-        print("ERROR: mm2-fast is not runnable in your PATH", file=stderr); exit(1)
+        print("ERROR: mm2-fast is not runnable in your PATH", file=sys.stderr); exit(1)
 
 # check NGMLR
 def check_ngmlr():
@@ -272,7 +272,7 @@ def check_ngmlr():
     except:
         o = None
     if o is None or 'Usage: ngmlr' not in o.decode():
-        print("ERROR: NGMLR is not runnable in your PATH", file=stderr); exit(1)
+        print("ERROR: NGMLR is not runnable in your PATH", file=sys.stderr); exit(1)
 
 # check STAR
 def check_star():
@@ -281,7 +281,7 @@ def check_star():
     except:
         o = None
     if o is None or 'Usage: STAR' not in o.decode():
-        print("ERROR: STAR is not runnable in your PATH", file=stderr); exit(1)
+        print("ERROR: STAR is not runnable in your PATH", file=sys.stderr); exit(1)
 
 # check unimap
 def check_unimap():
@@ -290,7 +290,7 @@ def check_unimap():
     except:
         o = None
     if o is None or 'Usage: unimap' not in o.decode():
-        print("ERROR: Unimap is not runnable in your PATH", file=stderr); exit(1)
+        print("ERROR: Unimap is not runnable in your PATH", file=sys.stderr); exit(1)
 
 # check wfmash
 def check_wfmash():
@@ -299,7 +299,7 @@ def check_wfmash():
     except:
         o = None
     if o is None or 'wfmash [target] [queries...] {OPTIONS}' not in o.decode():
-        print("ERROR: wfmash is not runnable in your PATH", file=stderr); exit(1)
+        print("ERROR: wfmash is not runnable in your PATH", file=sys.stderr); exit(1)
 
 # check Winnowmap
 def check_winnowmap():
@@ -308,13 +308,13 @@ def check_winnowmap():
     except:
         o = None
     if o is None or 'Usage: winnowmap' not in o.decode():
-        print("ERROR: Winnowmap is not runnable in your PATH", file=stderr); exit(1)
+        print("ERROR: Winnowmap is not runnable in your PATH", file=sys.stderr); exit(1)
     try:
         o = run(['meryl'], stdout=PIPE, stderr=PIPE).stderr
     except:
         o = None
     if o is None or 'usage: meryl' not in o.decode():
-        print("ERROR: meryl is not runnable in your PATH", file=stderr); exit(1)
+        print("ERROR: meryl is not runnable in your PATH", file=sys.stderr); exit(1)
 
 # build FAIDX index (multiple tools might need this)
 def build_index_faidx(ref_genome_path, threads, verbose=True):
@@ -747,7 +747,7 @@ ALIGNERS = {
 # handle GUI (updates argv)
 def run_gui():
     def clear_argv():
-        tmp = argv[0]; argv.clear(); argv.append(tmp)
+        tmp = sys.argv[0]; sys.argv.clear(); sys.argv.append(tmp)
     try:
         # imports
         from tkinter import Button, Checkbutton, END, Entry, Frame, IntVar, Label, OptionMenu, StringVar, Tk
@@ -864,14 +864,14 @@ def run_gui():
                 pass
             # close applet to run ViralMSA
             if valid:
-                argv.append('-s'); argv.append(button_seqs['text'].lstrip(button_seqs_prefix).strip())
-                argv.append('-r'); argv.append([v for k in REF_NAMES for v in REF_NAMES[k] if REF_NAMES[k][v] == dropdown_ref_var.get()][0])
-                argv.append('-e'); argv.append(entry_email.get())
-                argv.append('-o'); argv.append(button_out['text'].lstrip(button_out_prefix).strip())
-                argv.append('-a'); argv.append(dropdown_aligner_var.get().lstrip(dropdown_aligner_prefix).strip())
-                argv.append('-t'); argv.append(dropdown_threads_var.get().lstrip(dropdown_threads_prefix).strip())
+                sys.argv.append('-s'); sys.argv.append(button_seqs['text'].lstrip(button_seqs_prefix).strip())
+                sys.argv.append('-r'); sys.argv.append([v for k in REF_NAMES for v in REF_NAMES[k] if REF_NAMES[k][v] == dropdown_ref_var.get()][0])
+                sys.argv.append('-e'); sys.argv.append(entry_email.get())
+                sys.argv.append('-o'); sys.argv.append(button_out['text'].lstrip(button_out_prefix).strip())
+                sys.argv.append('-a'); sys.argv.append(dropdown_aligner_var.get().lstrip(dropdown_aligner_prefix).strip())
+                sys.argv.append('-t'); sys.argv.append(dropdown_threads_var.get().lstrip(dropdown_threads_prefix).strip())
                 if check_omitref_var.get() == 1:
-                    argv.append('--omit_ref')
+                    sys.argv.append('--omit_ref')
                 try:
                     root.destroy()
                 except:
@@ -883,22 +883,22 @@ def run_gui():
         root.title("ViralMSA %s" % VERSION)
         root.mainloop()
     except:
-        print("ERROR: Unable to import Tkinter", file=stderr); exit(1)
-    if len(argv) == 1:
+        print("ERROR: Unable to import Tkinter", file=sys.stderr); exit(1)
+    if len(sys.argv) == 1:
         exit()
 
 # parse user args
 def parse_args():
     # check if user wants to run the GUI
-    if len(argv) == 1:
+    if len(sys.argv) == 1:
         run_gui()
 
     # check if user wants to update ViralMSA
-    if '-u' in argv or '--update' in argv:
+    if '-u' in sys.argv or '--update' in sys.argv:
         update_viralmsa()
 
     # check if user just wants to list references
-    if '-l' in argv or '--list_references' in argv:
+    if '-l' in sys.argv or '--list_references' in sys.argv:
         print("=== List of ViralMSA Reference Sequences ===")
         for v in sorted(REF_NAMES.keys()):
             print("* %s" % v)
@@ -923,23 +923,23 @@ def parse_args():
 
     # check user args for validity
     if args.threads < 1:
-        print("ERROR: Number of threads must be positive", file=stderr); exit(1)
+        print("ERROR: Number of threads must be positive", file=sys.stderr); exit(1)
     if args.buffer_size < 1:
-        print("ERROR: Output buffer size must be positive", file=stderr); exit(1)
+        print("ERROR: Output buffer size must be positive", file=sys.stderr); exit(1)
     args.aligner = args.aligner.lower()
     if args.aligner not in ALIGNERS:
-        print("ERROR: Invalid aligner: %s (valid options: %s)" % (args.aligner, ', '.join(sorted(ALIGNERS.keys()))), file=stderr); exit(1)
+        print("ERROR: Invalid aligner: %s (valid options: %s)" % (args.aligner, ', '.join(sorted(ALIGNERS.keys()))), file=sys.stderr); exit(1)
     args.sequences = abspath(expanduser(args.sequences))
     if not isfile(args.sequences):
-        print("ERROR: Sequences file not found: %s" % args.sequences, file=stderr); exit(1)
+        print("ERROR: Sequences file not found: %s" % args.sequences, file=sys.stderr); exit(1)
     if args.sequences.lower().endswith('.gz'):
-        print("ERROR: Sequences cannot be compressed: %s" % args.sequences, file=stderr); exit(1)
+        print("ERROR: Sequences cannot be compressed: %s" % args.sequences, file=sys.stderr); exit(1)
     args.output = abspath(expanduser(args.output))
     if isdir(args.output) or isfile(args.output):
-        print("ERROR: Output directory exists: %s" % args.output, file=stderr); exit(1)
+        print("ERROR: Output directory exists: %s" % args.output, file=sys.stderr); exit(1)
     if isfile(args.reference):
         if count_IDs_fasta(args.reference, bufsize=args.buffer_size) != 1:
-            print("ERROR: Reference file (%s) must have exactly 1 sequence in the FASTA format" % args.reference, file=stderr); exit(1)
+            print("ERROR: Reference file (%s) must have exactly 1 sequence in the FASTA format" % args.reference, file=sys.stderr); exit(1)
         ref_seq = ''.join(l.strip() for l in open(args.reference, 'r', args.buffer_size) if not l.startswith('>'))
         h = md5(ref_seq.encode()).hexdigest()
         fn = args.reference
@@ -969,26 +969,26 @@ def download_ref_genome(ref_path, ref_genome_path, email, bufsize=DEFAULT_BUFSIZ
         raise RuntimeError("Encountered error when trying to download reference genome from NCBI. Perhaps the accession number is invalid?")
     seq = handle.read()
     if seq.count('>') != 1:
-        print("ERROR: Reference genome must only have a single sequence", file=stderr); exit(1)
+        print("ERROR: Reference genome must only have a single sequence", file=sys.stderr); exit(1)
     f = open(ref_genome_path, 'w', buffering=bufsize); f.write(seq.strip()); f.write('\n'); f.close()
 
 # convert alignment (SAM/PAF) to FASTA
-def aln_to_fasta(out_aln_path, out_msa_path, ref_genome_path, bufsize=DEFAULT_BUFSIZE):
+def aln_to_fasta(out_aln_path, out_msa_path, ref_genome_path, omit_ref=False, bufsize=DEFAULT_BUFSIZE):
     if out_aln_path.lower().endswith('.sam'):
         aln_type = 's' # SAM
     elif out_aln_path.lower().endswith('.paf'):
         aln_type = 'p' # PAF
     else:
-        print("ERROR: Invalid alignment extension: %s" % out_aln_path, file=stderr); exit(1)
+        print("ERROR: Invalid alignment extension: %s" % out_aln_path, file=sys.stderr); exit(1)
     msa = open(out_msa_path, 'w', buffering=bufsize); ref_seq = list()
     for line in open(ref_genome_path):
         if len(line) == 0:
             continue
         if line[0] != '>':
             ref_seq.append(line.strip())
-        elif not args.omit_ref:
+        elif not omit_ref:
             msa.write(line)
-    if not args.omit_ref:
+    if not omit_ref:
         for l in ref_seq:
             msa.write(l)
         msa.write('\n')
@@ -1031,7 +1031,7 @@ def aln_to_fasta(out_aln_path, out_msa_path, ref_genome_path, bufsize=DEFAULT_BU
     return num_output_IDs
 
 # main content
-if __name__ == "__main__":
+def main():
     # parse user args and prepare run
     args = parse_args()
     makedirs(args.viralmsa_dir, exist_ok=True)
@@ -1075,7 +1075,7 @@ if __name__ == "__main__":
     # convert alignment (SAM/PAF) to MSA FASTA
     print_log("Converting alignment to FASTA...")
     out_msa_path = '%s/%s.aln' % (args.output, args.sequences.split('/')[-1])
-    num_output_IDs = aln_to_fasta(out_aln_path, out_msa_path, args.ref_genome_path, bufsize=args.buffer_size)
+    num_output_IDs = aln_to_fasta(out_aln_path, out_msa_path, args.ref_genome_path, omit_ref=args.omit_ref, bufsize=args.buffer_size)
     print_log("Multiple sequence alignment complete: %s" % out_msa_path)
     if num_output_IDs < num_input_IDs:
         print_log("WARNING: Some sequences from the input are missing from the output. Perhaps try a different aligner or reference genome?")
@@ -1086,3 +1086,7 @@ if __name__ == "__main__":
     print_log(CITATION['viralmsa'])
     print_log(CITATION[args.aligner])
     LOGFILE.close()
+
+# run tool
+if __name__ == "__main__":
+    main()
