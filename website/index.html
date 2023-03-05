@@ -23,13 +23,29 @@
             
             // install biopython, a ViralMSA dependency
             await micropip.install('biopython');
-            
+
+            // create cache directory
+            pyodide.FS.mkdir(PATH_TO_PYODIDE_ROOT + 'cache');
+
+            // write example file to Pyodide
+            pyodide.FS.writeFile(PATH_TO_PYODIDE_ROOT + 'example_hiv.fas', await (await fetch("./assets/example/example_hiv.fas")).text(), { encoding: "utf8" });
+
             // load in ViralMSA.py
             pyodide.FS.writeFile(PATH_TO_PYODIDE_ROOT + 'ViralMSA.py', await (await fetch("./assets/python/ViralMSA.py")).text(), { encoding: "utf8" });
 
             // set global args variable
-            let arguments = "./ViralMSA.py -e email@address.com -s example/example_hiv.fas -o output -r HIV-1";
+            let arguments = "./ViralMSA.py -e email@address.com -s example_hiv.fas -o output -r HIV-1 --viralmsa_dir cache";
             pyodide.globals.set("arguments", arguments); 
+
+            // pyodide.globals.set("entrezEfetchOverrideJSFetch", (db, rettype, id) => {
+            //     let done = false;
+            //     fetch(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=${db}&rettype=${rettype}&id=${id}`)
+            //     .then(response => response.text())
+            //     .then(fastaText => {
+            //         done = true;
+            //         pyodide.FS.writeFile(PATH_TO_PYODIDE_ROOT + 'cache/' + id + '/' + id + '.fas', fastaText, { encoding: "utf8" });
+            //     })
+            // })
 
             // run ViralMSAWeb.py
             pyodide.runPython(await (await fetch("./assets/python/ViralMSAWeb.py")).text())
