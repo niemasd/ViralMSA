@@ -1,0 +1,26 @@
+bug: args.reference is not defined
+overriding: subprocess.call, check_output, Entrez.efetch
+
+todo: 
+start working on getting minimap2 
+two wasm module plan
+potential problems with multiprocessing, subprocess
+    likely just one thread, one cpu
+
+modifications: 
+biopython installable
+created web.py
+import sys
+main function
+global variable creation in main
+
+arguments modified:
+    no help option
+
+    what is email about?
+
+    need viralmsa cache directory?
+
+    no threads option
+    no updates option
+    what else might not be needed / other modifications? 
