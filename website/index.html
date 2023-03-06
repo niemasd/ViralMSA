@@ -3,54 +3,126 @@
 <head>
     <link rel="icon" type="image/x-icon" href="./favicon.ico">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/pyodide/v0.22.1/full/pyodide.js"></script>
     <link rel="stylesheet" href="assets/index.css">
+    <script src="https://biowasm.com/cdn/v3/aioli.js"></script>
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.22.1/full/pyodide.js"></script>
 </head>
 <body>
     <h1 class="my-5 text-center">ViralMSA Online Tool</h1>
-    <script>
-        // constants
+    <script type="module">
+        // constants & global variables
         const PATH_TO_PYODIDE_ROOT = "/home/pyodide/";
 
-        let pyodide; 
-        const initPyodide = async () => {
-            // load pyodide
-            pyodide = await loadPyodide();
+        // load minimap2 from BioWASM
+        const CLI = await new Aioli(["minimap2/2.22"]);
+
+        // load pyodide
+        const pyodide = await loadPyodide();
             
-            // load micropip, a package manager for Pyodide
-            await pyodide.loadPackage("micropip");
-            const micropip = pyodide.pyimport("micropip");
+        // load micropip, a package manager for Pyodide
+        await pyodide.loadPackage("micropip");
+        const micropip = pyodide.pyimport("micropip");
+        
+        // install biopython, a ViralMSA dependency
+        await micropip.install('biopython');
+
+        // create cache directory
+        pyodide.FS.mkdir(PATH_TO_PYODIDE_ROOT + 'cache');
+
+        // write example file to Pyodide
+        pyodide.FS.writeFile(PATH_TO_PYODIDE_ROOT + 'example_hiv.fas', await (await fetch("./assets/example/example_hiv.fas")).text(), { encoding: "utf8" });
+
+        // load in ViralMSA.py
+        pyodide.FS.writeFile(PATH_TO_PYODIDE_ROOT + 'ViralMSA.py', await (await fetch("./assets/python/ViralMSA.py")).text(), { encoding: "utf8" });
+
+        // load in reference file for ViralMSA
+        pyodide.FS.writeFile(PATH_TO_PYODIDE_ROOT + 'reference.fas', await (await fetch("./assets/example/reference.fas")).text(), { encoding: "utf8" });
+
+        // set global args variable
+        let args = "./ViralMSA.py -e email@address.com -s example_hiv.fas -o output -r reference.fas --viralmsa_dir cache";
+        pyodide.globals.set("arguments", args);
+        
+        // set global minimapOverride variable to use BioWASM
+        const minimap2Override = async (PyProxy) => {
+            const command = PyProxy.toJs();
             
-            // install biopython, a ViralMSA dependency
-            await micropip.install('biopython');
+            // build minimap2 index
+            if (command.includes('-d')) {
+                // TODO: change back after -d is fixed
+                return;
 
-            // create cache directory
-            pyodide.FS.mkdir(PATH_TO_PYODIDE_ROOT + 'cache');
+                // remember mmi output path and change to target.mmi for minimap2 in BioWASM
+                const mmiOutput = command[command.length - 2];
+                command[command.length - 2] =  "target.fas.mmi";
 
-            // write example file to Pyodide
-            pyodide.FS.writeFile(PATH_TO_PYODIDE_ROOT + 'example_hiv.fas', await (await fetch("./assets/example/example_hiv.fas")).text(), { encoding: "utf8" });
+                // mount fasta file to BioWASM
+                const fastaFile = command[command.length - 1];
+                await CLI.mount([{
+                    name: "target.fas",
+                    data: pyodide.FS.readFile(PATH_TO_PYODIDE_ROOT + fastaFile, { encoding: "utf8" }),
+                }]);
 
-            // load in ViralMSA.py
-            pyodide.FS.writeFile(PATH_TO_PYODIDE_ROOT + 'ViralMSA.py', await (await fetch("./assets/python/ViralMSA.py")).text(), { encoding: "utf8" });
+                // change fasta file name to target.fas for minimap2 in BioWASM
+                command[command.length - 1] = "target.fas";
 
-            // set global args variable
-            let arguments = "./ViralMSA.py -e email@address.com -s example_hiv.fas -o output -r HIV-1 --viralmsa_dir cache";
-            pyodide.globals.set("arguments", arguments); 
+                // run minimap2 in BioWASM
+                const output = await CLI.exec(command.join(' '));
+                
+                // copy over mmi file to Pyodide
+                const mmi = await CLI.download("target.fas.mmi");
+                console.log(await (await fetch(mmi).then(r => r.arrayBuffer())));
 
-            // pyodide.globals.set("entrezEfetchOverrideJSFetch", (db, rettype, id) => {
-            //     let done = false;
-            //     fetch(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=${db}&rettype=${rettype}&id=${id}`)
-            //     .then(response => response.text())
-            //     .then(fastaText => {
-            //         done = true;
-            //         pyodide.FS.writeFile(PATH_TO_PYODIDE_ROOT + 'cache/' + id + '/' + id + '.fas', fastaText, { encoding: "utf8" });
-            //     })
-            // })
+                return (output.stdout);
 
-            // run ViralMSAWeb.py
-            pyodide.runPython(await (await fetch("./assets/python/ViralMSAWeb.py")).text())
+            // alignment
+            } else if (command.includes('-a')) {
+                console.log(command);
+                // swap out third to last argument (output file)
+                const oldOutput = command[command.length - 3];
+                command[command.length - 3] = "sequence.fas.sam";
+
+                // swap out second to last argument - use reference.fas instead of reference.fas.mmi and remove pyodide path
+                command[command.length - 2] = "reference.fas";
+
+                // swap out last argument - use sequence.fas instead of pyodide path
+                command[command.length - 1] = "sequence.fas";
+
+                // write reference.fas to BioWASM
+                await CLI.mount([{
+                    name: "reference.fas",
+                    data: await (await fetch("./assets/example/reference.fas")).text(),
+                }]);
+
+                // write example.fas to BioWASM
+                await CLI.mount([{
+                    name: "sequence.fas",
+                    data: await (await fetch("./assets/example/example_hiv.fas")).text(),
+                }]);
+
+                // run minimap2 in BioWASM
+                const output = await CLI.exec(command.join(' '));
+
+                // copy over sam file to Pyodide
+                const sam = await CLI.download("sequence.fas.sam");
+                const samText = await (await fetch(sam).then(r => r.text()));
+                pyodide.FS.writeFile(oldOutput, samText, { encoding: "utf8" });
+            }
         }
-        initPyodide();
+        pyodide.globals.set("minimap2Override", minimap2Override);
+
+        // pyodide.globals.set("entrezEfetchOverrideJSFetch", (db, rettype, id) => {
+        //     let done = false;
+        //     fetch(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=${db}&rettype=${rettype}&id=${id}`)
+        //     .then(response => response.text())
+        //     .then(fastaText => {
+        //         done = true;
+        //         pyodide.FS.writeFile(PATH_TO_PYODIDE_ROOT + 'cache/' + id + '/' + id + '.fas', fastaText, { encoding: "utf8" });
+        //     })
+        // })
+
+        // run ViralMSAWeb.py
+        pyodide.runPython(await (await fetch("./assets/python/ViralMSAWeb.py")).text());
+
     </script>
 </body>
 </html>

@@ -20,6 +20,7 @@ from urllib.request import urlopen
 import argparse
 import sys
 import subprocess
+import asyncio
 
 # useful constants
 VERSION = '1.1.25'
@@ -593,12 +594,12 @@ def align_minigraph(seqs_path, out_paf_path, ref_genome_path, threads, verbose=T
         print_log("Minigraph alignment complete: %s" % out_paf_path)
 
 # align genomes using minimap2
-def align_minimap2(seqs_path, out_aln_path, ref_genome_path, threads, verbose=True):
+async def align_minimap2(seqs_path, out_aln_path, ref_genome_path, threads, verbose=True):
     index_path = '%s.mmi' % ref_genome_path
     command = ['minimap2', '-t', str(threads), '--score-N=0', '--secondary=no', '--sam-hit-only', '-a', '-o', out_aln_path, index_path, seqs_path]
     if verbose:
         print_log("Aligning using Minimap2: %s" % ' '.join(command))
-    log = open('%s.log' % out_aln_path, 'w'); subprocess.call(command, stderr=log); log.close()
+    log = open('%s.log' % out_aln_path, 'w'); await subprocess.call(command, stderr=log); log.close()
     if verbose:
         print_log("Minimap2 alignment complete: %s" % out_aln_path)
 
@@ -1032,7 +1033,7 @@ def aln_to_fasta(out_aln_path, out_msa_path, ref_genome_path, omit_ref=False, bu
     return num_output_IDs
 
 # main content
-def main():
+async def main():
     global args
 
     # parse user args and prepare run
@@ -1073,7 +1074,7 @@ def main():
         out_aln_path = '%s/%s.paf' % (args.output, args.sequences.split('/')[-1])
     else:
         out_aln_path = '%s/%s.sam' % (args.output, args.sequences.split('/')[-1])
-    ALIGNERS[args.aligner]['align'](args.sequences, out_aln_path, args.ref_genome_path, args.threads)
+    await ALIGNERS[args.aligner]['align'](args.sequences, out_aln_path, args.ref_genome_path, args.threads)
 
     # convert alignment (SAM/PAF) to MSA FASTA
     print_log("Converting alignment to FASTA...")
@@ -1092,4 +1093,4 @@ def main():
 
 # run tool
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
