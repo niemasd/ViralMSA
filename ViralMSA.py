@@ -21,7 +21,7 @@ import argparse
 import sys
 
 # useful constants
-VERSION = '1.1.25'
+VERSION = '1.1.26'
 RELEASES_URL = 'https://api.github.com/repos/niemasd/ViralMSA/tags'
 CIGAR_LETTERS = {'M','D','I','S','H','=','X'}
 DEFAULT_BUFSIZE = 1048576 # 1 MB #8192 # 8 KB
@@ -961,10 +961,10 @@ def parse_args():
     return args
 
 # download reference genome
-def download_ref_genome(ref_path, ref_genome_path, email, bufsize=DEFAULT_BUFSIZE):
+def download_ref_genome(reference, ref_path, ref_genome_path, email, bufsize=DEFAULT_BUFSIZE):
     makedirs(ref_path, exist_ok=True); Entrez.email = email
     try:
-        handle = Entrez.efetch(db='nucleotide', rettype='fasta', id=args.reference)
+        handle = Entrez.efetch(db='nucleotide', rettype='fasta', id=reference)
     except:
         raise RuntimeError("Encountered error when trying to download reference genome from NCBI. Perhaps the accession number is invalid?")
     seq = handle.read()
@@ -1057,7 +1057,7 @@ def main():
         print_log("Reference genome found: %s" % args.ref_genome_path)
     else:
         print_log("Downloading reference genome from NCBI...")
-        download_ref_genome(args.ref_path, args.ref_genome_path, args.email, bufsize=args.buffer_size)
+        download_ref_genome(args.reference, args.ref_path, args.ref_genome_path, args.email, bufsize=args.buffer_size)
         print_log("Reference genome downloaded: %s" % args.ref_genome_path)
 
     # build aligner index (if needed)
