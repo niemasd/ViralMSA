@@ -20,7 +20,6 @@ from urllib.request import urlopen
 import argparse
 import sys
 import subprocess
-import asyncio
 
 # useful constants
 VERSION = '1.1.25'
@@ -434,7 +433,7 @@ def build_index_minigraph(ref_genome_path, threads, verbose=True):
     pass # Minigraph doesn't seem to do anything with a ref genome with 1 sequence
 
 # build minimap2 index
-def build_index_minimap2(ref_genome_path, threads, verbose=True):
+async def build_index_minimap2(ref_genome_path, threads, verbose=True):
     index_path = '%s.mmi' % ref_genome_path
     if isfile(index_path):
         if verbose:
@@ -443,7 +442,7 @@ def build_index_minimap2(ref_genome_path, threads, verbose=True):
     command = ['minimap2', '-t', str(threads), '-d', index_path, ref_genome_path]
     if verbose:
         print_log("Building Minimap2 index: %s" % ' '.join(command))
-    log = open('%s.log' % index_path, 'w'); subprocess.call(command, stderr=log); log.close()
+    log = open('%s.log' % index_path, 'w'); await subprocess.call(command, stderr=log); log.close()
     if verbose:
         print_log("Minimap2 index built: %s" % index_path)
 
@@ -1065,7 +1064,7 @@ async def main():
         print_log("Reference genome downloaded: %s" % args.ref_genome_path)
 
     # build aligner index (if needed)
-    ALIGNERS[args.aligner]['build_index'](args.ref_genome_path, args.threads)
+    await ALIGNERS[args.aligner]['build_index'](args.ref_genome_path, args.threads)
     print_log()
 
     # align viral genomes against referencea
@@ -1093,4 +1092,4 @@ async def main():
 
 # run tool
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

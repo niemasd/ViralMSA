@@ -1,3 +1,19 @@
+todo:
+- preloading indexes 
+- getting other aligners working
+- web worker the pyodide 
+- validation
+- download button
+- add runtime
+- questions: what kind of files to accept? 
+
+no async solution: 
+    subprocess overridden -> runs javascript that runs pyodide webworker (that is async, but runPython covers that) so it's still technically sync (doesn't work)
+    - either async or split python running
+
+prevent await problem: 
+    - override subprocess so that it runs python (async) -> which runs javascript (async), but the process only completes when the python async finishes
+
 bug: args.reference is not defined
 overriding: subprocess.call, check_output, Entrez.efetch
 
