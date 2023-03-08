@@ -2,21 +2,25 @@
 import ViralMSA
 import asyncio
 
-oldSubprocessCall = ViralMSA.subprocess.call
+old_subprocess_call = ViralMSA.subprocess.call
 
-def checkOutputOverride(args):
+def check_output_override(args):
     return str.encode("'Usage: minimap2'")
 
-async def callOverride(command, stderr):
+async def call_override(command, stderr):
     if (command[0] != 'minimap2'):
-        return oldSubprocessCall(command, stderr=stderr)
+        return old_subprocess_call(command, stderr=stderr)
     
-    print('hit')
     await minimap2Override(command)
-    print('done')
+
+async def add_success_callback(task, callback):
+    await task
+    callback()
 
 if ('arguments' in globals()):
     ViralMSA.sys.argv = arguments.split()
-    ViralMSA.subprocess.check_output = checkOutputOverride
-    ViralMSA.subprocess.call = callOverride
-    asyncio.get_running_loop().create_task(ViralMSA.main())
+    ViralMSA.subprocess.check_output = check_output_override
+    ViralMSA.subprocess.call = call_override
+    main_task = asyncio.create_task(ViralMSA.main())
+    main_task.add_done_callback(ViralMSAFinish)
+    asyncio.get_running_loop().run_until_complete(main_task)

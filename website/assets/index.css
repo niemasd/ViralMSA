@@ -1,0 +1,17 @@
+#content {
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+    align-items: center;
+}
+
+.input {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.output textarea {
+    min-width: min(80vw, 1000px);
+    height: 50vh;
+}
