@@ -15,13 +15,13 @@ from multiprocessing import cpu_count
 from os import chdir, getcwd, makedirs, remove
 from os.path import abspath, expanduser, isdir, isfile, split
 from shutil import copy, move
-from subprocess import call, CalledProcessError, check_output, DEVNULL, PIPE, Popen, run, STDOUT
 from urllib.request import urlopen
 import argparse
+import subprocess
 import sys
 
 # useful constants
-VERSION = '1.1.26'
+VERSION = '1.1.27'
 RELEASES_URL = 'https://api.github.com/repos/niemasd/ViralMSA/tags'
 CIGAR_LETTERS = {'M','D','I','S','H','=','X'}
 DEFAULT_BUFSIZE = 1048576 # 1 MB #8192 # 8 KB
@@ -190,13 +190,13 @@ def fasta2fastq(fa_path, fq_path, qual='~', bufsize=DEFAULT_BUFSIZE):
 # check bowtie2
 def check_bowtie2():
     try:
-        o = check_output(['bowtie2', '-h'])
+        o = subprocess.check_output(['bowtie2', '-h'])
     except:
         o = None
     if o is None or 'Bowtie 2 version' not in o.decode():
         print("ERROR: bowtie2 is not runnable in your PATH", file=sys.stderr); exit(1)
     try:
-        o = check_output(['bowtie2-build', '-h'])
+        o = subprocess.check_output(['bowtie2-build', '-h'])
     except:
         o = None
     if o is None or 'Bowtie 2 version' not in o.decode():
@@ -205,7 +205,7 @@ def check_bowtie2():
 # check DRAGMAP
 def check_dragmap():
     try:
-        o = check_output(['dragen-os', '-h'])
+        o = subprocess.check_output(['dragen-os', '-h'])
     except:
         o = None
     if o is None or 'dragenos -r <reference> -b <base calls> [optional arguments]' not in o.decode():
@@ -214,13 +214,13 @@ def check_dragmap():
 # check HISAT2
 def check_hisat2():
     try:
-        o = check_output(['hisat2', '-h'])
+        o = subprocess.check_output(['hisat2', '-h'])
     except:
         o = None
     if o is None or 'HISAT2 version' not in o.decode():
         print("ERROR: hisat2 is not runnable in your PATH", file=sys.stderr); exit(1)
     try:
-        o = check_output(['hisat2-build', '-h'])
+        o = subprocess.check_output(['hisat2-build', '-h'])
     except:
         o = None
     if o is None or 'HISAT2 version' not in o.decode():
@@ -229,8 +229,8 @@ def check_hisat2():
 # check LRA
 def check_lra():
     try:
-        o = check_output(['lra', '-h'])
-    except CalledProcessError as cpe:
+        o = subprocess.check_output(['lra', '-h'])
+    except subprocess.CalledProcessError as cpe:
         o = cpe.output
     except:
         o = None
@@ -241,7 +241,7 @@ def check_lra():
 # check minigraph
 def check_minigraph():
     try:
-        o = run(['minigraph'], stdout=PIPE, stderr=PIPE).stderr
+        o = subprocess.run(['minigraph'], stdout=subprocess.PIPE, stderr=subprocess.PIPE).stderr
     except:
         o = None
     if o is None or 'Usage: minigraph' not in o.decode():
@@ -250,7 +250,7 @@ def check_minigraph():
 # check minimap2
 def check_minimap2():
     try:
-        o = check_output(['minimap2', '-h'])
+        o = subprocess.check_output(['minimap2', '-h'])
     except:
         o = None
     if o is None or 'Usage: minimap2' not in o.decode():
@@ -259,7 +259,7 @@ def check_minimap2():
 # check mm2-fast
 def check_mm2fast():
     try:
-        o = check_output(['mm2-fast', '-h'])
+        o = subprocess.check_output(['mm2-fast', '-h'])
     except:
         o = None
     if o is None or 'Usage: ' not in o.decode():
@@ -268,7 +268,7 @@ def check_mm2fast():
 # check NGMLR
 def check_ngmlr():
     try:
-        o = check_output(['ngmlr', '-h'], stderr=STDOUT)
+        o = subprocess.check_output(['ngmlr', '-h'], stderr=subprocess.STDOUT)
     except:
         o = None
     if o is None or 'Usage: ngmlr' not in o.decode():
@@ -277,7 +277,7 @@ def check_ngmlr():
 # check STAR
 def check_star():
     try:
-        o = check_output(['STAR', '-h'])
+        o = subprocess.check_output(['STAR', '-h'])
     except:
         o = None
     if o is None or 'Usage: STAR' not in o.decode():
@@ -286,7 +286,7 @@ def check_star():
 # check unimap
 def check_unimap():
     try:
-        o = check_output(['unimap', '-h'])
+        o = subprocess.check_output(['unimap', '-h'])
     except:
         o = None
     if o is None or 'Usage: unimap' not in o.decode():
@@ -295,7 +295,7 @@ def check_unimap():
 # check wfmash
 def check_wfmash():
     try:
-        o = check_output(['wfmash', '-h'])
+        o = subprocess.check_output(['wfmash', '-h'])
     except:
         o = None
     if o is None or 'wfmash [target] [queries...] {OPTIONS}' not in o.decode():
@@ -304,13 +304,13 @@ def check_wfmash():
 # check Winnowmap
 def check_winnowmap():
     try:
-        o = check_output(['winnowmap', '-h'])
+        o = subprocess.check_output(['winnowmap', '-h'])
     except:
         o = None
     if o is None or 'Usage: winnowmap' not in o.decode():
         print("ERROR: Winnowmap is not runnable in your PATH", file=sys.stderr); exit(1)
     try:
-        o = run(['meryl'], stdout=PIPE, stderr=PIPE).stderr
+        o = subprocess.run(['meryl'], stdout=subprocess.PIPE, stderr=subprocess.PIPE).stderr
     except:
         o = None
     if o is None or 'usage: meryl' not in o.decode():
@@ -326,7 +326,7 @@ def build_index_faidx(ref_genome_path, threads, verbose=True):
     command = ['samtools', 'faidx', ref_genome_path]
     if verbose:
         print_log("Building FAIDX index: %s" % ' '.join(command))
-    log = open('%s.log' % index_path, 'w'); call(command, stderr=log); log.close()
+    log = open('%s.log' % index_path, 'w'); subprocess.call(command, stderr=log); log.close()
     if verbose:
         print_log("FAIDX index built: %s" % index_path)
 
@@ -350,7 +350,7 @@ def build_index_bowtie2(ref_genome_path, threads, verbose=True):
     command = ['bowtie2-build', '--threads', str(threads), ref_genome_path, '%s.bowtie2' % ref_genome_fn]
     if verbose:
         print_log("Building bowtie2 index: %s" % ' '.join(command))
-    log = open('%s.bowtie2.log' % ref_genome_path, 'w'); call(command, stdout=log, stderr=STDOUT); log.close()
+    log = open('%s.bowtie2.log' % ref_genome_path, 'w'); subprocess.call(command, stdout=log, stderr=subprocess.STDOUT); log.close()
     if verbose:
         print_log("bowtie2 index built: %s.bowtie2.*.bt2" % ref_genome_path)
     chdir(orig_dir)
@@ -366,7 +366,7 @@ def build_index_dragmap(ref_genome_path, threads, verbose=True):
     command = ['dragen-os', '--build-hash-table', 'true', '--ht-reference', ref_genome_path, '--ht-num-threads', str(threads), '--output-directory', index_path]
     if verbose:
         print_log("Building DRAGMAP index: %s" % ' '.join(command))
-    log = open('%s/index.log' % index_path, 'w'); call(command, stdout=log, stderr=STDOUT); log.close()
+    log = open('%s/index.log' % index_path, 'w'); subprocess.call(command, stdout=log, stderr=subprocess.STDOUT); log.close()
     if verbose:
         print_log("DRAGMAP index built: %s" % index_path)
 
@@ -390,7 +390,7 @@ def build_index_hisat2(ref_genome_path, threads, verbose=True):
     command = ['hisat2-build', '--threads', str(threads), ref_genome_path, '%s.hisat2' % ref_genome_fn]
     if verbose:
         print_log("Building HISAT2 index: %s" % ' '.join(command))
-    log = open('%s.hisat2.log' % ref_genome_path, 'w'); call(command, stdout=log, stderr=STDOUT); log.close()
+    log = open('%s.hisat2.log' % ref_genome_path, 'w'); subprocess.call(command, stdout=log, stderr=subprocess.STDOUT); log.close()
     if verbose:
         print_log("HISAT2 index built: %s.hisat2.*.ht2" % ref_genome_path)
     chdir(orig_dir)
@@ -420,7 +420,7 @@ def build_index_lra(ref_genome_path, threads, verbose=True):
     command = ['lra', 'index', '-CONTIG', lra_ref_genome_path]
     if verbose:
         print_log("Building LRA index: %s" % ' '.join(command))
-    log = open('%s.log' % lra_ref_genome_path, 'w'); call(command, stderr=log); log.close()
+    log = open('%s.log' % lra_ref_genome_path, 'w'); subprocess.call(command, stderr=log); log.close()
     if verbose:
         if isfile(mmi_index_path):
             print_log("LRA index built: %s and %s" % (gli_index_path, mmi_index_path))
@@ -441,7 +441,7 @@ def build_index_minimap2(ref_genome_path, threads, verbose=True):
     command = ['minimap2', '-t', str(threads), '-d', index_path, ref_genome_path]
     if verbose:
         print_log("Building Minimap2 index: %s" % ' '.join(command))
-    log = open('%s.log' % index_path, 'w'); call(command, stderr=log); log.close()
+    log = open('%s.log' % index_path, 'w'); subprocess.call(command, stderr=log); log.close()
     if verbose:
         print_log("Minimap2 index built: %s" % index_path)
 
@@ -455,7 +455,7 @@ def build_index_mm2fast(ref_genome_path, threads, verbose=True):
     command = ['mm2-fast', '-t', str(threads), '-d', index_path, ref_genome_path]
     if verbose:
         print_log("Building mm2-fast index: %s" % ' '.join(command))
-    log = open('%s.log' % index_path, 'w'); call(command, stderr=log); log.close()
+    log = open('%s.log' % index_path, 'w'); subprocess.call(command, stderr=log); log.close()
     if verbose:
         print_log("mm2-fast index built: %s" % index_path)
 
@@ -474,7 +474,7 @@ def build_index_ngmlr(ref_genome_path, threads, verbose=True):
     command = ['ngmlr', '-x', 'pacbio', '-i', '0', '--no-smallinv', '-t', str(threads), '-r', ref_genome_path]
     if verbose:
         print_log("Building NGMLR index: %s" % ' '.join(command))
-    log = open('%s.NGMLR.log' % ref_genome_path, 'w'); call(command, stdin=DEVNULL, stderr=log, stdout=DEVNULL); log.close()
+    log = open('%s.NGMLR.log' % ref_genome_path, 'w'); subprocess.call(command, stdin=subprocess.DEVNULL, stderr=log, stdout=DEVNULL); log.close()
     if verbose:
         print_log("NGMLR index built: %s and %s" % (enc_index_path, ht_index_path))
 
@@ -494,7 +494,7 @@ def build_index_star(ref_genome_path, threads, verbose=True):
     command = ['STAR', '--runMode', 'genomeGenerate', '--runThreadN', str(threads), '--genomeDir', index_path, '--genomeFastaFiles', ref_genome_path, '--genomeSAindexNbases', str(genomeSAindexNbases)]
     if verbose:
         print_log("Building STAR index: %s" % ' '.join(command))
-    log = open('%s/index.log' % index_path, 'w'); call(command, stdout=log, stderr=STDOUT); log.close()
+    log = open('%s/index.log' % index_path, 'w'); subprocess.call(command, stdout=log, stderr=subprocess.STDOUT); log.close()
     if verbose:
         print_log("STAR index built: %s" % index_path)
     if delete_log and isfile('Log.out'):
@@ -510,7 +510,7 @@ def build_index_unimap(ref_genome_path, threads, verbose=True):
     command = ['unimap', '-t', str(threads), '-d', index_path, ref_genome_path]
     if verbose:
         print_log("Building Unimap index: %s" % ' '.join(command))
-    log = open('%s.log' % index_path, 'w'); call(command, stderr=log); log.close()
+    log = open('%s.log' % index_path, 'w'); subprocess.call(command, stderr=log); log.close()
     if verbose:
         print_log("Unimap index built: %s" % index_path)
 
@@ -529,7 +529,7 @@ def build_index_winnowmap(ref_genome_path, threads, verbose=True):
         command = ['meryl', 'count', 'k=%d' % WINNOWMAP_K, 'output', db_path, ref_genome_path]
         if verbose:
             print_log("Building Meryl DB: %s" % ' '.join(command))
-        log = open('%s.log' % db_path, 'w'); call(command, stderr=log); log.close()
+        log = open('%s.log' % db_path, 'w'); subprocess.call(command, stderr=log); log.close()
         if verbose:
             print_log("Meryl DB built: %s" % db_path)
     if isfile(index_path):
@@ -539,7 +539,7 @@ def build_index_winnowmap(ref_genome_path, threads, verbose=True):
     command = ['meryl', 'print', 'greater-than', 'distinct=%s' % WINNOWMAP_DISTINCT, db_path]
     if verbose:
         print_log("Building Winnowmap index (Meryl %d-mers): %s" % (WINNOWMAP_K, ' '.join(command)))
-    out = open(index_path, 'w'); log = open('%s.log' % index_path, 'w'); call(command, stdout=out, stderr=log); out.close(); log.close()
+    out = open(index_path, 'w'); log = open('%s.log' % index_path, 'w'); subprocess.call(command, stdout=out, stderr=log); out.close(); log.close()
     if verbose:
         print_log("Winnowmap index (Meryl %d-mers) built: %s" % (WINNOWMAP_K, index_path))
 
@@ -548,7 +548,7 @@ def align_bowtie2(seqs_path, out_aln_path, ref_genome_path, threads, verbose=Tru
     command = ['bowtie2', '--very-sensitive', '-p', str(threads), '-f', '-x', '%s.bowtie2' % ref_genome_path, '-U', seqs_path, '-S', out_aln_path]
     if verbose:
         print_log("Aligning using bowtie2: %s" % ' '.join(command))
-    log = open('%s.log' % out_aln_path, 'w'); call(command, stderr=log); log.close()
+    log = open('%s.log' % out_aln_path, 'w'); subprocess.call(command, stderr=log); log.close()
     if verbose:
         print_log("bowtie2 alignment complete: %s" % out_aln_path)
 
@@ -559,7 +559,7 @@ def align_dragmap(seqs_path, out_aln_path, ref_genome_path, threads, verbose=Tru
     command = ['dragen-os', '--num-threads', str(threads), '--Aligner.sw-all', '1', '-r', '%s.DRAGMAP' % ref_genome_path, '-1', tmp_fq_path]
     if verbose:
         print_log("Aligning using DRAGMAP: %s" % ' '.join(command))
-    out = open(out_aln_path, 'w'); log = open('%s.log' % out_aln_path, 'w'); call(command, stdout=out, stderr=log); out.close(); log.close()
+    out = open(out_aln_path, 'w'); log = open('%s.log' % out_aln_path, 'w'); subprocess.call(command, stdout=out, stderr=log); out.close(); log.close()
     if verbose:
         print_log("DRAGMAP alignment complete: %s" % out_aln_path)
 
@@ -568,7 +568,7 @@ def align_hisat2(seqs_path, out_aln_path, ref_genome_path, threads, verbose=True
     command = ['hisat2', '--very-sensitive', '-p', str(threads), '-f', '-x', '%s.hisat2' % ref_genome_path, '-U', seqs_path, '-S', out_aln_path]
     if verbose:
         print_log("Aligning using HISAT2: %s" % ' '.join(command))
-    log = open('%s.log' % out_aln_path, 'w'); call(command, stderr=log); log.close()
+    log = open('%s.log' % out_aln_path, 'w'); subprocess.call(command, stderr=log); log.close()
     if verbose:
         print_log("HISAT2 alignment complete: %s" % out_aln_path)
 
@@ -578,7 +578,7 @@ def align_lra(seqs_path, out_aln_path, ref_genome_path, threads, verbose=True):
     command = ['lra', 'align', '-t', str(threads), '-CONTIG', '-p', 's', lra_ref_genome_path, seqs_path]
     if verbose:
         print_log("Aligning using LRA: %s" % ' '.join(command))
-    out_sam_file = open(out_aln_path, 'w'); log = open('%s.log' % out_aln_path, 'w'); call(command, stdout=out_sam_file, stderr=log); out_sam_file.close(); log.close()
+    out_sam_file = open(out_aln_path, 'w'); log = open('%s.log' % out_aln_path, 'w'); subprocess.call(command, stdout=out_sam_file, stderr=log); out_sam_file.close(); log.close()
     if verbose:
         print_log("LRA alignment complete: %s" % out_aln_path)
 
@@ -587,7 +587,7 @@ def align_minigraph(seqs_path, out_paf_path, ref_genome_path, threads, verbose=T
     command = ['minigraph', '-c', '-t', str(threads), '--secondary=no', '-l', '0', '-d', '0', '-L', '0', '-o', out_paf_path, ref_genome_path, seqs_path]
     if verbose:
         print_log("Aligning using Minigraph: %s" % ' '.join(command))
-    log = open('%s.log' % out_paf_path, 'w'); call(command, stderr=log); log.close()
+    log = open('%s.log' % out_paf_path, 'w'); subprocess.call(command, stderr=log); log.close()
     if verbose:
         print_log("Minigraph alignment complete: %s" % out_paf_path)
 
@@ -597,7 +597,7 @@ def align_minimap2(seqs_path, out_aln_path, ref_genome_path, threads, verbose=Tr
     command = ['minimap2', '-t', str(threads), '--score-N=0', '--secondary=no', '--sam-hit-only', '-a', '-o', out_aln_path, index_path, seqs_path]
     if verbose:
         print_log("Aligning using Minimap2: %s" % ' '.join(command))
-    log = open('%s.log' % out_aln_path, 'w'); call(command, stderr=log); log.close()
+    log = open('%s.log' % out_aln_path, 'w'); subprocess.call(command, stderr=log); log.close()
     if verbose:
         print_log("Minimap2 alignment complete: %s" % out_aln_path)
 
@@ -607,7 +607,7 @@ def align_mm2fast(seqs_path, out_aln_path, ref_genome_path, threads, verbose=Tru
     command = ['mm2-fast', '-t', str(threads), '--score-N=0', '--secondary=no', '--sam-hit-only', '-a', '-o', out_aln_path, index_path, seqs_path]
     if verbose:
         print_log("Aligning using mm2-fast: %s" % ' '.join(command))
-    log = open('%s.log' % out_aln_path, 'w'); call(command, stderr=log); log.close()
+    log = open('%s.log' % out_aln_path, 'w'); subprocess.call(command, stderr=log); log.close()
     if verbose:
         print_log("mm2-fast alignment complete: %s" % out_aln_path)
 
@@ -616,7 +616,7 @@ def align_ngmlr(seqs_path, out_aln_path, ref_genome_path, threads, verbose=True)
     command = ['ngmlr', '--skip-write', '-x', 'pacbio', '-i', '0', '--no-smallinv', '-t', str(threads), '-r', ref_genome_path, '-q', seqs_path, '-o', out_aln_path]
     if verbose:
         print_log("Aligning using NGMLR: %s" % ' '.join(command))
-    log = open('%s.log' % out_aln_path, 'w'); call(command, stderr=log); log.close()
+    log = open('%s.log' % out_aln_path, 'w'); subprocess.call(command, stderr=log); log.close()
     if verbose:
         print_log("NGMLR alignment complete: %s" % out_aln_path)
 
@@ -631,7 +631,7 @@ def align_star(seqs_path, out_aln_path, ref_genome_path, threads, verbose=True):
     command = ['STAR', '--runThreadN', str(threads), '--genomeDir', index_path, '--readFilesIn', seqs_path, '--outFileNamePrefix', out_file_prefix, '--outFilterMismatchNmax', '9999999999']
     if verbose:
         print_log("Aligning using STAR: %s" % ' '.join(command))
-    log = open('%s/STAR.log' % out_sam_dir, 'w'); call(command, stdout=log); log.close()
+    log = open('%s/STAR.log' % out_sam_dir, 'w'); subprocess.call(command, stdout=log); log.close()
     move('%sAligned.out.sam' % out_file_prefix, out_aln_path)
     if verbose:
         print_log("STAR alignment complete: %s" % out_sam_dir)
@@ -644,7 +644,7 @@ def align_unimap(seqs_path, out_aln_path, ref_genome_path, threads, verbose=True
     command = ['unimap', '-t', str(threads), '--score-N=0', '--secondary=no', '--sam-hit-only', '-a', '--cs', '-o', out_aln_path, index_path, seqs_path]
     if verbose:
         print_log("Aligning using Unimap: %s" % ' '.join(command))
-    log = open('%s.log' % out_aln_path, 'w'); call(command, stderr=log); log.close()
+    log = open('%s.log' % out_aln_path, 'w'); subprocess.call(command, stderr=log); log.close()
     if verbose:
         print_log("Unimap alignment complete: %s" % out_aln_path)
 
@@ -654,7 +654,7 @@ def align_wfmash(seqs_path, out_aln_path, ref_genome_path, threads, verbose=True
     command = ['wfmash', '-N', '--sam-format', '--threads=%d' % threads, ref_genome_path, seqs_path]
     if verbose:
         print_log("Aligning using wfmash: %s" % ' '.join(command))
-    sam = open(out_aln_path, 'w'); log = open('%s.log' % out_aln_path, 'w'); call(command, stdout=sam, stderr=log); sam.close(); log.close()
+    sam = open(out_aln_path, 'w'); log = open('%s.log' % out_aln_path, 'w'); subprocess.call(command, stdout=sam, stderr=log); sam.close(); log.close()
     if verbose:
         print_log("wfmash alignment complete: %s" % out_aln_path)
 
@@ -664,7 +664,7 @@ def align_winnowmap(seqs_path, out_aln_path, ref_genome_path, threads, verbose=T
     command = ['winnowmap', '-k', str(WINNOWMAP_K), '-W', index_path, '-t', str(threads), '--score-N=0', '--secondary=no', '--sam-hit-only', '-a', '-o', out_aln_path, ref_genome_path, seqs_path]
     if verbose:
         print_log("Aligning using Winnowmap: %s" % ' '.join(command))
-    log = open('%s.log' % out_aln_path, 'w'); call(command, stderr=log); log.close()
+    log = open('%s.log' % out_aln_path, 'w'); subprocess.call(command, stderr=log); log.close()
     if verbose:
         print_log("Winnowmap alignment complete: %s" % out_aln_path)
 
