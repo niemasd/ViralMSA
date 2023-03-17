@@ -1,11 +1,8 @@
 todo:
 - preloading indexes 
 - getting other aligners working
-- web worker the pyodide 
-- validation
-- download button
-- add runtime
-- questions: what kind of files to accept? 
+- web worker the pyodide
+- bug: running mulitple times
 
 no async solution: 
     subprocess overridden -> runs javascript that runs pyodide webworker (that is async, but runPython covers that) so it's still technically sync (doesn't work)

@@ -12,6 +12,8 @@
 
         // constants & global variables
         const PATH_TO_PYODIDE_ROOT = "/home/pyodide/";
+        let downloadResults = false;
+        let startTime = new Date().getTime();
 
         // load minimap2 from BioWASM
         const CLI = await new Aioli(["minimap2/2.22"]);
@@ -20,9 +22,11 @@
         const pyodide = await loadPyodide({
             stdout: (text) => {
                 document.getElementById("pyodide-console").innerHTML += "STDOUT: " + text + "\n";
+                console.log(text);
             },
             stderr: (text) => {
                 document.getElementById("pyodide-console").innerHTML += "STDERR: " + text + "\n";
+                console.err(text);
             },
         });
             
@@ -41,6 +45,9 @@
         document.getElementById("loading").classList.add("d-none")
 
         const runViralMSA = async () => {
+            startTime = new Date().getTime();
+            downloadResults = false;
+
             const inputSequences = document.getElementById("input-sequences").files[0];
             if (!inputSequences) {
                 alert("Please enter an input sequence file.");
@@ -127,13 +134,22 @@
                     const samText = await (await fetch(sam).then(r => r.text()));
                     pyodide.FS.writeFile(oldOutput, samText, { encoding: "utf8" });
                 }
+                
             }
             pyodide.globals.set("minimap2Override", minimap2Override);
+            pyodide.globals.set("minimap2Finish", () => {
+                console.log("minimap2Override finished");
+            })
     
             // callback for when ViralMSA.py finishes
             const ViralMSAFinish = () => {
                 const outputPreview = pyodide.FS.readFile(PATH_TO_PYODIDE_ROOT + "output/sequence.fas.aln", { encoding: "utf8" }).substring(0, 100000)
                 document.getElementById("output-aln").innerText = outputPreview;
+                const samPreview = pyodide.FS.readFile(PATH_TO_PYODIDE_ROOT + "output/sequence.fas.sam", { encoding: "utf8" }).substring(0, 100000)
+                document.getElementById("seq-aln-map").innerText = samPreview;
+                downloadResults = true;
+                let duration = (new Date().getTime() - startTime) / 1000;
+                document.getElementById("duration").innerText = "Total runtime: " + duration + " seconds";
             }
             pyodide.globals.set("ViralMSAFinish", ViralMSAFinish);
     
@@ -150,6 +166,31 @@
             // run ViralMSAWeb.py
             pyodide.runPython(await (await fetch("./assets/python/ViralMSAWeb.py")).text());
         }
+
+        // from: https://stackoverflow.com/questions/2897619/using-html5-javascript-to-generate-and-save-a-file
+        const download = (filename, text) => {
+            var pom = document.createElement('a');
+            pom.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+            pom.setAttribute('download', filename);
+
+            if (document.createEvent) {
+                var event = document.createEvent('MouseEvents');
+                event.initEvent('click', true, true);
+                pom.dispatchEvent(event);
+            }
+            else {
+                pom.click();
+            }
+        }
+
+        document.getElementById("downloadResults").addEventListener("click", () => {
+            if (downloadResults) {
+                download("sequence.fas.aln", pyodide.FS.readFile(PATH_TO_PYODIDE_ROOT + "output/sequence.fas.aln", { encoding: "utf8" }))
+                download("sequence.fas.sam", pyodide.FS.readFile(PATH_TO_PYODIDE_ROOT + "output/sequence.fas.sam", { encoding: "utf8" }))
+            } else {
+                alert("No results to download.")
+            }
+        })
 
         document.getElementById("runViralMSA").addEventListener("click", runViralMSA);
     </script>
@@ -170,15 +211,21 @@
             </div>
 
             <button type="button" class="mt-3 btn btn-primary" id="runViralMSA">Run ViralMSA</button>
+            <button type="button" class="mt-3 btn btn-primary" id="downloadResults">Download Results</button>
+            <p class="my-3" id="duration"></p>
         </div>
         <div class="output">
-            <div class="mb-3">
+            <div class="mb-5">
                 <label for="pyodide-console" class="form-label"><h4>Console</h4></label>
                 <textarea class="form-control" id="pyodide-console" rows="3"></textarea>
             </div>
-            <div class="mb-3">
-                <label for="output-aln" class="form-label"><h4>Output Alignment</h4></label>
+            <div class="mb-5">
+                <label for="output-aln" class="form-label"><h4>Output Alignment (first 10,000 characters)</h4></label>
                 <textarea class="form-control" id="output-aln" rows="3"></textarea>
+            </div>
+            <div class="mb-5">
+                <label for="seq-aln-map" class="form-label"><h4>Sequence Alignment Map (first 10,000 characters)</h4></label>
+                <textarea class="form-control" id="seq-aln-map" rows="3"></textarea>
             </div>
         </div>
     </div>
