@@ -59,6 +59,19 @@
                 alert("Please enter a reference sequence file.");
                 return;
             }
+
+            // clear console and runtime record
+            document.getElementById("pyodide-console").innerHTML = "";
+            document.getElementById("duration").innerText = "Running...";
+
+            // remove output folder
+            if (pyodide.FS.readdir(PATH_TO_PYODIDE_ROOT).includes('output')) {
+                for (const file of pyodide.FS.readdir(PATH_TO_PYODIDE_ROOT + 'output')) {
+                    if (file === '.' || file === '..') continue;
+                    pyodide.FS.unlink(PATH_TO_PYODIDE_ROOT + 'output/' + file)
+                }
+                pyodide.FS.rmdir(PATH_TO_PYODIDE_ROOT + 'output', true);
+            }
             
             // write provided file to Pyodide
             const inputSeqReader = new FileReader();
