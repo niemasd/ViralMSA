@@ -5,6 +5,10 @@
     align-items: center;
 }
 
+#duration {
+    font-weight: bold;
+}
+
 .input {
     display: flex;
     flex-direction: column;

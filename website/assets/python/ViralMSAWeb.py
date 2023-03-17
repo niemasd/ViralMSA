@@ -13,10 +13,6 @@ async def call_override(command, stderr):
     
     await minimap2Override(command)
 
-async def add_success_callback(task, callback):
-    await task
-    callback()
-
 if ('arguments' in globals()):
     ViralMSA.sys.argv = arguments.split()
     ViralMSA.subprocess.check_output = check_output_override
