@@ -2,8 +2,12 @@ todo:
 - preloading indexes 
 - getting other aligners working
 - help guide
+- clean up codebase
 
 no async solution: 
     webworker pyodide -> runs stuff -> minimap2 function gets called -> calls another webworker, which runs actual minimap2 and the pyodide webworker runs Atomics.wait() with SharedArrayBuffer
 
 overriding: subprocess.call, check_output, Entrez.efetch
+
+sync XHR and service worker: https://glitch.com/edit/#!/sleep-sw?path=worker.js%3A28%3A71
+https://stackoverflow.com/questions/10590213/synchronously-wait-for-message-in-web-worker

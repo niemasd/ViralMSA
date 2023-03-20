@@ -1,5 +1,5 @@
 importScripts("https://cdn.jsdelivr.net/pyodide/v0.22.1/full/pyodide.js");
-importScripts("https://biowasm.com/cdn/v3/aioli.js")
+importScripts("http://localhost:8000/assets/biowasm/aioli.js")
 
 // webworker api
 self.onmessage = async (event) => {
@@ -36,7 +36,11 @@ let CLI;
 const init = async () => {
 
     // load minimap2 from BioWASM
-    CLI = await new Aioli(["minimap2/2.22"]);
+    CLI = await new Aioli([{
+        tool: "minimap2",
+        version: "2.22",
+        urlPrefix: "http://localhost:8000/assets/biowasm",
+    }]);
     
     // load pyodide
     pyodide = await loadPyodide({
