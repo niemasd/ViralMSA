@@ -1,14 +1,21 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <link rel="icon" type="image/x-icon" href="./favicon.ico">
+    <link rel="icon" type="image/x-icon" href="./assets/favicon.ico">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
     <link rel="stylesheet" href="./assets/index.css">
 </head>
 <body>
+    <script src="coi-serviceworker.min.js"></script>
     <script type="module" async>
-        const viralmsaworker = new Worker('./assets/js/viralmsaworker.js');
+        const viralmsaworker = new Worker('./viralmsaworker.js');
+
+        // shared array buffer for waiting for minimap2 to finish
+        const sharedArrayBuffer = new SharedArrayBuffer(4);
+        const sharedArray = new Int32Array(sharedArrayBuffer);
+        console.log(sharedArray) 
         
+        // webworker handling
         viralmsaworker.onmessage = (event) => {
             if (event.data.error) {
                 alert(event.data.error);
@@ -32,6 +39,7 @@
         }
 
         document.getElementById("runViralMSA").addEventListener("click", () => {
+            // validation here
             const inputSequences = document.getElementById("input-sequences").files[0];
             if (!inputSequences) {
                 alert("Please enter an input sequence file.");
@@ -44,6 +52,8 @@
                 return;
             }
 
+            // validation passed
+
             // clear console and runtime record
             document.getElementById("pyodide-console").innerHTML = "";
             document.getElementById("duration").innerText = "Running...";
@@ -51,6 +61,7 @@
             let inputSeq;
             let refSeq;
 
+            // sending file data to webworker
             const inputSeqReader = new FileReader();
             inputSeqReader.readAsText(inputSequences, "UTF-8");
             inputSeqReader.onload = (e) => {
@@ -71,6 +82,7 @@
             }, 100);
         });
 
+        // get results for downloading
         document.getElementById("downloadResults").addEventListener("click", () => {
             viralmsaworker.postMessage({'getResults': 'all'});
         });
