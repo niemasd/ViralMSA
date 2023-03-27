@@ -2,4 +2,3 @@ todo:
 - preloading indexes 
 - getting other aligners working
 - help guide
-- clean up codebase
