@@ -11,8 +11,8 @@
         const viralmsaworker = new Worker('./viralmsaworker.js');
         const minimap2worker = new Worker('./minimap2worker.js');
 
-        // shared array buffer for waiting for minimap2 to finish and transmitting file data (50MB)
-        const sharedArrayBuffer = new SharedArrayBuffer(52428800);
+        // shared array buffer for waiting for minimap2 to finish and transmitting file data (100MB)
+        const sharedArrayBuffer = new SharedArrayBuffer(104857600);
         const sharedArray = new Int32Array(sharedArrayBuffer);  
         viralmsaworker.postMessage({'arraybuffer': sharedArray})
         minimap2worker.postMessage({'arraybuffer': sharedArray})
