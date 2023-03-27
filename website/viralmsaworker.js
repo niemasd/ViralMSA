@@ -12,6 +12,7 @@ let mmiOutput;
 self.onmessage = async (event) => {
     if (event.data.getResults) {
         if (downloadResults) {
+            // send data over to main thread to be downloaded to user's computer
             self.postMessage({
                 'download': [
                     ['sequence.fas.aln', pyodide.FS.readFile(PATH_TO_PYODIDE_ROOT + "output/sequence.fas.aln", { encoding: "utf8" })],
@@ -28,14 +29,10 @@ self.onmessage = async (event) => {
             return;
         }
     
+        // run ViralMSA
         await runViralMSA(event.data.inputSeq, event.data.refSeq);
     } else if (event.data.arraybuffer) {
         mm2FinishedBuffer = event.data.arraybuffer;
-    } else if (event.data.minimap2done) {
-        if (event.data.minimap2done === 'buildIndex') {
-            // write mmi file to pyodide
-            pyodide.FS.writeFile(mmiOutput, event.data.mmi, { encoding: "binary" })
-        }
     }
 } 
 
@@ -83,7 +80,7 @@ const runViralMSA = async (inputSequences, referenceSequence) => {
     pyodide.FS.writeFile(PATH_TO_PYODIDE_ROOT + 'reference.fas', referenceSequence, { encoding: "utf8" });
     
     // load in ViralMSA.py
-    pyodide.FS.writeFile(PATH_TO_PYODIDE_ROOT + 'ViralMSA.py', await (await fetch("./assets/python/ViralMSA.py")).text(), { encoding: "utf8" });
+    pyodide.FS.writeFile(PATH_TO_PYODIDE_ROOT + 'ViralMSA.py', await (await fetch("https://raw.githubusercontent.com/niemasd/ViralMSA/master/ViralMSA.py")).text(), { encoding: "utf8" });
 
     // set global args variable
     let args = "./ViralMSA.py -e email@address.com -s sequence.fas -o output -r reference.fas --viralmsa_dir cache";
@@ -114,9 +111,6 @@ const runViralMSA = async (inputSequences, referenceSequence) => {
                 'inputSeq': pyodide.FS.readFile(PATH_TO_PYODIDE_ROOT + fastaFile, { encoding: "utf8" })
             });
 
-            // 10 second timeout
-            Atomics.wait(mm2FinishedBuffer, 0, 0, 10000)
-
         // alignment
         } else if (command.includes('-a')) {
             // swap out third to last argument (output file)
@@ -134,22 +128,29 @@ const runViralMSA = async (inputSequences, referenceSequence) => {
                 'command': command, 
                 'refSeq': pyodide.FS.readFile(PATH_TO_PYODIDE_ROOT + "sequence.fas", { encoding: "utf8" })
             });
+        }
 
-            // 10 second timeout
-            Atomics.wait(mm2FinishedBuffer, 0, 0, 10000)
-            
-            const mm2FinishedArray = new Uint8Array(mm2FinishedBuffer.buffer);
-            let lastIndex = mm2FinishedArray.length - 1;
-            while (lastIndex >= 0 && mm2FinishedArray[lastIndex] === 0) {
-                lastIndex--;
-            }
+        // 10 second timeout
+        Atomics.wait(mm2FinishedBuffer, 0, 0, 10000)
 
-            const strippedUint8Array = new Uint8Array(lastIndex + 1);
-            strippedUint8Array.set(mm2FinishedArray.subarray(0, lastIndex + 1));
+        const mm2FinishedArray = new Uint8Array(mm2FinishedBuffer.buffer);
+        let lastIndex = mm2FinishedArray.length - 1;
+        while (lastIndex >= 0 && mm2FinishedArray[lastIndex] === 0) {
+            lastIndex--;
+        }
 
+        const strippedUint8Array = new Uint8Array(lastIndex + 1);
+        strippedUint8Array.set(mm2FinishedArray.subarray(0, lastIndex + 1));
+
+        if (command.includes('-d')) {
+            // write mmi file to pyodide
+            pyodide.FS.writeFile(mmiOutput, strippedUint8Array, { encoding: "binary" })
+        } else if (command.includes('-a')) {
+            // write sam file to pyodide
             pyodide.FS.writeFile(PATH_TO_PYODIDE_ROOT + "output/sequence.fas.sam", strippedUint8Array, { encoding: "binary" })
         }
     }
+    
     pyodide.globals.set("minimap2Override", minimap2Override);
 
     // run ViralMSAWeb.py

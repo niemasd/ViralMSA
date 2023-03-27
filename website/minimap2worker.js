@@ -10,6 +10,7 @@ const init = async () => {
 
 init();
 
+// listen for messages from main thread
 self.onmessage = (event) => {
     if (event.data.arraybuffer) {
         mm2FinishedBuffer = event.data.arraybuffer;
@@ -18,7 +19,10 @@ self.onmessage = (event) => {
     }
 }
 
+// run minimap2 with provided command, sequences
 const runMinimap2 = async (command, inputSeq, refSeq) => {
+    mm2FinishedBuffer.fill(0);
+    
     // build minimap2 index
     if (command.includes('-d')) {
         await CLI.mount([{
@@ -29,8 +33,9 @@ const runMinimap2 = async (command, inputSeq, refSeq) => {
         // run minimap2 in BioWASM
         await CLI.exec(command.join(' '));
         
-        // send over output file data
+        // send over output file data (minimap2 index)
         self.postMessage({'minimap2done': 'buildIndex', 'mmi': await CLI.fs.readFile("target.fas.mmi", { encoding: "binary" })})
+
     // alignment
     } else if (command.includes('-a')) {
         // mount sequence.fas
@@ -42,7 +47,7 @@ const runMinimap2 = async (command, inputSeq, refSeq) => {
         // run minimap2 in BioWASM
         await CLI.exec(command.join(' '));
 
-        // copy over sam file to Pyodide
+        // send over output file data (sequence alignment / map file)
         self.postMessage({'minimap2done': 'alignment', 'sam': await CLI.fs.readFile("sequence.fas.sam", { encoding: "binary" })})
     }
 }
