@@ -433,7 +433,7 @@ def build_index_minigraph(ref_genome_path, threads, verbose=True):
     pass # Minigraph doesn't seem to do anything with a ref genome with 1 sequence
 
 # build minimap2 index
-async def build_index_minimap2(ref_genome_path, threads, verbose=True):
+def build_index_minimap2(ref_genome_path, threads, verbose=True):
     index_path = '%s.mmi' % ref_genome_path
     if isfile(index_path):
         if verbose:
@@ -442,7 +442,7 @@ async def build_index_minimap2(ref_genome_path, threads, verbose=True):
     command = ['minimap2', '-t', str(threads), '-d', index_path, ref_genome_path]
     if verbose:
         print_log("Building Minimap2 index: %s" % ' '.join(command))
-    log = open('%s.log' % index_path, 'w'); await subprocess.call(command, stderr=log); log.close()
+    log = open('%s.log' % index_path, 'w'); subprocess.call(command, stderr=log); log.close()
     if verbose:
         print_log("Minimap2 index built: %s" % index_path)
 
@@ -593,12 +593,12 @@ def align_minigraph(seqs_path, out_paf_path, ref_genome_path, threads, verbose=T
         print_log("Minigraph alignment complete: %s" % out_paf_path)
 
 # align genomes using minimap2
-async def align_minimap2(seqs_path, out_aln_path, ref_genome_path, threads, verbose=True):
+def align_minimap2(seqs_path, out_aln_path, ref_genome_path, threads, verbose=True):
     index_path = '%s.mmi' % ref_genome_path
     command = ['minimap2', '-t', str(threads), '--score-N=0', '--secondary=no', '--sam-hit-only', '-a', '-o', out_aln_path, index_path, seqs_path]
     if verbose:
         print_log("Aligning using Minimap2: %s" % ' '.join(command))
-    log = open('%s.log' % out_aln_path, 'w'); await subprocess.call(command, stderr=log); log.close()
+    log = open('%s.log' % out_aln_path, 'w'); subprocess.call(command, stderr=log); log.close()
     if verbose:
         print_log("Minimap2 alignment complete: %s" % out_aln_path)
 
@@ -1032,7 +1032,7 @@ def aln_to_fasta(out_aln_path, out_msa_path, ref_genome_path, omit_ref=False, bu
     return num_output_IDs
 
 # main content
-async def main():
+def main():
     global args
 
     # parse user args and prepare run
@@ -1064,7 +1064,7 @@ async def main():
         print_log("Reference genome downloaded: %s" % args.ref_genome_path)
 
     # build aligner index (if needed)
-    await ALIGNERS[args.aligner]['build_index'](args.ref_genome_path, args.threads)
+    ALIGNERS[args.aligner]['build_index'](args.ref_genome_path, args.threads)
     print_log()
 
     # align viral genomes against referencea
@@ -1073,7 +1073,7 @@ async def main():
         out_aln_path = '%s/%s.paf' % (args.output, args.sequences.split('/')[-1])
     else:
         out_aln_path = '%s/%s.sam' % (args.output, args.sequences.split('/')[-1])
-    await ALIGNERS[args.aligner]['align'](args.sequences, out_aln_path, args.ref_genome_path, args.threads)
+    ALIGNERS[args.aligner]['align'](args.sequences, out_aln_path, args.ref_genome_path, args.threads)
 
     # convert alignment (SAM/PAF) to MSA FASTA
     print_log("Converting alignment to FASTA...")
