@@ -11,31 +11,41 @@
         const viralmsaworker = new Worker('./viralmsaworker.js');
         const minimap2worker = new Worker('./minimap2worker.js');
 
-        // shared array buffer for waiting for minimap2 to finish (50MB)
+        // shared array buffer for waiting for minimap2 to finish and transmitting file data (50MB)
         const sharedArrayBuffer = new SharedArrayBuffer(52428800);
         const sharedArray = new Int32Array(sharedArrayBuffer);  
         viralmsaworker.postMessage({'arraybuffer': sharedArray})
         minimap2worker.postMessage({'arraybuffer': sharedArray})
         
-        // webworker handling
+        // Pyodide WebWorker (ViralMSA.py) handling
         viralmsaworker.onmessage = (event) => {
+            // error handling
             if (event.data.error) {
                 alert(event.data.error);
+
+            // done loading web page
             } else if (event.data.init) {
-                // done loading
                 document.getElementById("content").classList.remove("d-none")
                 document.getElementById("loading").classList.add("d-none")
+
+            // download results
             } else if (event.data.download) {
                 for (const download of event.data.download) {
                     // first element of array is filename, second element is content
                     downloadFile(download[0], download[1])
                 }
+
+            // updating console
             } else if (event.data.pyodideConsole) {
                 document.getElementById("pyodide-console").innerHTML += event.data.pyodideConsole;
+            
+            // on ViralMSA finish
             } else if (event.data.outputPreview) {
                 document.getElementById("output-aln").innerText = event.data.outputPreview;
                 document.getElementById("seq-aln-map").innerText = event.data.samPreview;
                 document.getElementById("duration").innerText = "Total runtime: " + event.data.duration + " seconds";
+            
+            // Pyodide call to run minimap2 
             } else if (event.data.runminimap2) {
                 if (event.data.runminimap2 === 'alignment') {
                     minimap2worker.postMessage({'runminimap2': 'alignment', 'command': event.data.command, 'refSeq': event.data.refSeq});
@@ -44,28 +54,27 @@
                 }
             }
 
+            // Minimap2 WebWorker handling
             minimap2worker.onmessage = (event) => {
+                // Minimap2 done running
                 if (event.data.minimap2done) {
-                    if (event.data.minimap2done === 'alignment') {
-                        viralmsaworker.postMessage({'minimap2done': 'alignment', 'sam': event.data.sam});
-                        
-                        const adjustedArray = new Uint8Array(Math.ceil(event.data.sam.length / 4) * 4);
-                        adjustedArray.set(event.data.sam);
-                        sharedArray.set(new Uint32Array(adjustedArray.buffer), 0)
-                        Atomics.notify(sharedArray, 0);
-                    } else if (event.data.minimap2done === 'buildIndex') {
-                        viralmsaworker.postMessage({'minimap2done': 'buildIndex', 'mmi': event.data.mmi});
+                    const fileData = event.data.minimap2done === 'alignment' ? event.data.sam : event.data.mmi;
 
-                        sharedArray[0] = 1;
-                        Atomics.notify(sharedArray, 0);
-                    }
+                    // adjust array size to be divisible by 4
+                    const adjustedArray = new Uint8Array(Math.ceil(fileData.length / 4) * 4);
+                    adjustedArray.set(fileData);
+                    // update shared array buffer
+                    sharedArray.set(new Uint32Array(adjustedArray.buffer), 0)
+
+                    // notify ViralMSA WebWorker that Minimap2 is done
+                    Atomics.notify(sharedArray, 0);
                 }
             }
             
         }
 
         document.getElementById("runViralMSA").addEventListener("click", () => {
-            // validation here
+            // validation
             const inputSequences = document.getElementById("input-sequences").files[0];
             if (!inputSequences) {
                 alert("Please enter an input sequence file.");
@@ -79,7 +88,6 @@
             }
 
             // validation passed
-
             // clear console and runtime record
             document.getElementById("pyodide-console").innerHTML = "";
             document.getElementById("duration").innerText = "Running...";
@@ -100,6 +108,7 @@
                 refSeq = e.target.result;
             }
 
+            // wait until file data is read and then run ViralMSA
             const interval = setInterval(() => {
                 if (inputSeq && refSeq) {
                     clearInterval(interval);
@@ -114,6 +123,7 @@
         });
 
         // from: https://stackoverflow.com/questions/2897619/using-html5-javascript-to-generate-and-save-a-file
+        // helper function to download files
         const downloadFile = (filename, text) => {
             var pom = document.createElement('a');
             pom.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
