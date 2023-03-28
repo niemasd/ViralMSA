@@ -159,7 +159,5 @@ const runViralMSA = async (inputSequences, referenceSequence) => {
 
     // after finished
     downloadResults = true;
-    const outputPreview = pyodide.FS.readFile(PATH_TO_PYODIDE_ROOT + "output/sequence.fas.aln", { encoding: "utf8" }).substring(0, 100000)
-    const samPreview = pyodide.FS.readFile(PATH_TO_PYODIDE_ROOT + "output/sequence.fas.sam", { encoding: "utf8" }).substring(0, 100000)
-    self.postMessage({'outputPreview': outputPreview, 'samPreview': samPreview, 'duration': (new Date().getTime() - startTime) / 1000})
+    self.postMessage({'finished': true, duration: (new Date().getTime() - startTime) / 1000})
 }
