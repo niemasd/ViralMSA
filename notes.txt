@@ -2,3 +2,5 @@ todo:
 - preloading indexes 
 - getting other aligners working
 - help guide
+
+update: made some modifications to .gitignore, created actions folder (should it be moved)

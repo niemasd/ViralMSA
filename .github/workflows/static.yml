@@ -14,7 +14,6 @@ permissions:
   contents: read
   pages: write
   id-token: write
-  deployments: write
 
 # Allow one concurrent deployment
 concurrency:
@@ -57,6 +56,7 @@ jobs:
           git config user.email github-actions@github.com
           git add .
           git commit -m "Github Action: generate common reference sequences and minimap2 indexes"
+          git remote set-url origin https://x-access-token:${{ secrets.GH_PAT }}@github.com/daniel-ji/ViralMSA.git
           git push
         continue-on-error: true
 
