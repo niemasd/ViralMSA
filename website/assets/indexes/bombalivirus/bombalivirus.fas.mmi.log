@@ -1,0 +1,8 @@
+[M::mm_idx_gen::0.002*1.46] collected minimizers
+[M::mm_idx_gen::0.003*1.32] sorted minimizers
+[M::main::0.004*1.23] loaded/built the index for 1 target sequence(s)
+[M::mm_idx_stat] kmer size: 15; skip: 10; is_hpc: 0; #seq: 1
+[M::mm_idx_stat::0.005*1.22] distinct minimizers: 3583 (100.00% are singletons); average occurrences: 1.000; average spacing: 5.315; total length: 19043
+[M::main] Version: 2.24-r1122
+[M::main] CMD: minimap2 -t 1 -d website/assets/indexes/bombalivirus/bombalivirus.fas.mmi website/assets/indexes/bombalivirus/bombalivirus.fas
+[M::main] Real time: 0.005 sec; CPU: 0.006 sec; Peak RSS: 0.020 GB
