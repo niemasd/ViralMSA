@@ -1,0 +1,8 @@
+[M::mm_idx_gen::0.002*1.55] collected minimizers
+[M::mm_idx_gen::0.003*1.37] sorted minimizers
+[M::main::0.004*1.26] loaded/built the index for 1 target sequence(s)
+[M::mm_idx_stat] kmer size: 15; skip: 10; is_hpc: 0; #seq: 1
+[M::mm_idx_stat::0.004*1.24] distinct minimizers: 3535 (100.00% are singletons); average occurrences: 1.000; average spacing: 5.344; total length: 18891
+[M::main] Version: 2.24-r1122
+[M::main] CMD: minimap2 -t 1 -d website/assets/indexes/restonvirus/restonvirus.fas.mmi website/assets/indexes/restonvirus/restonvirus.fas
+[M::main] Real time: 0.005 sec; CPU: 0.006 sec; Peak RSS: 0.021 GB
