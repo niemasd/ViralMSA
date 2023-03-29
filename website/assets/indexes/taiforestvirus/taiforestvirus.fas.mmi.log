@@ -1,8 +1,0 @@
-[M::mm_idx_gen::0.003*1.41] collected minimizers
-[M::mm_idx_gen::0.004*1.29] sorted minimizers
-[M::main::0.005*1.22] loaded/built the index for 1 target sequence(s)
-[M::mm_idx_stat] kmer size: 15; skip: 10; is_hpc: 0; #seq: 1
-[M::mm_idx_stat::0.005*1.21] distinct minimizers: 3537 (99.94% are singletons); average occurrences: 1.001; average spacing: 5.350; total length: 18935
-[M::main] Version: 2.24-r1122
-[M::main] CMD: minimap2 -t 1 -d website/assets/indexes/taiforestvirus/taiforestvirus.fas.mmi website/assets/indexes/taiforestvirus/taiforestvirus.fas
-[M::main] Real time: 0.006 sec; CPU: 0.007 sec; Peak RSS: 0.021 GB
