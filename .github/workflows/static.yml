@@ -57,6 +57,7 @@ jobs:
           git add .
           git commit -m "Github Action: generate common reference sequences and minimap2 indexes"
           git push
+        continue-on-error: true
 
 
   # deploy job for static content
