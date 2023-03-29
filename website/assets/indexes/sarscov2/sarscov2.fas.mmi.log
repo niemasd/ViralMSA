@@ -1,8 +1,0 @@
-[M::mm_idx_gen::0.003*1.37] collected minimizers
-[M::mm_idx_gen::0.005*1.24] sorted minimizers
-[M::main::0.006*1.19] loaded/built the index for 1 target sequence(s)
-[M::mm_idx_stat] kmer size: 15; skip: 10; is_hpc: 0; #seq: 1
-[M::mm_idx_stat::0.006*1.18] distinct minimizers: 5587 (99.93% are singletons); average occurrences: 1.004; average spacing: 5.332; total length: 29903
-[M::main] Version: 2.24-r1122
-[M::main] CMD: minimap2 -t 1 -d website/assets/indexes/sarscov2/sarscov2.fas.mmi website/assets/indexes/sarscov2/sarscov2.fas
-[M::main] Real time: 0.007 sec; CPU: 0.008 sec; Peak RSS: 0.021 GB
