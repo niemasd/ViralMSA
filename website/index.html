@@ -8,8 +8,8 @@
 <body>
     <script src="coi-serviceworker.min.js"></script>
     <script type="module" async>
-        const viralmsaworker = new Worker('./viralmsaworker.js');
-        const minimap2worker = new Worker('./minimap2worker.js');
+        const viralmsaworker = new Worker('./assets/workers/viralmsaworker.js');
+        const minimap2worker = new Worker('./assets/workers/minimap2worker.js');
 
         // shared array buffer for waiting for minimap2 to finish and transmitting file data (100MB)
         const sharedArrayBuffer = new SharedArrayBuffer(104857600);

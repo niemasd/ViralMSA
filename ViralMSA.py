@@ -15,14 +15,13 @@ from multiprocessing import cpu_count
 from os import chdir, getcwd, makedirs, remove
 from os.path import abspath, expanduser, isdir, isfile, split
 from shutil import copy, move
-from subprocess import CalledProcessError, DEVNULL, PIPE, Popen, run, STDOUT
 from urllib.request import urlopen
 import argparse
-import sys
 import subprocess
+import sys
 
 # useful constants
-VERSION = '1.1.25'
+VERSION = '1.1.27'
 RELEASES_URL = 'https://api.github.com/repos/niemasd/ViralMSA/tags'
 CIGAR_LETTERS = {'M','D','I','S','H','=','X'}
 DEFAULT_BUFSIZE = 1048576 # 1 MB #8192 # 8 KB
@@ -231,7 +230,7 @@ def check_hisat2():
 def check_lra():
     try:
         o = subprocess.check_output(['lra', '-h'])
-    except CalledProcessError as cpe:
+    except subprocess.CalledProcessError as cpe:
         o = cpe.output
     except:
         o = None
@@ -242,7 +241,7 @@ def check_lra():
 # check minigraph
 def check_minigraph():
     try:
-        o = run(['minigraph'], stdout=PIPE, stderr=PIPE).stderr
+        o = subprocess.run(['minigraph'], stdout=subprocess.PIPE, stderr=subprocess.PIPE).stderr
     except:
         o = None
     if o is None or 'Usage: minigraph' not in o.decode():
@@ -269,7 +268,7 @@ def check_mm2fast():
 # check NGMLR
 def check_ngmlr():
     try:
-        o = subprocess.check_output(['ngmlr', '-h'], stderr=STDOUT)
+        o = subprocess.check_output(['ngmlr', '-h'], stderr=subprocess.STDOUT)
     except:
         o = None
     if o is None or 'Usage: ngmlr' not in o.decode():
@@ -311,7 +310,7 @@ def check_winnowmap():
     if o is None or 'Usage: winnowmap' not in o.decode():
         print("ERROR: Winnowmap is not runnable in your PATH", file=sys.stderr); exit(1)
     try:
-        o = run(['meryl'], stdout=PIPE, stderr=PIPE).stderr
+        o = subprocess.run(['meryl'], stdout=subprocess.PIPE, stderr=subprocess.PIPE).stderr
     except:
         o = None
     if o is None or 'usage: meryl' not in o.decode():
@@ -351,7 +350,7 @@ def build_index_bowtie2(ref_genome_path, threads, verbose=True):
     command = ['bowtie2-build', '--threads', str(threads), ref_genome_path, '%s.bowtie2' % ref_genome_fn]
     if verbose:
         print_log("Building bowtie2 index: %s" % ' '.join(command))
-    log = open('%s.bowtie2.log' % ref_genome_path, 'w'); subprocess.call(command, stdout=log, stderr=STDOUT); log.close()
+    log = open('%s.bowtie2.log' % ref_genome_path, 'w'); subprocess.call(command, stdout=log, stderr=subprocess.STDOUT); log.close()
     if verbose:
         print_log("bowtie2 index built: %s.bowtie2.*.bt2" % ref_genome_path)
     chdir(orig_dir)
@@ -367,7 +366,7 @@ def build_index_dragmap(ref_genome_path, threads, verbose=True):
     command = ['dragen-os', '--build-hash-table', 'true', '--ht-reference', ref_genome_path, '--ht-num-threads', str(threads), '--output-directory', index_path]
     if verbose:
         print_log("Building DRAGMAP index: %s" % ' '.join(command))
-    log = open('%s/index.log' % index_path, 'w'); subprocess.call(command, stdout=log, stderr=STDOUT); log.close()
+    log = open('%s/index.log' % index_path, 'w'); subprocess.call(command, stdout=log, stderr=subprocess.STDOUT); log.close()
     if verbose:
         print_log("DRAGMAP index built: %s" % index_path)
 
@@ -391,7 +390,7 @@ def build_index_hisat2(ref_genome_path, threads, verbose=True):
     command = ['hisat2-build', '--threads', str(threads), ref_genome_path, '%s.hisat2' % ref_genome_fn]
     if verbose:
         print_log("Building HISAT2 index: %s" % ' '.join(command))
-    log = open('%s.hisat2.log' % ref_genome_path, 'w'); subprocess.call(command, stdout=log, stderr=STDOUT); log.close()
+    log = open('%s.hisat2.log' % ref_genome_path, 'w'); subprocess.call(command, stdout=log, stderr=subprocess.STDOUT); log.close()
     if verbose:
         print_log("HISAT2 index built: %s.hisat2.*.ht2" % ref_genome_path)
     chdir(orig_dir)
@@ -475,7 +474,7 @@ def build_index_ngmlr(ref_genome_path, threads, verbose=True):
     command = ['ngmlr', '-x', 'pacbio', '-i', '0', '--no-smallinv', '-t', str(threads), '-r', ref_genome_path]
     if verbose:
         print_log("Building NGMLR index: %s" % ' '.join(command))
-    log = open('%s.NGMLR.log' % ref_genome_path, 'w'); subprocess.call(command, stdin=DEVNULL, stderr=log, stdout=DEVNULL); log.close()
+    log = open('%s.NGMLR.log' % ref_genome_path, 'w'); subprocess.call(command, stdin=subprocess.DEVNULL, stderr=log, stdout=DEVNULL); log.close()
     if verbose:
         print_log("NGMLR index built: %s and %s" % (enc_index_path, ht_index_path))
 
@@ -495,7 +494,7 @@ def build_index_star(ref_genome_path, threads, verbose=True):
     command = ['STAR', '--runMode', 'genomeGenerate', '--runThreadN', str(threads), '--genomeDir', index_path, '--genomeFastaFiles', ref_genome_path, '--genomeSAindexNbases', str(genomeSAindexNbases)]
     if verbose:
         print_log("Building STAR index: %s" % ' '.join(command))
-    log = open('%s/index.log' % index_path, 'w'); subprocess.call(command, stdout=log, stderr=STDOUT); log.close()
+    log = open('%s/index.log' % index_path, 'w'); subprocess.call(command, stdout=log, stderr=subprocess.STDOUT); log.close()
     if verbose:
         print_log("STAR index built: %s" % index_path)
     if delete_log and isfile('Log.out'):
@@ -962,10 +961,10 @@ def parse_args():
     return args
 
 # download reference genome
-def download_ref_genome(ref_path, ref_genome_path, email, bufsize=DEFAULT_BUFSIZE):
+def download_ref_genome(reference, ref_path, ref_genome_path, email, bufsize=DEFAULT_BUFSIZE):
     makedirs(ref_path, exist_ok=True); Entrez.email = email
     try:
-        handle = Entrez.efetch(db='nucleotide', rettype='fasta', id=args.reference)
+        handle = Entrez.efetch(db='nucleotide', rettype='fasta', id=reference)
     except:
         raise RuntimeError("Encountered error when trying to download reference genome from NCBI. Perhaps the accession number is invalid?")
     seq = handle.read()
@@ -1033,8 +1032,6 @@ def aln_to_fasta(out_aln_path, out_msa_path, ref_genome_path, omit_ref=False, bu
 
 # main content
 def main():
-    global args
-
     # parse user args and prepare run
     args = parse_args()
     makedirs(args.viralmsa_dir, exist_ok=True)
@@ -1060,7 +1057,7 @@ def main():
         print_log("Reference genome found: %s" % args.ref_genome_path)
     else:
         print_log("Downloading reference genome from NCBI...")
-        download_ref_genome(args.ref_path, args.ref_genome_path, args.email, bufsize=args.buffer_size)
+        download_ref_genome(args.reference, args.ref_path, args.ref_genome_path, args.email, bufsize=args.buffer_size)
         print_log("Reference genome downloaded: %s" % args.ref_genome_path)
 
     # build aligner index (if needed)
