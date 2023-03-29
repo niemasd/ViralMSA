@@ -1,0 +1,8 @@
+[M::mm_idx_gen::0.004*1.30] collected minimizers
+[M::mm_idx_gen::0.005*1.23] sorted minimizers
+[M::main::0.007*1.18] loaded/built the index for 1 target sequence(s)
+[M::mm_idx_stat] kmer size: 15; skip: 10; is_hpc: 0; #seq: 1
+[M::mm_idx_stat::0.007*1.17] distinct minimizers: 3590 (99.94% are singletons); average occurrences: 1.001; average spacing: 5.278; total length: 18959
+[M::main] Version: 2.24-r1122
+[M::main] CMD: minimap2 -t 1 -d website/assets/indexes/ebolavirus/ebolavirus.fas.mmi website/assets/indexes/ebolavirus/ebolavirus.fas
+[M::main] Real time: 0.007 sec; CPU: 0.009 sec; Peak RSS: 0.020 GB
