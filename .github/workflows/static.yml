@@ -23,6 +23,7 @@ concurrency:
 jobs:
   # preload job to download common reference sequences and their minimap2 indexes
   preload:
+    if: github.actor != 'github-actions'
     runs-on: ubuntu-latest
 
     steps: 
@@ -64,6 +65,7 @@ jobs:
 
   # deploy job for static content
   deploy:
+    if: github.actor != 'github-actions'
     needs: preload
     environment:
       name: github-pages
