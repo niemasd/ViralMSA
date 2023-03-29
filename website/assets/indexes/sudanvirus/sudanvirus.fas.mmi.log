@@ -1,8 +1,0 @@
-[M::mm_idx_gen::0.002*1.54] collected minimizers
-[M::mm_idx_gen::0.003*1.38] sorted minimizers
-[M::main::0.004*1.28] loaded/built the index for 1 target sequence(s)
-[M::mm_idx_stat] kmer size: 15; skip: 10; is_hpc: 0; #seq: 1
-[M::mm_idx_stat::0.005*1.26] distinct minimizers: 3582 (99.94% are singletons); average occurrences: 1.001; average spacing: 5.266; total length: 18875
-[M::main] Version: 2.24-r1122
-[M::main] CMD: minimap2 -t 1 -d website/assets/indexes/sudanvirus/sudanvirus.fas.mmi website/assets/indexes/sudanvirus/sudanvirus.fas
-[M::main] Real time: 0.005 sec; CPU: 0.006 sec; Peak RSS: 0.021 GB
