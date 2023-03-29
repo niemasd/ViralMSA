@@ -1,0 +1,8 @@
+[M::mm_idx_gen::0.002*1.56] collected minimizers
+[M::mm_idx_gen::0.002*1.43] sorted minimizers
+[M::main::0.003*1.30] loaded/built the index for 1 target sequence(s)
+[M::mm_idx_stat] kmer size: 15; skip: 10; is_hpc: 0; #seq: 1
+[M::mm_idx_stat::0.004*1.29] distinct minimizers: 1780 (99.72% are singletons); average occurrences: 1.022; average spacing: 5.300; total length: 9646
+[M::main] Version: 2.24-r1122
+[M::main] CMD: minimap2 -t 1 -d website/assets/indexes/hcv1/hcv1.fas.mmi website/assets/indexes/hcv1/hcv1.fas
+[M::main] Real time: 0.004 sec; CPU: 0.005 sec; Peak RSS: 0.020 GB
