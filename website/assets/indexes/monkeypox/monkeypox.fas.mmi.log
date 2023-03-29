@@ -1,0 +1,8 @@
+[M::mm_idx_gen::0.009*1.12] collected minimizers
+[M::mm_idx_gen::0.014*1.07] sorted minimizers
+[M::main::0.017*1.06] loaded/built the index for 1 target sequence(s)
+[M::mm_idx_stat] kmer size: 15; skip: 10; is_hpc: 0; #seq: 1
+[M::mm_idx_stat::0.017*1.06] distinct minimizers: 35546 (96.57% are singletons); average occurrences: 1.038; average spacing: 5.347; total length: 197209
+[M::main] Version: 2.24-r1122
+[M::main] CMD: minimap2 -t 1 -d website/assets/indexes/monkeypox/monkeypox.fas.mmi website/assets/indexes/monkeypox/monkeypox.fas
+[M::main] Real time: 0.020 sec; CPU: 0.021 sec; Peak RSS: 0.021 GB
