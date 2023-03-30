@@ -4,3 +4,7 @@ todo:
 - help guide
 
 update: made some modifications to .gitignore, created actions folder (should it be moved)
+how to best create ui for preloaded indexes?
+automatically use uploaded over ref seq? (both case scenario)
+provide mmi file (download and then write to pyodide)
+add code documentation (especially with (complex) functions)

@@ -130,6 +130,9 @@
 
             let inputSeq;
             let refSeq;
+            let refIndex;
+            let refVirus; 
+            let refID;
 
             // sending file data to webworker
             const inputSeqReader = new FileReader();
@@ -145,14 +148,15 @@
                     refSeq = e.target.result;
                 }
             } else {
-                refSeq = await (await fetch("https://raw.githubusercontent.com/niemasd/viralmsa/master/ref_genomes/" + selectedRefSeq + "/" + selectedRefSeq + ".fas")).text();
+                // only need to provide refID when using a preloaded reference sequence and index
+                refID = selectedRefSeq;
             }
 
             // wait until file data is read and then run ViralMSA
             const interval = setInterval(() => {
-                if (inputSeq && refSeq) {
+                if (inputSeq && (refSeq || refID)) {
                     clearInterval(interval);
-                    viralmsaworker.postMessage({'run': 'viralmsa', 'inputSeq': inputSeq, 'refSeq': refSeq});
+                    viralmsaworker.postMessage({'run': 'viralmsa', 'inputSeq': inputSeq, 'refSeq': refSeq, 'refID': refID});
                 }
             }, 100);
         });
@@ -192,7 +196,8 @@
             </div>            
             
             <div id="ref-seq-container">
-                <select class="form-select mt-2" aria-label="Default select example" id="common-sequences">
+                <label for="common-sequences" class="form-label mt-2">Select Preloaded Reference Sequence</label>
+                <select class="form-select" aria-label="Default select example" id="common-sequences">
                     <option selected>Select a Reference Sequence</option>
                 </select>
 

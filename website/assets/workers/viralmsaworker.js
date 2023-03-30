@@ -5,9 +5,14 @@ const PATH_TO_PYODIDE_ROOT = "/home/pyodide/";
 let downloadResults = false;
 let startTime = new Date().getTime();
 let pyodide; 
+// holds minimap2 output and is used to block thread until minimap2 is done
 let mm2FinishedBuffer; 
+// where (in Pyodide FS) to write minimap2 output
 let mmiOutput; 
+// holds python code of web wrapper for ViralMSA
 let ViralMSAWeb;
+let REFS; 
+let REF_NAMES;
 
 // webworker api
 self.onmessage = async (event) => {
@@ -25,13 +30,9 @@ self.onmessage = async (event) => {
                 'error': "No results to download."
             })
         }
-    } else if (event.data.run) {
-        if (!pyodide) {
-            return;
-        }
-    
+    } else if (event.data.run) {    
         // run ViralMSA
-        await runViralMSA(event.data.inputSeq, event.data.refSeq);
+        await runViralMSA(event.data.inputSeq, event.data.refSeq, event.data.refID);
     } else if (event.data.arraybuffer) {
         mm2FinishedBuffer = event.data.arraybuffer;
     }
@@ -64,19 +65,23 @@ const init = async () => {
     // load in ViralMSAWeb.py
     ViralMSAWeb = await (await fetch("../python/ViralMSAWeb.py")).text()
 
+    // get REFS and REF_NAMES for preloaded reference sequences and indexes
     pyodide.runPython(ViralMSAWeb)
-
+    REFS = (pyodide.globals.get('REFS').toJs())
+    REF_NAMES = (pyodide.globals.get('REF_NAMES').toJs())
     self.postMessage({
         'init': 'done',
-        'REFS': (pyodide.globals.get('REFS').toJs()), 
-        'REF_NAMES': (pyodide.globals.get('REF_NAMES').toJs())
+        'REFS': REFS, 
+        'REF_NAMES': REF_NAMES
     })
 }
 
 init();
 
-const runViralMSA = async (inputSequences, referenceSequence) => {
+// only needs referenceSequence or refID (providing refID means using a preloaded reference sequence and index)
+const runViralMSA = async (inputSequences, referenceSequence, refID) => {
     startTime = new Date().getTime();
+    console.log('hit')
     downloadResults = false;
 
     // remove output folder
@@ -90,11 +95,32 @@ const runViralMSA = async (inputSequences, referenceSequence) => {
     
     // write provided files to Pyodide
     pyodide.FS.writeFile(PATH_TO_PYODIDE_ROOT + 'sequence.fas', inputSequences, { encoding: "utf8" });
-    pyodide.FS.writeFile(PATH_TO_PYODIDE_ROOT + 'reference.fas', referenceSequence, { encoding: "utf8" });
 
-    // set global args variable
-    let args = "./ViralMSA.py -e email@address.com -s sequence.fas -o output -r reference.fas --viralmsa_dir cache";
-    pyodide.globals.set("arguments", args);
+    // preloaded reference sequence and index  
+    if (refID) {
+        refVirus = [...REFS].find(([key, value]) => value === refID)[0];
+
+        if (!pyodide.FS.readdir(`${PATH_TO_PYODIDE_ROOT}/cache/`).includes(refID)) {
+            // get reference sequence and index
+            referenceSequence = await (await fetch("https://raw.githubusercontent.com/niemasd/viralmsa/master/ref_genomes/" + refID + "/" + refID + ".fas")).text();
+            refIndex = new Uint8Array(await (await fetch("https://raw.githubusercontent.com/niemasd/viralmsa/master/ref_genomes/" + refID + "/" + refID + ".fas.mmi")).arrayBuffer());
+        
+            pyodide.FS.mkdir(`${PATH_TO_PYODIDE_ROOT}/cache/${refID}`)
+            pyodide.FS.writeFile(`${PATH_TO_PYODIDE_ROOT}/cache/${refID}/${refID}.fas`, referenceSequence, { encoding: "utf8" });
+            pyodide.FS.writeFile(`${PATH_TO_PYODIDE_ROOT}/cache/${refID}/${refID}.fas.mmi`, refIndex, { encoding: "binary" });
+        }
+
+        // set global args variable
+        let args = `./ViralMSA.py -e email@address.com -s sequence.fas -o output -r ${refVirus} --viralmsa_dir cache`;
+        pyodide.globals.set("arguments", args);
+    } else {
+        pyodide.FS.writeFile(PATH_TO_PYODIDE_ROOT + 'reference.fas', referenceSequence, { encoding: "utf8" });
+
+        // set global args variable
+        let args = "./ViralMSA.py -e email@address.com -s sequence.fas -o output -r reference.fas --viralmsa_dir cache";
+        pyodide.globals.set("arguments", args);
+    }
+
     
     // set global minimapOverride variable to use BioWASM
     const minimap2Override = (PyProxy) => {
