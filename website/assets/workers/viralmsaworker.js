@@ -7,6 +7,7 @@ let startTime = new Date().getTime();
 let pyodide; 
 let mm2FinishedBuffer; 
 let mmiOutput; 
+let ViralMSAWeb;
 
 // webworker api
 self.onmessage = async (event) => {
@@ -56,8 +57,20 @@ const init = async () => {
 
     // create cache directory
     pyodide.FS.mkdir(PATH_TO_PYODIDE_ROOT + 'cache');
-    
-    self.postMessage({'init': 'done'})
+
+    // load in ViralMSA.py
+    pyodide.FS.writeFile(PATH_TO_PYODIDE_ROOT + 'ViralMSA.py', await (await fetch("https://raw.githubusercontent.com/niemasd/ViralMSA/master/ViralMSA.py")).text(), { encoding: "utf8" });
+
+    // load in ViralMSAWeb.py
+    ViralMSAWeb = await (await fetch("../python/ViralMSAWeb.py")).text()
+
+    pyodide.runPython(ViralMSAWeb)
+
+    self.postMessage({
+        'init': 'done',
+        'REFS': (pyodide.globals.get('REFS').toJs()), 
+        'REF_NAMES': (pyodide.globals.get('REF_NAMES').toJs())
+    })
 }
 
 init();
@@ -78,9 +91,6 @@ const runViralMSA = async (inputSequences, referenceSequence) => {
     // write provided files to Pyodide
     pyodide.FS.writeFile(PATH_TO_PYODIDE_ROOT + 'sequence.fas', inputSequences, { encoding: "utf8" });
     pyodide.FS.writeFile(PATH_TO_PYODIDE_ROOT + 'reference.fas', referenceSequence, { encoding: "utf8" });
-    
-    // load in ViralMSA.py
-    pyodide.FS.writeFile(PATH_TO_PYODIDE_ROOT + 'ViralMSA.py', await (await fetch("https://raw.githubusercontent.com/niemasd/ViralMSA/master/ViralMSA.py")).text(), { encoding: "utf8" });
 
     // set global args variable
     let args = "./ViralMSA.py -e email@address.com -s sequence.fas -o output -r reference.fas --viralmsa_dir cache";
@@ -155,7 +165,7 @@ const runViralMSA = async (inputSequences, referenceSequence) => {
 
     // run ViralMSAWeb.py
     // TODO: Change to actual ViralMSAWeb.py
-    pyodide.runPython(await (await fetch("./assets/python/ViralMSAWeb.py")).text());
+    pyodide.runPython(ViralMSAWeb);
 
     // after finished
     downloadResults = true;

@@ -5,6 +5,13 @@
     align-items: center;
 }
 
+#ref-seq-container {
+    margin-top: 2vh;
+    border: 2px solid black;
+    border-radius: 5px;
+    padding: 2vh 2vw;
+}
+
 #duration {
     font-weight: bold;
 }
