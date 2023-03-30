@@ -1,8 +1,9 @@
 #content {
     display: flex;
     width: 100%;
-    flex-direction: column;
-    align-items: center;
+    flex-direction: row;
+    padding: 0vh 5vw;
+    justify-content: space-between;
 }
 
 #ref-seq-container {
@@ -19,10 +20,16 @@
 .input {
     display: flex;
     flex-direction: column;
+    justify-content: space-between;
     align-items: center;
+    min-width: fit-content;
+    width: 30vw;
+}
+
+.output {
+    width: 50vw;
 }
 
 .output textarea {
-    min-width: min(80vw, 1000px);
     height: 50vh;
 }
