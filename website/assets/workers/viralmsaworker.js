@@ -89,9 +89,19 @@ const runViralMSA = async (inputSequences, inputSeqCompressed, referenceSequence
         pyodide.FS.unlink(PATH_TO_PYODIDE_ROOT + 'sequence.fas');
     }
 
+    // remove sequence.fas.gz
+    if (pyodide.FS.readdir(PATH_TO_PYODIDE_ROOT).includes('sequence.fas.gz')) {
+        pyodide.FS.unlink(PATH_TO_PYODIDE_ROOT + 'sequence.fas.gz');
+    }
+
     // remove reference.fas
     if (pyodide.FS.readdir(PATH_TO_PYODIDE_ROOT).includes('reference.fas')) {
         pyodide.FS.unlink(PATH_TO_PYODIDE_ROOT + 'reference.fas');
+    }
+
+    // remove reference.fas
+    if (pyodide.FS.readdir(PATH_TO_PYODIDE_ROOT).includes('reference.fas.gz')) {
+        pyodide.FS.unlink(PATH_TO_PYODIDE_ROOT + 'reference.fas.gz');
     }
 
     // remove output folder
