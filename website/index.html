@@ -151,27 +151,37 @@
 
             // sending file data to webworker
             const inputSeqReader = new FileReader();
-            inputSeqReader.readAsText(inputSequences, "UTF-8");
+            inputSeqReader.readAsArrayBuffer(inputSequences);
             inputSeqReader.onload = (e) => {
-                inputSeq = e.target.result;
+                inputSeq = new Uint8Array(e.target.result);
             }
 
             if (uploadedRefSeq) {
                 const refSeqReader = new FileReader();
-                refSeqReader.readAsText(uploadedRefSeq, "UTF-8");
+                refSeqReader.readAsArrayBuffer(uploadedRefSeq);
                 refSeqReader.onload = (e) => {
-                    refSeq = e.target.result;
+                    refSeq = new Uint8Array(e.target.result);
                 }
             } else {
                 // only need to provide refID when using a preloaded reference sequence and index
                 refID = selectedRefSeq;
+                // write reference index to minimap2 since it will never be built
+                refIndex = new Uint8Array(await (await fetch("https://raw.githubusercontent.com/niemasd/viralmsa/master/ref_genomes/" + refID + "/" + refID + ".fas.mmi")).arrayBuffer());
+                minimap2worker.postMessage({writeIndex: refIndex})
             }
 
             // wait until file data is read and then run ViralMSA
             const interval = setInterval(() => {
                 if (inputSeq && (refSeq || refID)) {
                     clearInterval(interval);
-                    viralmsaworker.postMessage({'run': 'viralmsa', 'inputSeq': inputSeq, 'refSeq': refSeq, 'refID': refID});
+                    viralmsaworker.postMessage({
+                        'run': 'viralmsa', 
+                        'inputSeq': inputSeq, 
+                        'refSeq': refSeq, 
+                        'refID': refID, 
+                        'inputSeqCompressed': inputSequences.name.endsWith(".gz"), 
+                        'refSeqCompressed': uploadedRefSeq && uploadedRefSeq.name.endsWith(".gz")
+                    });
                     startTime = new Date().getTime();
                     document.getElementById("downloadResults").disabled = true;
                 }

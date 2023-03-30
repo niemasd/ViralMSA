@@ -14,22 +14,22 @@ init();
 self.onmessage = (event) => {
     if (event.data.arraybuffer) {
         mm2FinishedBuffer = event.data.arraybuffer;
+    } else if (event.data.writeIndex) {
+        CLI.fs.writeFile("target.fas.mmi", event.data.writeIndex, { encoding: "binary" });
     } else if (event.data.runminimap2) {
         runMinimap2(event.data.command, event.data.inputSeq, event.data.refSeq);
     }
 }
 
 // run minimap2 with provided command, sequences
+// assumed that inputSeq and refSeq is binary data
 const runMinimap2 = async (command, inputSeq, refSeq) => {
     // reset minimap2 output buffer
     mm2FinishedBuffer.fill(0);
     
     // build minimap2 index
     if (command.includes('-d')) {
-        await CLI.mount([{
-            name: "target.fas",
-            data: inputSeq,
-        }]);
+        await CLI.fs.writeFile("target.fas", inputSeq, { encoding: "binary" });
 
         // run minimap2 in BioWASM
         await CLI.exec(command.join(' '));
@@ -40,10 +40,7 @@ const runMinimap2 = async (command, inputSeq, refSeq) => {
     // alignment
     } else if (command.includes('-a')) {
         // mount sequence.fas
-        await CLI.mount([{
-            name: "sequence.fas",
-            data: refSeq,
-        }]);
+        await CLI.fs.writeFile("sequence.fas", refSeq, { encoding: "binary" });
 
         // run minimap2 in BioWASM
         await CLI.exec(command.join(' '));
