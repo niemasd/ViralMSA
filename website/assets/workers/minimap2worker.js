@@ -21,6 +21,7 @@ self.onmessage = (event) => {
 
 // run minimap2 with provided command, sequences
 const runMinimap2 = async (command, inputSeq, refSeq) => {
+    // reset minimap2 output buffer
     mm2FinishedBuffer.fill(0);
     
     // build minimap2 index

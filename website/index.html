@@ -12,6 +12,8 @@
         const minimap2worker = new Worker('./assets/workers/minimap2worker.js');
         let REFS = undefined;
         let REF_NAMES = undefined;
+        // helps track ViralMSA runtime
+        let startTime = new Date().getTime();
         const refGenomes = new Set();
 
         // -------- INITIALIZATION --------
@@ -76,7 +78,7 @@
             
             // on ViralMSA finish
             } else if (event.data.finished) {
-                document.getElementById("duration").innerText = "Total runtime: " + event.data.duration + " seconds";
+                document.getElementById("duration").innerText = "Total runtime: " + (new Date().getTime() - startTime) / 1000 + " seconds";
             
             // Pyodide call to run minimap2 
             } else if (event.data.runminimap2) {
@@ -157,6 +159,8 @@
                 if (inputSeq && (refSeq || refID)) {
                     clearInterval(interval);
                     viralmsaworker.postMessage({'run': 'viralmsa', 'inputSeq': inputSeq, 'refSeq': refSeq, 'refID': refID});
+                    startTime = new Date().getTime();
+                    console.log(startTime)
                 }
             }, 100);
         });

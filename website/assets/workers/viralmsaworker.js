@@ -3,7 +3,6 @@ importScripts("https://cdn.jsdelivr.net/pyodide/v0.22.1/full/pyodide.js");
 // constants & global variables
 const PATH_TO_PYODIDE_ROOT = "/home/pyodide/";
 let downloadResults = false;
-let startTime = new Date().getTime();
 let pyodide; 
 // holds minimap2 output and is used to block thread until minimap2 is done
 let mm2FinishedBuffer; 
@@ -16,9 +15,9 @@ let REF_NAMES;
 
 // webworker api
 self.onmessage = async (event) => {
+    // send data over to main thread to be downloaded to user's computer
     if (event.data.getResults) {
         if (downloadResults) {
-            // send data over to main thread to be downloaded to user's computer
             self.postMessage({
                 'download': [
                     ['sequence.fas.aln', pyodide.FS.readFile(PATH_TO_PYODIDE_ROOT + "output/sequence.fas.aln", { encoding: "utf8" })],
@@ -30,9 +29,10 @@ self.onmessage = async (event) => {
                 'error': "No results to download."
             })
         }
+    // run ViralMSA
     } else if (event.data.run) {    
-        // run ViralMSA
         await runViralMSA(event.data.inputSeq, event.data.refSeq, event.data.refID);
+    // initialize minimap2 output buffer
     } else if (event.data.arraybuffer) {
         mm2FinishedBuffer = event.data.arraybuffer;
     }
@@ -56,7 +56,7 @@ const init = async () => {
     // install biopython, a ViralMSA dependency
     await micropip.install('biopython');
 
-    // create cache directory
+    // create cache directory for ViralMSA sequences and indexes 
     pyodide.FS.mkdir(PATH_TO_PYODIDE_ROOT + 'cache');
 
     // load in ViralMSA.py
@@ -78,10 +78,9 @@ const init = async () => {
 
 init();
 
-// only needs referenceSequence or refID (providing refID means using a preloaded reference sequence and index)
+// only needs referenceSequence or refID (providing refID means using a preloaded reference sequence and index, which is later fetched)
 const runViralMSA = async (inputSequences, referenceSequence, refID) => {
-    startTime = new Date().getTime();
-    console.log('hit')
+    // reset global variable
     downloadResults = false;
 
     // remove output folder
@@ -98,13 +97,16 @@ const runViralMSA = async (inputSequences, referenceSequence, refID) => {
 
     // preloaded reference sequence and index  
     if (refID) {
+        // get reference sequence virus name to use in command line args
         refVirus = [...REFS].find(([key, value]) => value === refID)[0];
 
+        // only fetch reference sequence and index if not already in cache
         if (!pyodide.FS.readdir(`${PATH_TO_PYODIDE_ROOT}/cache/`).includes(refID)) {
             // get reference sequence and index
             referenceSequence = await (await fetch("https://raw.githubusercontent.com/niemasd/viralmsa/master/ref_genomes/" + refID + "/" + refID + ".fas")).text();
             refIndex = new Uint8Array(await (await fetch("https://raw.githubusercontent.com/niemasd/viralmsa/master/ref_genomes/" + refID + "/" + refID + ".fas.mmi")).arrayBuffer());
         
+            // write reference sequence and index to Pyodide
             pyodide.FS.mkdir(`${PATH_TO_PYODIDE_ROOT}/cache/${refID}`)
             pyodide.FS.writeFile(`${PATH_TO_PYODIDE_ROOT}/cache/${refID}/${refID}.fas`, referenceSequence, { encoding: "utf8" });
             pyodide.FS.writeFile(`${PATH_TO_PYODIDE_ROOT}/cache/${refID}/${refID}.fas.mmi`, refIndex, { encoding: "binary" });
@@ -123,9 +125,11 @@ const runViralMSA = async (inputSequences, referenceSequence, refID) => {
 
     
     // set global minimapOverride variable to use BioWASM
+    // handles both index building and alignment
     const minimap2Override = (PyProxy) => {
         const command = PyProxy.toJs();
         
+        // reset minimap2FinishedBuffer
         Atomics.store(mm2FinishedBuffer, 0, 0);
 
         // build minimap2 index
@@ -169,12 +173,13 @@ const runViralMSA = async (inputSequences, referenceSequence, refID) => {
         // 10 second timeout
         Atomics.wait(mm2FinishedBuffer, 0, 0, 10000)
 
+        // get minimap2 output and strip trailing null bytes
         const mm2FinishedArray = new Uint8Array(mm2FinishedBuffer.buffer);
         let lastIndex = mm2FinishedArray.length - 1;
         while (lastIndex >= 0 && mm2FinishedArray[lastIndex] === 0) {
             lastIndex--;
         }
-
+        // create new array with no trailing null bytes
         const strippedUint8Array = new Uint8Array(lastIndex + 1);
         strippedUint8Array.set(mm2FinishedArray.subarray(0, lastIndex + 1));
 
@@ -190,10 +195,9 @@ const runViralMSA = async (inputSequences, referenceSequence, refID) => {
     pyodide.globals.set("minimap2Override", minimap2Override);
 
     // run ViralMSAWeb.py
-    // TODO: Change to actual ViralMSAWeb.py
     pyodide.runPython(ViralMSAWeb);
 
     // after finished
     downloadResults = true;
-    self.postMessage({'finished': true, duration: (new Date().getTime() - startTime) / 1000})
+    self.postMessage({'finished': true})
 }
