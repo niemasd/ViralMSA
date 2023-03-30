@@ -151,16 +151,16 @@
 
             // sending file data to webworker
             const inputSeqReader = new FileReader();
-            inputSeqReader.readAsArrayBuffer(inputSequences);
+            inputSeqReader.readAsText(inputSequences, "UTF-8");
             inputSeqReader.onload = (e) => {
-                inputSeq = new Uint8Array(e.target.result);
+                inputSeq = e.target.result;
             }
 
             if (uploadedRefSeq) {
                 const refSeqReader = new FileReader();
-                refSeqReader.readAsArrayBuffer(uploadedRefSeq);
+                refSeqReader.readAsText(uploadedRefSeq, "UTF-8");
                 refSeqReader.onload = (e) => {
-                    refSeq = new Uint8Array(e.target.result);
+                    refSeq = e.target.result;
                 }
             } else {
                 // only need to provide refID when using a preloaded reference sequence and index
@@ -174,14 +174,7 @@
             const interval = setInterval(() => {
                 if (inputSeq && (refSeq || refID)) {
                     clearInterval(interval);
-                    viralmsaworker.postMessage({
-                        'run': 'viralmsa', 
-                        'inputSeq': inputSeq, 
-                        'refSeq': refSeq, 
-                        'refID': refID, 
-                        'inputSeqCompressed': inputSequences.name.endsWith(".gz"), 
-                        'refSeqCompressed': uploadedRefSeq && uploadedRefSeq.name.endsWith(".gz")
-                    });
+                    viralmsaworker.postMessage({'run': 'viralmsa', 'inputSeq': inputSeq, 'refSeq': refSeq, 'refID': refID});
                     startTime = new Date().getTime();
                     document.getElementById("downloadResults").disabled = true;
                 }

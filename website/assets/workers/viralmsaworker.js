@@ -31,7 +31,7 @@ self.onmessage = async (event) => {
         }
     // run ViralMSA
     } else if (event.data.run) {    
-        await runViralMSA(event.data.inputSeq, event.data.inputSeqCompressed, event.data.refSeq, event.data.refSeqCompressed, event.data.refID);
+        await runViralMSA(event.data.inputSeq, event.data.refSeq, event.data.refID);
     // initialize minimap2 output buffer
     } else if (event.data.arraybuffer) {
         mm2FinishedBuffer = event.data.arraybuffer;
@@ -79,8 +79,7 @@ const init = async () => {
 init();
 
 // only needs referenceSequence or refID (providing refID means using a preloaded reference sequence and index, which is later fetched)
-// inputSequences and referenceSequence are both expected to be binary data (Uint8Array)
-const runViralMSA = async (inputSequences, inputSeqCompressed, referenceSequence, refSeqCompressed, refID) => {
+const runViralMSA = async (inputSequences, referenceSequence, refID) => {
     // reset global variable
     downloadResults = false;
 
@@ -105,7 +104,6 @@ const runViralMSA = async (inputSequences, inputSeqCompressed, referenceSequence
     }
 
     // remove output folder
-    console.log(pyodide.FS.readdir(PATH_TO_PYODIDE_ROOT))
     if (pyodide.FS.readdir(PATH_TO_PYODIDE_ROOT).includes('output')) {
         for (const file of pyodide.FS.readdir(PATH_TO_PYODIDE_ROOT + 'output')) {
             if (file === '.' || file === '..') continue;
@@ -115,7 +113,7 @@ const runViralMSA = async (inputSequences, inputSeqCompressed, referenceSequence
     }
     
     // write provided files to Pyodide
-    pyodide.FS.writeFile(PATH_TO_PYODIDE_ROOT + 'sequence.fas' + (inputSeqCompressed ? '.gz' : '') , inputSequences, { encoding: "binary" });
+    pyodide.FS.writeFile(PATH_TO_PYODIDE_ROOT + 'sequence.fas', inputSequences, { encoding: "utf8" });
 
     // preloaded reference sequence and index  
     if (refID) {
@@ -135,13 +133,13 @@ const runViralMSA = async (inputSequences, inputSeqCompressed, referenceSequence
         }
 
         // set global args variable
-        let args = `./ViralMSA.py -e email@address.com -s sequence.fas${inputSeqCompressed ? '.gz' : ''} -o output -r ${refVirus} --viralmsa_dir cache`;
+        let args = `./ViralMSA.py -e email@address.com -s sequence.fas -o output -r ${refVirus} --viralmsa_dir cache`;
         pyodide.globals.set("arguments", args);
     } else {
-        pyodide.FS.writeFile(PATH_TO_PYODIDE_ROOT + 'reference.fas' +  (refSeqCompressed ? '.gz' : ''), referenceSequence, { encoding: "binary" });
+        pyodide.FS.writeFile(PATH_TO_PYODIDE_ROOT + 'reference.fas', referenceSequence, { encoding: "utf8" });
 
         // set global args variable
-        let args = `./ViralMSA.py -e email@address.com -s sequence.fas${inputSeqCompressed ? '.gz' : ''} -o output -r reference.fas${refSeqCompressed ? '.gz' : ''} --viralmsa_dir cache`;
+        let args = "./ViralMSA.py -e email@address.com -s sequence.fas -o output -r reference.fas --viralmsa_dir cache";
         pyodide.globals.set("arguments", args);
     }
 
@@ -156,7 +154,6 @@ const runViralMSA = async (inputSequences, inputSeqCompressed, referenceSequence
 
         // build minimap2 index
         if (command.includes('-d')) {
-            console.log(command)
             // remember mmi output path and change to target.mmi for minimap2 in BioWASM
             mmiOutput = command[command.length - 2];
             command[command.length - 2] =  "target.fas.mmi";
@@ -166,18 +163,16 @@ const runViralMSA = async (inputSequences, inputSeqCompressed, referenceSequence
             
             // change fasta file name to target.fas for minimap2 in BioWASM
             command[command.length - 1] = "target.fas";
-            console.log(command)
 
             // post message to main thread to run minimap2
             self.postMessage({
                 'runminimap2': 'buildIndex',
                 'command': command, 
-                'inputSeq': pyodide.FS.readFile(PATH_TO_PYODIDE_ROOT + fastaFile, { encoding: "binary" })
+                'inputSeq': pyodide.FS.readFile(PATH_TO_PYODIDE_ROOT + fastaFile, { encoding: "utf8" })
             });
 
         // alignment
         } else if (command.includes('-a')) {
-            console.log(command)
             // swap out third to last argument (output file)
             command[command.length - 3] = "sequence.fas.sam";
 
@@ -186,13 +181,12 @@ const runViralMSA = async (inputSequences, inputSeqCompressed, referenceSequence
 
             // swap out last argument - use sequence instead of pyodide path
             command[command.length - 1] = "sequence.fas";
-            console.log(command)
 
             // run minimap2 in BioWASM
             self.postMessage({
                 'runminimap2': 'alignment',
                 'command': command, 
-                'refSeq': pyodide.FS.readFile(PATH_TO_PYODIDE_ROOT + "sequence.fas", { encoding: "binary" })
+                'refSeq': pyodide.FS.readFile(PATH_TO_PYODIDE_ROOT + "sequence.fas", { encoding: "utf8" })
             });
         }
 
