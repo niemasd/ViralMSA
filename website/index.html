@@ -165,6 +165,9 @@
             } else {
                 // only need to provide refID when using a preloaded reference sequence and index
                 refID = selectedRefSeq;
+                // write reference index to minimap2 since it will never be built
+                refIndex = new Uint8Array(await (await fetch("https://raw.githubusercontent.com/niemasd/viralmsa/master/ref_genomes/" + refID + "/" + refID + ".fas.mmi")).arrayBuffer());
+                minimap2worker.postMessage({writeIndex: refIndex})
             }
 
             // wait until file data is read and then run ViralMSA

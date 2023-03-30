@@ -14,6 +14,8 @@ init();
 self.onmessage = (event) => {
     if (event.data.arraybuffer) {
         mm2FinishedBuffer = event.data.arraybuffer;
+    } else if (event.data.writeIndex) {
+        CLI.fs.writeFile("target.fas.mmi", event.data.writeIndex, { encoding: "binary" });
     } else if (event.data.runminimap2) {
         runMinimap2(event.data.command, event.data.inputSeq, event.data.refSeq);
     }
