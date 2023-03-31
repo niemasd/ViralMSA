@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="icon" type="image/x-icon" href="./assets/favicon.ico">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link rel="stylesheet" href="./assets/index.css">
+</head>
+<body>
+    <script src="coi-serviceworker.min.js"></script>
+    <script type="module" async>
+        const viralmsaworker = new Worker('./assets/workers/viralmsaworker.js');
+        const minimap2worker = new Worker('./assets/workers/minimap2worker.js');
+        let REFS = undefined;
+        let REF_NAMES = undefined;
+        // helps track ViralMSA runtime
+        let startTime = new Date().getTime();
+        const refGenomes = new Set();
+
+        // -------- LOADING ANIMATION --------
+        const loadingInterval = setInterval(() => {
+            const loading = document.getElementById("loading").getElementsByTagName("h4")[0];
+            const dots = loading.innerText.split(" ")[1]
+            if (dots && dots.length === 3) {
+                loading.innerHTML = "Loading "
+            } else {
+                loading.innerHTML += "."
+            }
+        }, 500);
+
+        // -------- INITIALIZATION --------
+
+        // shared array buffer for waiting for minimap2 to finish and transmitting file data (100MB)
+        const sharedArrayBuffer = new SharedArrayBuffer(104857600);
+        const sharedArray = new Int32Array(sharedArrayBuffer);  
+        viralmsaworker.postMessage({'arraybuffer': sharedArray})
+        minimap2worker.postMessage({'arraybuffer': sharedArray})
+
+        // fetch preload indexes
+        fetch("https://api.github.com/repos/niemasd/viralmsa/git/trees/master?recursive=1")
+        .then(res => res.json())
+        .then(json => {
+            for (const file of json.tree) {
+                if (file.path.startsWith("ref_genomes/")) {
+                    refGenomes.add(file.path.split("/")[1]);
+                }
+            }
+        })
+
+        const preloadIndexes = setInterval(() => {
+            if (REFS && REF_NAMES && refGenomes.size > 0) {
+                clearInterval(preloadIndexes);
+                REF_NAMES.forEach(entry => {
+                    entry.forEach((commonName, virus)  => {
+                        const option = document.createElement("option");
+                        option.value = REFS.get(virus);
+                        option.innerText = commonName;
+                        document.getElementById("common-sequences").appendChild(option);
+                    })
+                })
+                // web page ready to load
+                document.getElementById("content").classList.remove("d-none")
+                document.getElementById("loading").classList.add("d-none")
+                clearInterval(loadingInterval)
+            }
+        }, 1000)
+
+        // -------- WEBWORKERS --------
+
+        // Pyodide WebWorker (ViralMSA.py) handling
+        viralmsaworker.onmessage = (event) => {
+            // error handling
+            if (event.data.error) {
+                alert(event.data.error);
+
+            // done loading pyodide / ViralMSA 
+            } else if (event.data.init) {
+                REFS = event.data.REFS;
+                REF_NAMES = event.data.REF_NAMES;
+
+            // download results
+            } else if (event.data.download) {
+                for (const download of event.data.download) {
+                    // first element of array is filename, second element is content
+                    downloadFile(download[0], download[1])
+                }
+
+            // updating console
+            } else if (event.data.pyodideConsole) {
+                document.getElementById("pyodide-console").innerHTML += event.data.pyodideConsole;
+            
+            // on ViralMSA finish
+            } else if (event.data.finished) {
+                document.getElementById("duration").innerText = "Total runtime: " + (new Date().getTime() - startTime) / 1000 + " seconds";
+                document.getElementById("downloadResults").disabled = false;
+            
+            // Pyodide call to run minimap2 
+            } else if (event.data.runminimap2) {
+                if (event.data.runminimap2 === 'alignment') {
+                    minimap2worker.postMessage({'runminimap2': 'alignment', 'command': event.data.command, 'refSeq': event.data.refSeq});
+                } else if (event.data.runminimap2 === 'buildIndex') {
+                    minimap2worker.postMessage({'runminimap2': 'buildIndex', 'command': event.data.command, 'inputSeq': event.data.inputSeq});
+                }
+            }
+        }
+
+        // Minimap2 WebWorker handling
+        minimap2worker.onmessage = (event) => {
+            // Minimap2 done running
+            if (event.data.minimap2done) {
+                const fileData = event.data.minimap2done === 'alignment' ? event.data.sam : event.data.mmi;
+
+                // adjust array size to be divisible by 4
+                const adjustedArray = new Uint8Array(Math.ceil(fileData.length / 4) * 4);
+                adjustedArray.set(fileData);
+                // update shared array buffer
+                sharedArray.set(new Uint32Array(adjustedArray.buffer), 0)
+
+                // notify ViralMSA WebWorker that Minimap2 is done
+                Atomics.notify(sharedArray, 0);
+            }
+        }
+
+        // -------- HANDLING USER INPUT --------
+
+        document.getElementById("runViralMSA").addEventListener("click", async () => {
+            // validation
+            const inputSequences = document.getElementById("input-sequences").files[0];
+            if (!inputSequences) {
+                alert("Please enter an input sequence file.");
+                return;
+            }
+
+            const uploadedRefSeq = document.getElementById("ref-sequence").files[0];
+            const selectedRefSeq = document.getElementById("common-sequences").value;
+
+            if (!uploadedRefSeq && !selectedRefSeq.startsWith("NC_")) {
+                alert("Please upload or select a reference sequence file.");
+                return;
+            }
+
+            // validation passed
+            // clear console and runtime record
+            document.getElementById("pyodide-console").innerHTML = "";
+            document.getElementById("duration").innerText = "Running...";
+
+            let inputSeq;
+            let refSeq;
+            let refIndex;
+            let refVirus; 
+            let refID;
+
+            // sending file data to webworker
+            const inputSeqReader = new FileReader();
+            inputSeqReader.readAsText(inputSequences, "UTF-8");
+            inputSeqReader.onload = (e) => {
+                inputSeq = e.target.result;
+            }
+
+            if (uploadedRefSeq) {
+                const refSeqReader = new FileReader();
+                refSeqReader.readAsText(uploadedRefSeq, "UTF-8");
+                refSeqReader.onload = (e) => {
+                    refSeq = e.target.result;
+                }
+            } else {
+                // only need to provide refID when using a preloaded reference sequence and index
+                refID = selectedRefSeq;
+                // write reference index to minimap2 since it will never be built
+                refIndex = new Uint8Array(await (await fetch("https://raw.githubusercontent.com/niemasd/viralmsa/master/ref_genomes/" + refID + "/" + refID + ".fas.mmi")).arrayBuffer());
+                minimap2worker.postMessage({writeIndex: refIndex})
+            }
+
+            // wait until file data is read and then run ViralMSA
+            const interval = setInterval(() => {
+                if (inputSeq && (refSeq || refID)) {
+                    clearInterval(interval);
+                    viralmsaworker.postMessage({'run': 'viralmsa', 'inputSeq': inputSeq, 'refSeq': refSeq, 'refID': refID});
+                    startTime = new Date().getTime();
+                    document.getElementById("downloadResults").disabled = true;
+                }
+            }, 100);
+        });
+
+        // get results for downloading
+        document.getElementById("downloadResults").addEventListener("click", () => {
+            viralmsaworker.postMessage({'getResults': 'all'});
+        });
+
+        // from: https://stackoverflow.com/questions/2897619/using-html5-javascript-to-generate-and-save-a-file
+        // helper function to download files
+        const downloadFile = (filename, text) => {
+            var pom = document.createElement('a');
+            pom.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+            pom.setAttribute('download', filename);
+
+            if (document.createEvent) {
+                var event = document.createEvent('MouseEvents');
+                event.initEvent('click', true, true);
+                pom.dispatchEvent(event);
+            }
+            else {
+                pom.click();
+            }
+        }
+
+    </script>
+    <h1 class="my-5 text-center">ViralMSA Online Tool</h1>
+    <div id="loading">
+        <h4 class="text-center" >Loading </h4>
+    </div>
+    <div id="content" class="d-none">
+        <div class="input">
+            <div class="mb-3">
+                <label for="input-sequences" class="form-label">Input Sequences (FASTA Format)</label>
+                <input class="form-control" type="file" id="input-sequences">
+            </div>            
+            
+            <div id="ref-seq-container">
+                <label for="common-sequences" class="form-label mt-2">Select Preloaded Reference Sequence</label>
+                <select class="form-select" aria-label="Default select example" id="common-sequences">
+                    <option selected>Select a Reference Sequence</option>
+                </select>
+
+                <h5 class="mt-2 text-center">&#8213; OR &#8213;</h5>
+            
+                <div class="mb-3">
+                    <label for="ref-sequence" class="form-label">Upload Reference Sequence</label>
+                    <input class="form-control" type="file" id="ref-sequence">
+                </div>
+            </div>
+
+            <button type="button" class="mt-3 btn btn-primary" id="runViralMSA">Run ViralMSA</button>
+            <button type="button" class="mt-3 btn btn-primary" id="downloadResults" disabled>Download Results</button>
+            <p class="my-3" id="duration"></p>
+        </div>
+        <div class="output">
+            <div class="mb-5">
+                <label for="pyodide-console" class="form-label"><h4>Console</h4></label>
+                <textarea class="form-control" id="pyodide-console" rows="3"></textarea>
+            </div>
+        </div>
+    </div>
+    <footer class="text-center mt-4">
+        WebAssembly implementation of <a href="https://www.github.com/niemasd/ViralMSA" target="_blank" rel="noreferrer">ViralMSA</a>.<br>
+        Created by Daniel Ji, UCSD Undergraduate Student Researcher for Professor <a href="https://www.niema.net" target="_blank" rel="noreferrer">Niema Moshiri</a>
+    </footer>
+</body>
+</html>

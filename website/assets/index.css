@@ -1,0 +1,35 @@
+#content {
+    display: flex;
+    width: 100%;
+    flex-direction: row;
+    padding: 0vh 5vw;
+    justify-content: space-between;
+}
+
+#ref-seq-container {
+    margin-top: 2vh;
+    border: 2px solid black;
+    border-radius: 5px;
+    padding: 2vh 2vw;
+}
+
+#duration {
+    font-weight: bold;
+}
+
+.input {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    min-width: fit-content;
+    width: 30vw;
+}
+
+.output {
+    width: 50vw;
+}
+
+.output textarea {
+    height: 50vh;
+}
