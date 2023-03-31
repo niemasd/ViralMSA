@@ -1,5 +1,5 @@
 # preload common reference sequences and their minimap2 indexes, deploy static content to GitHub Pages
-name: Preload indexes and deploy static content to Pages
+name: Deploy static content to Pages
 
 on:
   # Runs on pushes targeting the default branch
@@ -23,7 +23,6 @@ concurrency:
 jobs:
   # deploy job for static content
   deploy:
-    needs: preload
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
