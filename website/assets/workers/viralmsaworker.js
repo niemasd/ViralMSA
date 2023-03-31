@@ -21,7 +21,6 @@ self.onmessage = async (event) => {
             self.postMessage({
                 'download': [
                     ['sequence.fas.aln', pyodide.FS.readFile(PATH_TO_PYODIDE_ROOT + "output/sequence.fas.aln", { encoding: "utf8" })],
-                    ['sequence.fas.sam', pyodide.FS.readFile(PATH_TO_PYODIDE_ROOT + "output/sequence.fas.sam", { encoding: "utf8" })],
                 ]
             })
         } else {
@@ -67,12 +66,13 @@ const init = async () => {
 
     // get REFS and REF_NAMES for preloaded reference sequences and indexes
     pyodide.runPython(ViralMSAWeb)
-    REFS = (pyodide.globals.get('REFS').toJs())
-    REF_NAMES = (pyodide.globals.get('REF_NAMES').toJs())
+    REFS = pyodide.globals.get('REFS').toJs()
+    REF_NAMES = pyodide.globals.get('REF_NAMES').toJs()
     self.postMessage({
         'init': 'done',
         'REFS': REFS, 
-        'REF_NAMES': REF_NAMES
+        'REF_NAMES': REF_NAMES,
+        'VERSION': pyodide.globals.get('VERSION'),
     })
 }
 
@@ -88,19 +88,9 @@ const runViralMSA = async (inputSequences, referenceSequence, refID) => {
         pyodide.FS.unlink(PATH_TO_PYODIDE_ROOT + 'sequence.fas');
     }
 
-    // remove sequence.fas.gz
-    if (pyodide.FS.readdir(PATH_TO_PYODIDE_ROOT).includes('sequence.fas.gz')) {
-        pyodide.FS.unlink(PATH_TO_PYODIDE_ROOT + 'sequence.fas.gz');
-    }
-
     // remove reference.fas
     if (pyodide.FS.readdir(PATH_TO_PYODIDE_ROOT).includes('reference.fas')) {
         pyodide.FS.unlink(PATH_TO_PYODIDE_ROOT + 'reference.fas');
-    }
-
-    // remove reference.fas
-    if (pyodide.FS.readdir(PATH_TO_PYODIDE_ROOT).includes('reference.fas.gz')) {
-        pyodide.FS.unlink(PATH_TO_PYODIDE_ROOT + 'reference.fas.gz');
     }
 
     // remove output folder
