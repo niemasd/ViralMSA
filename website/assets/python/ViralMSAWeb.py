@@ -18,10 +18,11 @@ def call_override(command, stderr):
         # run old subprocess call if not minimap2 (won't work because Pyodide doesn't support subprocess.call)
         return old_subprocess_call(command, stderr=stderr)
     
+    # run minimap2, from javascript
     minimap2Override(command)
 
 if ('arguments' in globals()):
-    # set command line arguments
+    # set command line arguments, from javascript
     ViralMSA.sys.argv = arguments.split()
     # set overrides
     ViralMSA.subprocess.check_output = check_output_override
