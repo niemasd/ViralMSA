@@ -1,6 +1,8 @@
 # ViralMSA
 ViralMSA is a tool to perform reference-guided multiple sequence alignment of viral genomes. ViralMSA wraps around existing read mapping tools such as [Minimap2](https://doi.org/10.1093/bioinformatics/bty191), and as such, it can natively improve as methods of read mapping evolve. Importantly, this approach scales linearly with the number of sequences and can be massively parallelized. However, insertions with respect to the reference genome will be thrown away. This is fair for many viral analyses (e.g. phylogenetic inference, as insertions with respect to the reference likely lack phylogenetic information), but it may not be appropriate for all contexts.
 
+To run ViralMSA, you can either install the command-line tool (instructions below), or you can try out the [web app](https://niema.net/ViralMSA) created by my student, [Daniel Ji](https://www.linkedin.com/in/danielji26), which is a complete WebAssembly port of ViralMSA (meaning it runs fully client-side in your own web browser!). The web app works well for reasonably small datasets (e.g. a few thousand full genomes), but for larger datasets, you will want to use the command-line tool.
+
 ## Installation
 ViralMSA is written in Python 3 and depends on [BioPython](https://biopython.org/). You can simply download [ViralMSA.py](ViralMSA.py) to your machine and make it executable:
 
