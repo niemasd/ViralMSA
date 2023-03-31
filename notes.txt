@@ -1,7 +1,0 @@
-todo:
-- preloading indexes 
-- getting other aligners working
-- help guide
-
-how to best create ui for preloaded indexes?
-ask for larger files to test with
