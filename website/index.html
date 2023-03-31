@@ -133,7 +133,7 @@
             const uploadedRefSeq = document.getElementById("ref-sequence").files[0];
             const selectedRefSeq = document.getElementById("common-sequences").value;
 
-            if (!uploadedRefSeq && !selectedRefSeq) {
+            if (!uploadedRefSeq && !selectedRefSeq.startsWith("NC_")) {
                 alert("Please upload or select a reference sequence file.");
                 return;
             }
