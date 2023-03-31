@@ -21,7 +21,6 @@ self.onmessage = async (event) => {
             self.postMessage({
                 'download': [
                     ['sequence.fas.aln', pyodide.FS.readFile(PATH_TO_PYODIDE_ROOT + "output/sequence.fas.aln", { encoding: "utf8" })],
-                    ['sequence.fas.sam', pyodide.FS.readFile(PATH_TO_PYODIDE_ROOT + "output/sequence.fas.sam", { encoding: "utf8" })],
                 ]
             })
         } else {
@@ -67,12 +66,13 @@ const init = async () => {
 
     // get REFS and REF_NAMES for preloaded reference sequences and indexes
     pyodide.runPython(ViralMSAWeb)
-    REFS = (pyodide.globals.get('REFS').toJs())
-    REF_NAMES = (pyodide.globals.get('REF_NAMES').toJs())
+    REFS = pyodide.globals.get('REFS').toJs()
+    REF_NAMES = pyodide.globals.get('REF_NAMES').toJs()
     self.postMessage({
         'init': 'done',
         'REFS': REFS, 
-        'REF_NAMES': REF_NAMES
+        'REF_NAMES': REF_NAMES,
+        'VERSION': pyodide.globals.get('VERSION'),
     })
 }
 

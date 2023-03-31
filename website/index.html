@@ -16,6 +16,15 @@
         let startTime = new Date().getTime();
         const refGenomes = new Set();
 
+        // -------- GET ViralMSA VERSION --------
+        try {
+            const VERSION = [...(await (await fetch("https://raw.githubusercontent.com/niemasd/ViralMSA/master/ViralMSA.py")).text()).matchAll(/VERSION = '([1-9|.]*)'/gm)][0][1];
+            document.getElementById("site-title").innerText = "ViralMSA v" + VERSION;
+        } catch (error) {
+            console.log(error);
+            document.getElementById("site-title").innerText = "ViralMSA";
+        }
+
         // -------- LOADING ANIMATION --------
         const loadingInterval = setInterval(() => {
             const loading = document.getElementById("loading").getElementsByTagName("h4")[0];
@@ -49,14 +58,17 @@
         const preloadIndexes = setInterval(() => {
             if (REFS && REF_NAMES && refGenomes.size > 0) {
                 clearInterval(preloadIndexes);
+                const options = [];
                 REF_NAMES.forEach(entry => {
                     entry.forEach((commonName, virus)  => {
                         const option = document.createElement("option");
                         option.value = REFS.get(virus);
                         option.innerText = commonName;
-                        document.getElementById("common-sequences").appendChild(option);
+                        options.push(option);
                     })
                 })
+                options.sort((a, b) => a.innerText.localeCompare(b.innerText));
+                options.forEach(option => document.getElementById("common-sequences").appendChild(option));
                 // web page ready to load
                 document.getElementById("content").classList.remove("d-none")
                 document.getElementById("loading").classList.add("d-none")
@@ -204,8 +216,7 @@
         }
 
     </script>
-    <title>ViralMSA</title>
-    <h1 class="my-5 text-center">ViralMSA</h1>
+    <h1 class="my-5 text-center" id="site-title"></h1>
     <div id="loading">
         <h4 class="text-center" >Loading </h4>
     </div>

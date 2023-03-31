@@ -1,4 +1,4 @@
-# preload common reference sequences and their minimap2 indexes, deploy static content to GitHub Pages
+# deploy static content to GitHub Pages
 name: Deploy static content to Pages
 
 on:
