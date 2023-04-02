@@ -117,6 +117,23 @@
             }
         }
 
+        // helper function to write to console 
+        const getCurrentDateTime = () => {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+
+            return `[${year}-${month}-${day} ${hours}:${minutes}:${seconds}]`;
+            }
+
+        const printLog = (text) => {
+            document.getElementById("pyodide-console").innerHTML += "JS LOG:   " + getCurrentDateTime() + " " + text + "\n";
+        } 
+
         // Minimap2 WebWorker handling
         minimap2worker.onmessage = (event) => {
             // Minimap2 done running
@@ -163,6 +180,7 @@
             let refID;
 
             // sending file data to webworker
+            printLog("Reading input sequence file...")
             const inputSeqReader = new FileReader();
             inputSeqReader.readAsText(inputSequences, "UTF-8");
             inputSeqReader.onload = (e) => {
