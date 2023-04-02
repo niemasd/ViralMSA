@@ -180,8 +180,8 @@ const runViralMSA = async (inputSequences, referenceSequence, refID) => {
             });
         }
 
-        // 10 second timeout
-        Atomics.wait(mm2FinishedBuffer, 0, 0, 10000)
+        // 120 second timeout
+        Atomics.wait(mm2FinishedBuffer, 0, 0, 120000)
 
         // get minimap2 output and strip trailing null bytes
         const mm2FinishedArray = new Uint8Array(mm2FinishedBuffer.buffer);
