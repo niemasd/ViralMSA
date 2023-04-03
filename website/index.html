@@ -13,6 +13,8 @@
         const minimap2worker = new Worker('./assets/workers/minimap2worker.js');
         let REFS = undefined;
         let REF_NAMES = undefined;
+        // ViralMSA "Running..." animation interval
+        let runningInterval = undefined;
         // helps track ViralMSA runtime
         let startTime = new Date().getTime();
         const refGenomes = new Set();
@@ -40,8 +42,8 @@
 
         // -------- INITIALIZATION --------
 
-        // shared array buffer for waiting for minimap2 to finish and transmitting file data (100MB)
-        const sharedArrayBuffer = new SharedArrayBuffer(104857600);
+        // shared array buffer for waiting for minimap2 to finish and transmitting file data (200MB)
+        const sharedArrayBuffer = new SharedArrayBuffer(209715200);
         const sharedArray = new Int32Array(sharedArrayBuffer);  
         viralmsaworker.postMessage({'arraybuffer': sharedArray})
         minimap2worker.postMessage({'arraybuffer': sharedArray})
@@ -106,6 +108,7 @@
             } else if (event.data.finished) {
                 document.getElementById("duration").innerText = "Total runtime: " + (new Date().getTime() - startTime) / 1000 + " seconds";
                 document.getElementById("downloadResults").disabled = false;
+                clearInterval(runningInterval)
             
             // Pyodide call to run minimap2 
             } else if (event.data.runminimap2) {
@@ -116,6 +119,23 @@
                 }
             }
         }
+
+        // helper function to write to console 
+        const getCurrentDateTime = () => {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+
+            return `[${year}-${month}-${day} ${hours}:${minutes}:${seconds}]`;
+            }
+
+        const printLog = (text) => {
+            document.getElementById("pyodide-console").innerHTML += "JS LOG:   " + getCurrentDateTime() + " " + text + "\n";
+        } 
 
         // Minimap2 WebWorker handling
         minimap2worker.onmessage = (event) => {
@@ -155,7 +175,16 @@
             // validation passed
             // clear console and runtime record
             document.getElementById("pyodide-console").innerHTML = "";
-            document.getElementById("duration").innerText = "Running...";
+            document.getElementById("duration").innerText = "Running ";
+            runningInterval = setInterval(() => {
+                const loading = document.getElementById("duration")
+                const dots = loading.innerText.split(" ")[1]
+                if (dots && dots.length === 3) {
+                    loading.innerHTML = "Running "
+                } else {
+                    loading.innerHTML += "."
+                }
+            }, 500);
 
             let inputSeq;
             let refSeq;
@@ -163,6 +192,7 @@
             let refID;
 
             // sending file data to webworker
+            printLog("Reading input sequence file...")
             const inputSeqReader = new FileReader();
             inputSeqReader.readAsText(inputSequences, "UTF-8");
             inputSeqReader.onload = (e) => {
