@@ -14,6 +14,9 @@
 }
 
 #duration {
+    display: flex;
+    justify-content: center;
+    align-items: center;
     font-weight: bold;
 }
 
@@ -26,10 +29,37 @@
     width: 30vw;
 }
 
+#input-sequences-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
 .output {
     width: 50vw;
 }
 
 .output textarea {
-    height: 50vh;
+    height: 60vh;
+}
+
+#loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.loading-circle {
+    height: 20px;
+    
+    animation: loading-anim 2s linear infinite;
+}
+
+@keyframes loading-anim {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
 }
