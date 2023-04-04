@@ -13,8 +13,6 @@
         const minimap2worker = new Worker('./assets/workers/minimap2worker.js');
         let REFS = undefined;
         let REF_NAMES = undefined;
-        // ViralMSA "Running..." animation interval
-        let runningInterval = undefined;
         // helps track ViralMSA runtime
         let startTime = new Date().getTime();
         const refGenomes = new Set();
@@ -28,17 +26,6 @@
             console.log(error);
             document.getElementById("site-title").innerText = "ViralMSA";
         }
-
-        // -------- LOADING ANIMATION --------
-        const loadingInterval = setInterval(() => {
-            const loading = document.getElementById("loading").getElementsByTagName("h4")[0];
-            const dots = loading.innerText.split(" ")[1]
-            if (dots && dots.length === 3) {
-                loading.innerHTML = "Loading "
-            } else {
-                loading.innerHTML += "."
-            }
-        }, 500);
 
         // -------- INITIALIZATION --------
 
@@ -76,7 +63,6 @@
                 // web page ready to load
                 document.getElementById("content").classList.remove("d-none")
                 document.getElementById("loading").classList.add("d-none")
-                clearInterval(loadingInterval)
             }
         }, 1000)
 
@@ -106,9 +92,9 @@
             
             // on ViralMSA finish
             } else if (event.data.finished) {
-                document.getElementById("duration").innerText = "Total runtime: " + (new Date().getTime() - startTime) / 1000 + " seconds";
+                document.getElementById("duration-text").innerText = "Total runtime: " + (new Date().getTime() - startTime) / 1000 + " seconds";
+                document.getElementById("running-loading-circle").classList.add("d-none");
                 document.getElementById("downloadResults").disabled = false;
-                clearInterval(runningInterval)
             
             // Pyodide call to run minimap2 
             } else if (event.data.runminimap2) {
@@ -175,16 +161,8 @@
             // validation passed
             // clear console and runtime record
             document.getElementById("pyodide-console").innerHTML = "";
-            document.getElementById("duration").innerText = "Running ";
-            runningInterval = setInterval(() => {
-                const loading = document.getElementById("duration")
-                const dots = loading.innerText.split(" ")[1]
-                if (dots && dots.length === 3) {
-                    loading.innerHTML = "Running "
-                } else {
-                    loading.innerHTML += "."
-                }
-            }, 500);
+            document.getElementById("duration-text").innerText = "Running ";
+            document.getElementById("running-loading-circle").classList.remove("d-none");
 
             let inputSeq;
             let refSeq;
@@ -249,7 +227,8 @@
     </script>
     <h1 class="my-5 text-center" id="site-title"></h1>
     <div id="loading">
-        <h4 class="text-center" >Loading </h4>
+        <h4 class="text-center me-2">Loading </h4>
+        <img id="site-loading-circle" class="loading-circle" src="./assets/loading.png" alt="loading">
     </div>
     <div id="content" class="d-none">
         <div class="input">
@@ -274,7 +253,10 @@
 
             <button type="button" class="mt-3 btn btn-primary" id="runViralMSA">Run ViralMSA</button>
             <button type="button" class="mt-3 btn btn-primary" id="downloadResults" disabled>Download Results</button>
-            <p class="my-3" id="duration"></p>
+            <div id="duration">
+                <p id="duration-text" class="my-3"></p>
+                <img id="running-loading-circle" class="loading-circle d-none ms-2" src="./assets/loading.png" alt="loading">
+            </div>
         </div>
         <div class="output">
             <div class="mb-5">
