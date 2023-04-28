@@ -6,17 +6,16 @@ MAINTAINER Niema Moshiri <niemamoshiri@gmail.com>
 RUN apt-get update && apt-get -y upgrade && \
     DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get install -y cmake g++ g++-10 gcc-10 libboost-all-dev libgsl-dev libjemalloc-dev make unzip wget zlib1g-dev && \
 
-    # Install Bowtie2 v2.4.3
-    wget "https://github.com/BenLangmead/bowtie2/releases/download/v2.4.3/bowtie2-2.4.3-source.zip" && \
-    unzip bowtie2-*-source.zip && \
+    # Install Bowtie2 v2.5.1
+    wget -qO- "https://github.com/BenLangmead/bowtie2/archive/refs/tags/v2.5.1.tar.gz" | tar -zx && \
     cd bowtie2-* && \
     make && \
     make install && \
     cd .. && \
     rm -rf bowtie2-* && \
 
-    # Install DRAGMAP v1.2.1
-    wget -qO- "https://github.com/Illumina/DRAGMAP/archive/refs/tags/1.2.1.tar.gz" | tar -zx && \
+    # Install DRAGMAP v1.3.0
+    wget -qO- "https://github.com/Illumina/DRAGMAP/archive/refs/tags/1.3.0.tar.gz" | tar -zx && \
     cd DRAGMAP-* && \
     HAS_GTEST=0 make CFLAGS:= && \
     HAS_GTEST=0 make install && \
@@ -40,8 +39,8 @@ RUN apt-get update && apt-get -y upgrade && \
     cd .. && \
     rm -rf minimap2-* && \
 
-    # Install mm2-fast v1.0pre1
-    wget -qO- "https://github.com/bwa-mem2/mm2-fast/releases/download/mm2-fast-v1.0pre1/Source_code_including_submodules.tar.gz" | tar -zx && \
+    # Install mm2-fast v1.0
+    wget -qO- "https://github.com/bwa-mem2/mm2-fast/releases/download/mm2-fast-v1.0/Source_code_including_submodules.tar.gz" | tar -zx && \
     cd mm2-fast* && \
     make && \
     mv minimap2 /usr/local/bin/mm2-fast && \
@@ -59,8 +58,8 @@ RUN apt-get update && apt-get -y upgrade && \
     cd ../.. && \
     rm -rf ngmlr-* && \
 
-    # Install STAR v2.7.5c
-    wget -qO- "https://github.com/alexdobin/STAR/archive/refs/tags/2.7.9a.tar.gz" | tar -zx && \
+    # Install STAR v2.7.10b
+    wget -qO- "https://github.com/alexdobin/STAR/archive/refs/tags/2.7.10b.tar.gz" | tar -zx && \
     mv STAR-*/bin/Linux_*_static/* /usr/local/bin/ && \
     rm -rf STAR-* && \
 
@@ -73,8 +72,8 @@ RUN apt-get update && apt-get -y upgrade && \
     cd .. && \
     rm -rf master.zip unimap-master && \
 
-    # Install wfmash v0.7.0
-    wget -qO- "https://github.com/ekg/wfmash/releases/download/v0.7.0/wfmash-v0.7.0.tar.gz" | tar -zx && \
+    # Install wfmash v0.10.3
+    wget -qO- "https://github.com/waveygang/wfmash/releases/download/v0.10.3/wfmash-v0.10.3.tar.gz" | tar -zx && \
     cd wfmash-* && \
     cmake -H. -Bbuild -DCMAKE_C_COMPILER="$(which gcc-10)" -DCMAKE_CXX_COMPILER="$(which g++-10)" && \
     cmake --build build -- && \
