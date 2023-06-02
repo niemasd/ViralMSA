@@ -21,7 +21,7 @@
 
         // -------- GET ViralMSA VERSION --------
         try {
-            const VERSION = [...(await (await fetch("https://raw.githubusercontent.com/niemasd/ViralMSA/master/ViralMSA.py")).text()).matchAll(/VERSION = '([1-9|.]*)'/gm)][0][1];
+            const VERSION = [...(await (await fetch("https://raw.githubusercontent.com/niemasd/ViralMSA/master/ViralMSA.py")).text()).matchAll(/VERSION = '([0-9|.]*)'/gm)][0][1];
             document.getElementById("site-title").innerText = "ViralMSA v" + VERSION;
             document.title = "ViralMSA v" + VERSION;
         } catch (error) {
