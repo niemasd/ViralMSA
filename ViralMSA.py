@@ -21,7 +21,7 @@ import subprocess
 import sys
 
 # useful constants
-VERSION = '1.1.28'
+VERSION = '1.1.30'
 RELEASES_URL = 'https://api.github.com/repos/niemasd/ViralMSA/tags'
 CIGAR_LETTERS = {'M','D','I','S','H','=','X'}
 DEFAULT_BUFSIZE = 1048576 # 1 MB #8192 # 8 KB
@@ -59,6 +59,10 @@ CITATION = {
 REFS = {
     'bombalivirus':    'NC_039345', # Bombali Virus (Bombali ebolavirus)
     'bundibugyovirus': 'NC_014373', # Bundibugyo Virus (Bundibugyo ebolavirus)
+    'denv1':           'NC_001477', # Dengue Virus 1
+    'denv2':           'NC_001474', # Dengue Virus 2
+    'denv3':           'NC_001475', # Dengue Virus 3
+    'denv4':           'NC_002640', # Dengue Virus 4
     'ebolavirus':      'NC_002549', # Ebola Virus (Zaire ebolavirus)
     'hcv1':            'NC_004102', # HCV genotype 1
     'hcv1h77':         'NC_038882', # HCV genotpye 1 (isolate H77)
@@ -77,6 +81,13 @@ REFS = {
     'taiforestvirus':  'NC_014372', # Tai Forest Virus (Tai Forest ebolavirus, Cote d'Ivoire ebolavirus)
 }
 REF_NAMES = {
+    'DENV': {
+        'denv1':           'Dengue Virus 1',
+        'denv2':           'Dengue Virus 2',
+        'denv3':           'Dengue Virus 3',
+        'denv4':           'Dengue Virus 4',
+    },
+
     'Ebola': {
         'bombalivirus':    'Bombali Virus (Bombali ebolavirus)',
         'bundibugyovirus': 'Bundibugyo Virus (Bundibugyo ebolavirus)',
