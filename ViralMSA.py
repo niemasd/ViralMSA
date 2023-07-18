@@ -3,12 +3,6 @@
 ViralMSA: Reference-guided multiple sequence alignment of viral genomes
 '''
 
-# non-standard imports
-try:
-    from Bio import Entrez
-except ModuleNotFoundError:
-    print("ERROR: Unable to import Biopython. Install with: pip install biopython", file=sys.stderr); exit(1)
-
 # standard imports
 from datetime import datetime
 from gzip import open as gopen
@@ -24,6 +18,12 @@ from urllib.request import urlopen
 import argparse
 import subprocess
 import sys
+
+# non-standard imports
+try:
+    from Bio import Entrez
+except ModuleNotFoundError:
+    print("ERROR: Unable to import Biopython. Install with: pip install biopython", file=sys.stderr); exit(1)
 
 # useful constants
 VERSION = '1.1.31'
