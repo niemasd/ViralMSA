@@ -3,8 +3,13 @@
 ViralMSA: Reference-guided multiple sequence alignment of viral genomes
 '''
 
-# imports
-from Bio import Entrez
+# non-standard imports
+try:
+    from Bio import Entrez
+except ModuleNotFoundError:
+    print("ERROR: Unable to import Biopython. Install with: pip install biopython", file=sys.stderr); exit(1)
+
+# standard imports
 from datetime import datetime
 from gzip import open as gopen
 from hashlib import md5
@@ -21,7 +26,7 @@ import subprocess
 import sys
 
 # useful constants
-VERSION = '1.1.30'
+VERSION = '1.1.31'
 RELEASES_URL = 'https://api.github.com/repos/niemasd/ViralMSA/tags'
 CIGAR_LETTERS = {'M','D','I','S','H','=','X'}
 DEFAULT_BUFSIZE = 1048576 # 1 MB #8192 # 8 KB
