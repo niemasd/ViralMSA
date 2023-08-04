@@ -8,6 +8,10 @@ body {
 	font-size: 0.9rem;
 }
 
+.form-check-label {
+	font-size: 1rem;
+}
+
 #content {
     display: flex;
     width: 100%;

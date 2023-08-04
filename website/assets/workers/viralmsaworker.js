@@ -30,7 +30,7 @@ self.onmessage = async (event) => {
         }
     // run ViralMSA
     } else if (event.data.run) {    
-        await runViralMSA(event.data.inputSeq, event.data.refSeq, event.data.refID);
+        await runViralMSA(event.data.inputSeq, event.data.refSeq, event.data.refID, event.data.omitRef);
     // initialize minimap2 output buffer
     } else if (event.data.arraybuffer) {
         mm2FinishedBuffer = event.data.arraybuffer;
@@ -79,7 +79,7 @@ const init = async () => {
 init();
 
 // only needs referenceSequence or refID (providing refID means using a preloaded reference sequence and index, which is later fetched)
-const runViralMSA = async (inputSequences, referenceSequence, refID) => {
+const runViralMSA = async (inputSequences, referenceSequence, refID, omitRef) => {
     // reset global variable
     downloadResults = false;
 
@@ -105,6 +105,7 @@ const runViralMSA = async (inputSequences, referenceSequence, refID) => {
     // write provided files to Pyodide
     pyodide.FS.writeFile(PATH_TO_PYODIDE_ROOT + 'sequence.fas', inputSequences, { encoding: "utf8" });
 
+	let args = undefined;
     // preloaded reference sequence and index  
     if (refID) {
         // get reference sequence virus name to use in command line args
@@ -123,15 +124,19 @@ const runViralMSA = async (inputSequences, referenceSequence, refID) => {
         }
 
         // set global args variable
-        let args = `./ViralMSA.py -e email@address.com -s sequence.fas -o output -r ${refVirus} --viralmsa_dir cache`;
-        pyodide.globals.set("arguments", args);
+        args = `./ViralMSA.py -e email@address.com -s sequence.fas -o output -r ${refVirus} --viralmsa_dir cache`;
     } else {
         pyodide.FS.writeFile(PATH_TO_PYODIDE_ROOT + 'reference.fas', referenceSequence, { encoding: "utf8" });
 
         // set global args variable
-        let args = "./ViralMSA.py -e email@address.com -s sequence.fas -o output -r reference.fas --viralmsa_dir cache";
-        pyodide.globals.set("arguments", args);
+        args = "./ViralMSA.py -e email@address.com -s sequence.fas -o output -r reference.fas --viralmsa_dir cache";
     }
+
+	if (omitRef) {
+		args += " --omit_ref";
+	}
+
+	pyodide.globals.set("arguments", args);
 
     
     // set global minimapOverride variable to use BioWASM
