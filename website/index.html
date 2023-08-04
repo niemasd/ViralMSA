@@ -126,7 +126,7 @@
 		}
 
 		const printLog = (text) => {
-			document.getElementById("pyodide-console").innerHTML += "JS LOG:   " + getCurrentDateTime() + " " + text + "\n";
+			document.getElementById("pyodide-console").innerHTML += "JS LOG:  " + getCurrentDateTime() + " " + text + "\n";
 		}
 
 		// Minimap2 WebWorker handling
@@ -201,6 +201,7 @@
 			let refSeq;
 			let refIndex;
 			let refID;
+			const omitRef = document.getElementById("omit-ref").checked;
 
 			// sending file data to webworker
 			printLog("Reading input sequence file...")
@@ -232,7 +233,7 @@
 			const interval = setInterval(() => {
 				if (inputSeq && (refSeq || refID)) {
 					clearInterval(interval);
-					viralmsaworker.postMessage({ 'run': 'viralmsa', 'inputSeq': inputSeq, 'refSeq': refSeq, 'refID': refID });
+					viralmsaworker.postMessage({ 'run': 'viralmsa', 'inputSeq': inputSeq, 'refSeq': refSeq, 'refID': refID, 'omitRef': omitRef });
 					startTime = new Date().getTime();
 					document.getElementById("downloadResults").disabled = true;
 				}
@@ -275,8 +276,8 @@
 					<label for="input-sequences" class="form-label">Input Sequences (FASTA Format)</label>
 					<input class="form-control" type="file" id="input-sequences">
 					<p id="loaded-example-indicator" class="mt-2 d-none"><strong>Loaded Example Data: <a
-							href="https://raw.githubusercontent.com/niemasd/viralmsa/master/example/example_hiv.fas"
-							target="_blank" rel="noreferr
+								href="https://raw.githubusercontent.com/niemasd/viralmsa/master/example/example_hiv.fas"
+								target="_blank" rel="noreferr
 						">example_hiv.fas</a></strong></p>
 				</div>
 
@@ -287,9 +288,16 @@
 
 				<h5 class="mt-2 text-center">&#8213; OR &#8213;</h5>
 
-				<div class="mb-3">
+				<div>
 					<label for="ref-sequence" class="form-label">Upload Reference Sequence</label>
 					<input class="form-control" type="file" id="ref-sequence">
+				</div>
+
+				<div class="form-check mt-4">
+					<input class="form-check-input" type="checkbox" value="" id="omit-ref">
+					<label class="form-check-label" for="omit-ref">
+						Omit Reference Sequence from Output
+					</label>
 				</div>
 			</div>
 
