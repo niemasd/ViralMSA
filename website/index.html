@@ -12,15 +12,17 @@
 <body>
 	<script src="coi-serviceworker.min.js"></script>
 	<script type="module" async>
+		const OUTPUT_ID = "output-console";
+
 		const viralmsaworker = new Worker('./assets/workers/viralmsaworker.js');
 		const minimap2worker = new Worker('./assets/workers/minimap2worker.js');
 		let REFS = undefined;
 		let REF_NAMES = undefined;
+		const refGenomes = new Set();
 		let EXAMPLE_INPUT = undefined;
 		let USE_EXAMPLE_INPUT = false;
 		// helps track ViralMSA runtime
 		let startTime = new Date().getTime();
-		const refGenomes = new Set();
 
 		// -------- GET ViralMSA VERSION --------
 		try {
@@ -69,7 +71,7 @@
 				document.getElementById("content").classList.remove("d-none")
 				document.getElementById("loading").classList.add("d-none")
 			}
-		}, 1000)
+		}, 250)
 
 		// -------- WEBWORKERS --------
 
@@ -83,7 +85,7 @@
 			} else if (event.data.init) {
 				REFS = event.data.REFS;
 				REF_NAMES = event.data.REF_NAMES;
-				printLog("ViralMSA Loaded.")
+				LOG("ViralMSA Loaded.")
 
 				// download results
 			} else if (event.data.download) {
@@ -94,7 +96,7 @@
 
 				// updating console
 			} else if (event.data.pyodideConsole) {
-				document.getElementById("pyodide-console").innerHTML += event.data.pyodideConsole;
+				document.getElementById("output-console").innerHTML += event.data.pyodideConsole;
 
 				// on ViralMSA finish
 			} else if (event.data.finished) {
@@ -125,8 +127,15 @@
 			return `[${year}-${month}-${day} ${hours}:${minutes}:${seconds}]`;
 		}
 
-		const printLog = (text) => {
-			document.getElementById("pyodide-console").innerHTML += "JS LOG:  " + getCurrentDateTime() + " " + text + "\n";
+		const LOG = (output) => {
+			const textArea = document.getElementById(OUTPUT_ID);
+			const date = new Date();
+			textArea.value += `${getTimeWithMilliseconds(date)}: ` + output + "\n";
+		}
+
+		const getTimeWithMilliseconds = date => {
+			const t = date.toLocaleTimeString();
+			return `${t.substring(0, 7)}.${("00" + date.getMilliseconds()).slice(-3)}`;
 		}
 
 		// Minimap2 WebWorker handling
@@ -193,7 +202,7 @@
 
 			// validation passed
 			// clear console and runtime record
-			document.getElementById("pyodide-console").innerHTML = "";
+			document.getElementById("output-console").innerHTML = "";
 			document.getElementById("duration-text").innerText = "Running ";
 			document.getElementById("running-loading-circle").classList.remove("d-none");
 
@@ -204,7 +213,7 @@
 			const omitRef = document.getElementById("omit-ref").checked;
 
 			// sending file data to webworker
-			printLog("Reading input sequence file...")
+			LOG("Reading input sequence file...")
 			if (USE_EXAMPLE_INPUT) {
 				inputSeq = EXAMPLE_INPUT;
 			} else {
@@ -263,12 +272,18 @@
 		}
 	</script>
 
-	<h2 class="my-5 text-center" id="site-title"></h2>
+	<h2 class="mt-5 mb-2 text-center" id="site-title"></h2>
+	<p class="text-center my-3">
+		WebAssembly implementation of <a href="https://www.github.com/niemasd/ViralMSA" target="_blank"
+			rel="noreferrer">ViralMSA</a>.<br>
+		Created by Daniel Ji, UCSD Undergraduate Student Researcher for Professor <a href="https://www.niema.net"
+			target="_blank" rel="noreferrer">Niema Moshiri</a>
+	</p>
 	<div id="loading">
 		<h4 class="text-center me-2">Loading </h4>
 		<img id="site-loading-circle" class="loading-circle" src="./assets/loading.png" alt="loading">
 	</div>
-	<div id="content" class="d-none mt-5">
+	<div id="content" class="d-none mt-3">
 		<div class="input">
 			<h5 class="w-100 text-start mb-3">Input</h5>
 			<div id="ref-seq-container">
@@ -306,7 +321,7 @@
 		</div>
 		<div class="output">
 			<h5 class="mb-3">Console</h5>
-			<textarea class="form-control" id="pyodide-console" rows="3"></textarea>
+			<textarea class="form-control" id="output-console" rows="3"></textarea>
 			<button type="button" class="mt-4 btn btn-primary w-100" id="downloadResults" disabled>Download
 				Results</button>
 			<div id="duration">
@@ -316,12 +331,6 @@
 			</div>
 		</div>
 	</div>
-	<footer class="text-center my-4">
-		WebAssembly implementation of <a href="https://www.github.com/niemasd/ViralMSA" target="_blank"
-			rel="noreferrer">ViralMSA</a>.<br>
-		Created by Daniel Ji, UCSD Undergraduate Student Researcher for Professor <a href="https://www.niema.net"
-			target="_blank" rel="noreferrer">Niema Moshiri</a>
-	</footer>
 </body>
 
 </html>
