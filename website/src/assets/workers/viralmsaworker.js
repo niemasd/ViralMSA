@@ -62,7 +62,7 @@ const init = async () => {
     pyodide.FS.writeFile(PATH_TO_PYODIDE_ROOT + 'ViralMSA.py', await (await fetch("https://raw.githubusercontent.com/niemasd/ViralMSA/master/ViralMSA.py")).text(), { encoding: "utf8" });
 
     // load in ViralMSAWeb.py
-    ViralMSAWeb = await (await fetch("../python/ViralMSAWeb.py")).text()
+    ViralMSAWeb = await (await fetch("https://raw.githubusercontent.com/niemasd/ViralMSA/master/website/assets/python/ViralMSAWeb.py")).text()
 
     // get REFS and REF_NAMES for preloaded reference sequences and indexes
     pyodide.runPython(ViralMSAWeb)
