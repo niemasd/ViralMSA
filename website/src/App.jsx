@@ -124,7 +124,7 @@ export class App extends Component {
 		} else if (event.data.init) {
 			// done loading pyodide / ViralMSA 
 			this.setState({ REFS: event.data.REFS, REF_NAMES: event.data.REF_NAMES })
-			LOG("ViralMSA Loaded.\n")
+			LOG("ViralMSA Loaded.")
 		} else if (event.data.download) {
 			// download results
 			for (const download of event.data.download) {
@@ -137,6 +137,7 @@ export class App extends Component {
 			LOG(event.data.pyodideConsole, false)
 		} else if (event.data.finished) {
 			// on ViralMSA finish
+			LOG("ViralMSA finished!")
 			this.setState({ done: true, timeElapsed: (new Date().getTime() - this.state.startTime) / 1000 })
 		} else if (event.data.runminimap2) {
 			// Pyodide call to run minimap2 
@@ -149,7 +150,7 @@ export class App extends Component {
 	}
 
 	handleMinimap2Message = (event) => {
-		// Minimap2 done running
+		// minimap2 done running
 		if (event.data.minimap2done) {
 			const fileData = event.data.minimap2done === 'alignment' ? event.data.sam : event.data.mmi;
 
@@ -159,8 +160,13 @@ export class App extends Component {
 			// update shared array buffer
 			this.state.sharedArray.set(new Uint32Array(adjustedArray.buffer), 0)
 
-			// notify ViralMSA WebWorker that Minimap2 is done
+			// notify ViralMSA WebWorker that minimap2 is done
 			Atomics.notify(this.state.sharedArray, 0);
+		}
+
+		// log message
+		if (event.data.log) {
+			LOG(event.data.log, false)
 		}
 	}
 
@@ -341,9 +347,9 @@ export class App extends Component {
 						</div>
 						<textarea className="form-control" id="output-console" rows="3"></textarea>
 						<button type="button" className="mt-4 btn btn-primary w-100" disabled={!this.state.done} onClick={this.downloadResults}>Download Results</button>
-						<div id="duration">
+						<div id="duration" className="my-3">
 							{this.state.timeElapsed &&
-								<p id="duration-text" className="my-3">Total runtime: {this.state.timeElapsed} seconds</p>
+								<p id="duration-text">Total runtime: {this.state.timeElapsed} seconds</p>
 							}
 							{this.state.running && !this.state.done &&
 								<Fragment>
