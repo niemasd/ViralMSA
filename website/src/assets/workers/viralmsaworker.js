@@ -114,8 +114,8 @@ const runViralMSA = async (inputSequences, referenceSequence, refID, omitRef) =>
         // only fetch reference sequence and index if not already in cache
         if (!pyodide.FS.readdir(`${PATH_TO_PYODIDE_ROOT}/cache/`).includes(refID)) {
             // get reference sequence and index
-            referenceSequence = await (await fetch("https://raw.githubusercontent.com/niemasd/viralmsa/master/ref_genomes/" + refID + "/" + refID + ".fas")).text();
-            refIndex = new Uint8Array(await (await fetch("https://raw.githubusercontent.com/niemasd/viralmsa/master/ref_genomes/" + refID + "/" + refID + ".fas.mmi")).arrayBuffer());
+            const referenceSequence = await (await fetch("https://raw.githubusercontent.com/niemasd/viralmsa/master/ref_genomes/" + refID + "/" + refID + ".fas")).text();
+            const refIndex = new Uint8Array(await (await fetch("https://raw.githubusercontent.com/niemasd/viralmsa/master/ref_genomes/" + refID + "/" + refID + ".fas.mmi")).arrayBuffer());
         
             // write reference sequence and index to Pyodide
             pyodide.FS.mkdir(`${PATH_TO_PYODIDE_ROOT}/cache/${refID}`)

@@ -8,7 +8,9 @@ import {
 	CLEAR_LOG,
 	MAX_SHARED_ARRAY_BUFFER_SIZE,
 	VIRAL_MSA_LINK,
-	VIRAL_MSA_REPO_STRUCTURE_LINK
+	VIRAL_MSA_REPO_STRUCTURE_LINK,
+	EXAMPLE_INPUT_FILE,
+	EXAMPLE_PRELOADED_REF
 } from './constants.js';
 
 const viralMSAWorker = new Worker(new URL('./assets/workers/viralmsaworker.js', import.meta.url));
@@ -112,7 +114,7 @@ export class App extends Component {
 
 	fetchExampleInput = async () => {
 		this.setState({
-			exampleInput: await (await fetch("https://raw.githubusercontent.com/niemasd/viralmsa/master/example/example_hiv.fas")).text()
+			exampleInput: await (await fetch(EXAMPLE_INPUT_FILE)).text()
 		})
 	}
 
@@ -192,7 +194,7 @@ export class App extends Component {
 	}
 
 	toggleExampleData = () => {
-		this.setState(prevState => ({ useExampleInput: !prevState.useExampleInput }))
+		this.setState(prevState => ({ useExampleInput: !prevState.useExampleInput, preloadedRef: prevState.useExampleInput ? prevState.preloadedRef : EXAMPLE_PRELOADED_REF}))
 	}
 
 	runViralMSA = async () => {
@@ -297,7 +299,7 @@ export class App extends Component {
 								<input className="form-control" type="file" id="input-sequences" onChange={this.setInputFile} />
 								{this.state.useExampleInput &&
 									<p className="mt-2"><strong>Using Loaded Example Data: <a
-										href="https://raw.githubusercontent.com/niemasd/viralmsa/master/example/example_hiv.fas"
+										href={EXAMPLE_INPUT_FILE}
 										target="_blank" rel="noreferrer">example_hiv.fas</a></strong></p>
 								}
 							</div>
