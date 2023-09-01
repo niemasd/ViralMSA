@@ -26,12 +26,13 @@ except ModuleNotFoundError:
     print("ERROR: Unable to import Biopython. Install with: pip install biopython", file=sys.stderr); exit(1)
 
 # useful constants
-VERSION = '1.1.32'
+VERSION = '1.1.33'
 RELEASES_URL = 'https://api.github.com/repos/niemasd/ViralMSA/tags'
 CIGAR_LETTERS = {'M','D','I','S','H','=','X'}
 DEFAULT_BUFSIZE = 1048576 # 1 MB #8192 # 8 KB
 DEFAULT_ALIGNER = 'minimap2'
 DEFAULT_THREADS = cpu_count()
+global QUIET; QUIET = False
 global LOGFILE; LOGFILE = None
 
 # mapper-specific options
@@ -132,7 +133,8 @@ assert len(tmp) == 0, "Value(s) in REFS missing in REF_NAMES: %s" % str(tmp)
 # print to log (prefixed by current time)
 def print_log(s='', end='\n'):
     tmp = "[%s] %s" % (get_time(), s)
-    print(tmp, end=end); sys.stdout.flush()
+    if not QUIET:
+        print(tmp, file=sys.stderr, end=end); sys.stderr.flush()
     if LOGFILE is not None:
         print(tmp, file=LOGFILE, end=end); LOGFILE.flush()
 
@@ -163,6 +165,10 @@ def get_time():
 # count the number of IDs in a FASTA file
 def count_IDs_fasta(fn, bufsize=DEFAULT_BUFSIZE):
     return sum(l.startswith('>') for l in open(fn, buffering=bufsize))
+
+# count the number of IDs in a SAM file
+def count_IDs_sam(fn, bufsize=DEFAULT_BUFSIZE):
+    return len({l.split('\t')[0].strip() for l in open(fn, buffering=bufsize) if not l.startswith('@')})
 
 # parse a CIGAR string
 def parse_cigar(s):
@@ -924,7 +930,7 @@ def parse_args():
 
     # use argparse to parse user arguments
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('-s', '--sequences', required=True, type=str, help="Input Sequences (FASTA format)")
+    parser.add_argument('-s', '--sequences', required=True, type=str, help="Input Sequences (FASTA format, or SAM if already mapped)")
     parser.add_argument('-r', '--reference', required=True, type=str, help="Reference")
     parser.add_argument('-e', '--email', required=True, type=str, help="Email Address (for Entrez)")
     parser.add_argument('-o', '--output', required=True, type=str, help="Output Directory")
@@ -933,6 +939,8 @@ def parse_args():
     parser.add_argument('-b', '--buffer_size', required=False, type=int, default=DEFAULT_BUFSIZE, help="File Stream Buffer Size (bytes)")
     parser.add_argument('-l', '--list_references', action="store_true", help="List all reference sequences")
     parser.add_argument('--omit_ref', action="store_true", help="Omit reference sequence from output alignment")
+    parser.add_argument('--stdout', action="store_true", help="Write MSA to standard output instead of to file")
+    parser.add_argument('-q', '--quiet', action="store_true", help="Suppress log output")
     parser.add_argument('--viralmsa_dir', required=False, type=str, default=abspath(expanduser("~/.viralmsa")), help="ViralMSA Cache Directory")
     parser.add_argument('-u', '--update', action="store_true", help="Update ViralMSA (current version: %s)" % VERSION)
     args = parser.parse_args()
@@ -996,7 +1004,11 @@ def aln_to_fasta(out_aln_path, out_msa_path, ref_genome_path, omit_ref=False, bu
         aln_type = 'p' # PAF
     else:
         print("ERROR: Invalid alignment extension: %s" % out_aln_path, file=sys.stderr); exit(1)
-    msa = open(out_msa_path, 'w', buffering=bufsize); ref_seq = list()
+    if out_msa_path is None:
+        msa = sys.stdout
+    else:
+        msa = open(out_msa_path, 'w', buffering=bufsize)
+    ref_seq = list()
     for line in open(ref_genome_path):
         if len(line) == 0:
             continue
@@ -1049,12 +1061,19 @@ def aln_to_fasta(out_aln_path, out_msa_path, ref_genome_path, omit_ref=False, bu
 # main content
 def main():
     # parse user args and prepare run
+    INPUT_TYPE = None
     args = parse_args()
     makedirs(args.viralmsa_dir, exist_ok=True)
     makedirs(args.output)
+    global QUIET; QUIET = args.quiet
     global LOGFILE; LOGFILE = open("%s/viralmsa.log" % args.output, 'w')
     ALIGNERS[args.aligner]['check']()
-    num_input_IDs = count_IDs_fasta(args.sequences, bufsize=args.buffer_size)
+    if args.sequences.lower().endswith('.sam'):
+        INPUT_TYPE = 'SAM'
+        num_input_IDs = count_IDs_sam(args.sequences, bufsize=args.buffer_size)
+    else: # assume FASTA input if not SAM
+        INPUT_TYPE = 'FASTA'
+        num_input_IDs = count_IDs_fasta(args.sequences, bufsize=args.buffer_size)
 
     # print run information
     print_log("===== RUN INFORMATION =====")
@@ -1063,7 +1082,8 @@ def main():
     print_log("Reference: %s" % args.reference)
     print_log("Email Address: %s" % args.email)
     print_log("Output Directory: %s" % args.output)
-    print_log("Aligner: %s" % args.aligner)
+    if INPUT_TYPE == 'FASTA':
+        print_log("Aligner: %s" % args.aligner)
     print_log("ViralMSA Cache Directory: %s" % args.viralmsa_dir)
     print_log()
 
@@ -1076,21 +1096,28 @@ def main():
         download_ref_genome(args.reference, args.ref_path, args.ref_genome_path, args.email, bufsize=args.buffer_size)
         print_log("Reference genome downloaded: %s" % args.ref_genome_path)
 
-    # build aligner index (if needed)
-    ALIGNERS[args.aligner]['build_index'](args.ref_genome_path, args.threads)
-    print_log()
+    # align if FASTA input, otherwise use SAM input as-is
+    if INPUT_TYPE == 'FASTA':
+        # build aligner index (if needed)
+        ALIGNERS[args.aligner]['build_index'](args.ref_genome_path, args.threads)
+        print_log()
 
-    # align viral genomes against referencea
-    print_log("===== ALIGNMENT =====")
-    if args.aligner in ALIGNERS_PAF:
-        out_aln_path = '%s/%s.paf' % (args.output, args.sequences.split('/')[-1])
-    else:
-        out_aln_path = '%s/%s.sam' % (args.output, args.sequences.split('/')[-1])
-    ALIGNERS[args.aligner]['align'](args.sequences, out_aln_path, args.ref_genome_path, args.threads)
+        # align viral genomes against referencea
+        print_log("===== ALIGNMENT =====")
+        if args.aligner in ALIGNERS_PAF:
+            out_aln_path = '%s/%s.paf' % (args.output, args.sequences.split('/')[-1])
+        else:
+            out_aln_path = '%s/%s.sam' % (args.output, args.sequences.split('/')[-1])
+        ALIGNERS[args.aligner]['align'](args.sequences, out_aln_path, args.ref_genome_path, args.threads)
+    elif INPUT_TYPE == 'SAM':
+        out_aln_path = args.sequences
 
     # convert alignment (SAM/PAF) to MSA FASTA
     print_log("Converting alignment to FASTA...")
-    out_msa_path = '%s/%s.aln' % (args.output, args.sequences.split('/')[-1])
+    if args.stdout:
+        out_msa_path = None
+    else:
+        out_msa_path = '%s/%s.aln' % (args.output, args.sequences.split('/')[-1])
     num_output_IDs = aln_to_fasta(out_aln_path, out_msa_path, args.ref_genome_path, omit_ref=args.omit_ref, bufsize=args.buffer_size)
     print_log("Multiple sequence alignment complete: %s" % out_msa_path)
     if num_output_IDs < num_input_IDs:
