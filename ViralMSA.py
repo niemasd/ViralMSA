@@ -26,7 +26,7 @@ except ModuleNotFoundError:
     print("ERROR: Unable to import Biopython. Install with: pip install biopython", file=sys.stderr); exit(1)
 
 # useful constants
-VERSION = '1.1.33'
+VERSION = '1.1.34'
 RELEASES_URL = 'https://api.github.com/repos/niemasd/ViralMSA/tags'
 CIGAR_LETTERS = {'M','D','I','S','H','=','X'}
 DEFAULT_BUFSIZE = 1048576 # 1 MB #8192 # 8 KB
