@@ -1067,12 +1067,12 @@ def main():
     makedirs(args.output)
     global QUIET; QUIET = args.quiet
     global LOGFILE; LOGFILE = open("%s/viralmsa.log" % args.output, 'w')
-    ALIGNERS[args.aligner]['check']()
     if args.sequences.lower().endswith('.sam'):
         INPUT_TYPE = 'SAM'
         num_input_IDs = count_IDs_sam(args.sequences, bufsize=args.buffer_size)
     else: # assume FASTA input if not SAM
         INPUT_TYPE = 'FASTA'
+        ALIGNERS[args.aligner]['check']()
         num_input_IDs = count_IDs_fasta(args.sequences, bufsize=args.buffer_size)
 
     # print run information
