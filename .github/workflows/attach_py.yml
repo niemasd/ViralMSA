@@ -1,8 +1,8 @@
 name: Attach ViralMSA.py to release
 on:
-  push:
-    tags:
-      - '*'
+  release:
+    types:
+    - created
 jobs:
   attach_py:
     runs-on: ubuntu-latest
