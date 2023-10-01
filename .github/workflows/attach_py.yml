@@ -1,0 +1,16 @@
+name: Attach ViralMSA.py to release
+on:
+  push:
+    tags:
+      - '*'
+jobs:
+  attach_py:
+    runs-on: ubuntu-latest
+      - name: Upload ViralMSA.py to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ViralMSA.py
+          asset_name: ViralMSA.py
+          tag: ${{ github.ref }}
+          overwrite: true
