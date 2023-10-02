@@ -26,6 +26,8 @@ ViralMSA also requires at least one of the following tools to perform the alignm
 * [wfmash](https://github.com/ekg/wfmash)
 * [Winnowmap](https://github.com/marbl/Winnowmap)
 
+We also provide a Docker image with all dependencies installed: [niemasd/viralmsa](https://hub.docker.com/r/niemasd/viralmsa)
+
 ## Usage
 ViralMSA can be used as follows:
 
