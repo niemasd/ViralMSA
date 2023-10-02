@@ -12,6 +12,12 @@ chmod a+x ViralMSA.py
 sudo mv ViralMSA.py /usr/local/bin/ViralMSA.py # optional step to install globally
 ```
 
+If you already have ViralMSA installed, you can update it to the newest release version easily:
+
+```bash
+ViralMSA.py -u
+```
+
 ViralMSA also requires at least one of the following tools to perform the alignment:
 
 * **[Minimap2](https://github.com/lh3/minimap2) (used by default; strongly recommended)**
