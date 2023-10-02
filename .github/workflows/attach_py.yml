@@ -6,6 +6,8 @@ jobs:
   attach_py:
     runs-on: ubuntu-latest
     steps:
+      - name: Set up Git repository
+        uses: actions/checkout@v2
       - name: Upload ViralMSA.py to release
         uses: svenstaro/upload-release-action@v2
         with:
