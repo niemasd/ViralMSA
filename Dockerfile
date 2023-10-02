@@ -85,7 +85,7 @@ RUN apt-get update && apt-get -y upgrade && \
     rm -rf master.zip unimap-master && \
 
     # Install wfmash
-    wget -qO- "https://github.com/waveygang/wfmash/releases/download/v0.10.3/wfmash-v0.10.5.tar.gz" | tar -zx && \
+    wget -qO- "https://github.com/waveygang/wfmash/releases/download/v0.10.5/wfmash-v0.10.5.tar.gz" | tar -zx && \
     cd wfmash-* && \
     cmake -H. -Bbuild -DCMAKE_C_COMPILER="$(which gcc-10)" -DCMAKE_CXX_COMPILER="$(which g++-10)" && \
     cmake --build build -- && \
