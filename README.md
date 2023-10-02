@@ -7,7 +7,7 @@ To run ViralMSA, you can either install the command-line tool (instructions belo
 ViralMSA is written in Python 3 and depends on [BioPython](https://biopython.org/). You can simply download [ViralMSA.py](ViralMSA.py) to your machine and make it executable:
 
 ```bash
-wget "https://raw.githubusercontent.com/niemasd/ViralMSA/master/ViralMSA.py"
+wget "[https://raw.githubusercontent.com/niemasd/ViralMSA/master/ViralMSA.py](https://github.com/niemasd/ViralMSA/releases/latest/download/ViralMSA.py)"
 chmod a+x ViralMSA.py
 sudo mv ViralMSA.py /usr/local/bin/ViralMSA.py # optional step to install globally
 ```
