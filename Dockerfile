@@ -4,7 +4,7 @@ MAINTAINER Niema Moshiri <niemamoshiri@gmail.com>
 
 # Set up environment and install dependencies
 RUN apt-get update && apt-get -y upgrade && \
-    DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get install -y cmake g++ g++-10 gcc-10 libboost-all-dev libbz2-dev libcurl4-openssl-dev libgsl-dev libjemalloc-dev liblzma-dev make python3 python3-pip unzip wget zlib1g-dev && \
+    DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get install -y cmake g++ g++-10 gcc-10 libboost-all-dev libbz2-dev libcurl4-openssl-dev libgsl-dev libjemalloc-dev liblzma-dev make pkg-config python3 python3-pip unzip wget zlib1g-dev && \
 
     # Install Python packages
     pip install --no-cache-dir biopython && \
