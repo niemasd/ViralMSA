@@ -4,7 +4,7 @@ ViralMSA is a tool to perform reference-guided multiple sequence alignment of vi
 To run ViralMSA, you can either install the command-line tool (instructions below), or you can try out the [web app](https://niema.net/ViralMSA) created by my student, [Daniel Ji](https://www.linkedin.com/in/danielji26), which is a complete WebAssembly port of ViralMSA (meaning it runs fully client-side in your own web browser!). The web app works well for reasonably small datasets (e.g. a few thousand full genomes), but for larger datasets, you will want to use the command-line tool.
 
 ## Installation
-ViralMSA is written in Python 3 and depends on [BioPython](https://biopython.org/). You can simply download [ViralMSA.py](ViralMSA.py) to your machine and make it executable:
+ViralMSA is written in Python 3 and depends on [BioPython](https://biopython.org/). You can simply download [ViralMSA.py](https://github.com/niemasd/ViralMSA/releases/latest/download/ViralMSA.py) to your machine and make it executable:
 
 ```bash
 wget "https://github.com/niemasd/ViralMSA/releases/latest/download/ViralMSA.py"
