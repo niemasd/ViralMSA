@@ -19,14 +19,8 @@ import argparse
 import subprocess
 import sys
 
-# non-standard imports
-try:
-    from Bio import Entrez
-except ModuleNotFoundError:
-    print("ERROR: Unable to import Biopython. Install with: pip install biopython", file=sys.stderr); exit(1)
-
 # useful constants
-VERSION = '1.1.35'
+VERSION = '1.1.36'
 RELEASES_URL = 'https://api.github.com/repos/niemasd/ViralMSA/tags'
 CIGAR_LETTERS = {'M','D','I','S','H','=','X'}
 DEFAULT_BUFSIZE = 1048576 # 1 MB #8192 # 8 KB
@@ -986,6 +980,10 @@ def parse_args():
 
 # download reference genome
 def download_ref_genome(reference, ref_path, ref_genome_path, email, bufsize=DEFAULT_BUFSIZE):
+    try:
+        from Bio import Entrez
+    except ModuleNotFoundError:
+        print("ERROR: Unable to import Biopython, which is needed to download a reference genome.\nInstall with: pip install biopython", file=sys.stderr); exit(1)
     makedirs(ref_path, exist_ok=True); Entrez.email = email
     try:
         handle = Entrez.efetch(db='nucleotide', rettype='fasta', id=reference)
