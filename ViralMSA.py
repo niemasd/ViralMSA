@@ -20,7 +20,7 @@ import subprocess
 import sys
 
 # useful constants
-VERSION = '1.1.36'
+VERSION = '1.1.37'
 RELEASES_URL = 'https://api.github.com/repos/niemasd/ViralMSA/tags'
 CIGAR_LETTERS = {'M','D','I','S','H','=','X'}
 DEFAULT_BUFSIZE = 1048576 # 1 MB #8192 # 8 KB
@@ -57,28 +57,29 @@ CITATION = {
 
 # reference genomes for common viruses
 REFS = {
-    'bombalivirus':    'NC_039345', # Bombali Virus (Bombali ebolavirus)
-    'bundibugyovirus': 'NC_014373', # Bundibugyo Virus (Bundibugyo ebolavirus)
-    'denv1':           'NC_001477', # Dengue Virus 1
-    'denv2':           'NC_001474', # Dengue Virus 2
-    'denv3':           'NC_001475', # Dengue Virus 3
-    'denv4':           'NC_002640', # Dengue Virus 4
-    'ebolavirus':      'NC_002549', # Ebola Virus (Zaire ebolavirus)
-    'hcv1':            'NC_004102', # HCV genotype 1
-    'hcv1h77':         'NC_038882', # HCV genotpye 1 (isolate H77)
-    'hcv2':            'NC_009823', # HCV genotype 2
-    'hcv3':            'NC_009824', # HCV genotype 3
-    'hcv4':            'NC_009825', # HCV genotype 4
-    'hcv5':            'NC_009826', # HCV genotype 5
-    'hcv6':            'NC_009827', # HCV genotype 6
-    'hcv7':            'NC_030791', # HCV genotype 7
-    'hiv1':            'NC_001802', # HIV-1
-    'hiv2':            'NC_001722', # HIV-2
-    'monkeypox':       'NC_063383', # Monkeypox Virus
-    'restonvirus':     'NC_004161', # Reston Virus (Reston ebolavirus)
-    'sarscov2':        'NC_045512', # SARS-CoV-2 (COVID-19)
-    'sudanvirus':      'NC_006432', # Sudan Virus (Sudan ebolavirus)
-    'taiforestvirus':  'NC_014372', # Tai Forest Virus (Tai Forest ebolavirus, Cote d'Ivoire ebolavirus)
+    'bombalivirus':     'NC_039345', # Bombali Virus (Bombali ebolavirus)
+    'bundibugyovirus':  'NC_014373', # Bundibugyo Virus (Bundibugyo ebolavirus)
+    'chikungunyavirus': 'NC_004162', # Chikungunya virus
+    'denv1':            'NC_001477', # Dengue Virus 1
+    'denv2':            'NC_001474', # Dengue Virus 2
+    'denv3':            'NC_001475', # Dengue Virus 3
+    'denv4':            'NC_002640', # Dengue Virus 4
+    'ebolavirus':       'NC_002549', # Ebola Virus (Zaire ebolavirus)
+    'hcv1':             'NC_004102', # HCV genotype 1
+    'hcv1h77':          'NC_038882', # HCV genotpye 1 (isolate H77)
+    'hcv2':             'NC_009823', # HCV genotype 2
+    'hcv3':             'NC_009824', # HCV genotype 3
+    'hcv4':             'NC_009825', # HCV genotype 4
+    'hcv5':             'NC_009826', # HCV genotype 5
+    'hcv6':             'NC_009827', # HCV genotype 6
+    'hcv7':             'NC_030791', # HCV genotype 7
+    'hiv1':             'NC_001802', # HIV-1
+    'hiv2':             'NC_001722', # HIV-2
+    'monkeypox':        'NC_063383', # Monkeypox Virus
+    'restonvirus':      'NC_004161', # Reston Virus (Reston ebolavirus)
+    'sarscov2':         'NC_045512', # SARS-CoV-2 (COVID-19)
+    'sudanvirus':       'NC_006432', # Sudan Virus (Sudan ebolavirus)
+    'taiforestvirus':   'NC_014372', # Tai Forest Virus (Tai Forest ebolavirus, Cote d'Ivoire ebolavirus)
 }
 REF_NAMES = {
     'DENV': {
