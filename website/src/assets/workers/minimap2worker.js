@@ -1,11 +1,14 @@
-importScripts("https://biowasm.com/cdn/v3/aioli.js")
-
 let CLI;
 let mm2FinishedBuffer;
 
 const init = async () => {
 	// load minimap2 from BioWASM
-	CLI = await new Aioli(["minimap2/2.22"]);
+	const Aioli = (await import("@biowasm/aioli/dist/aioli")).default;
+	CLI = await new Aioli([{
+		tool: "minimap2",
+		version: "2.22",
+		urlPrefix: `${self.location.origin}${import.meta.env.BASE_URL || ''}tools/minimap2`,
+	}]);
 }
 
 init();

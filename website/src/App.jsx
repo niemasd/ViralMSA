@@ -14,7 +14,7 @@ import {
 } from './constants.js';
 
 const viralMSAWorker = new Worker(new URL('./assets/workers/viralmsaworker.js', import.meta.url));
-const minimap2Worker = new Worker(new URL('./assets/workers/minimap2worker.js', import.meta.url));
+const minimap2Worker = new Worker(new URL('./assets/workers/minimap2worker.js', import.meta.url), { type: "module" });
 
 export class App extends Component {
 	constructor(props) {
@@ -79,7 +79,7 @@ export class App extends Component {
 	}
 
 	fetchPreloadedRef = async () => {
-		const res = await fetch(VIRAL_MSA_REPO_STRUCTURE_LINK);
+		const res = await fetch(`${window.location.origin}${import.meta.env.BASE_URL || ''}${VIRAL_MSA_REPO_STRUCTURE_LINK}`);
 		const json = await res.json();
 		const refGenomes = new Set();
 		for (const file of json.tree) {
@@ -194,7 +194,7 @@ export class App extends Component {
 	}
 
 	toggleExampleData = () => {
-		this.setState(prevState => ({ useExampleInput: !prevState.useExampleInput, preloadedRef: prevState.useExampleInput ? prevState.preloadedRef : EXAMPLE_PRELOADED_REF}))
+		this.setState(prevState => ({ useExampleInput: !prevState.useExampleInput, preloadedRef: prevState.useExampleInput ? prevState.preloadedRef : EXAMPLE_PRELOADED_REF }))
 	}
 
 	runViralMSA = async () => {
