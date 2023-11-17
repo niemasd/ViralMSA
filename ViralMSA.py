@@ -20,7 +20,7 @@ import subprocess
 import sys
 
 # useful constants
-VERSION = '1.1.38'
+VERSION = '1.1.39'
 RELEASES_URL = 'https://api.github.com/repos/niemasd/ViralMSA/tags'
 CIGAR_LETTERS = {'M','D','I','S','H','=','X'}
 DEFAULT_BUFSIZE = 1048576 # 1 MB #8192 # 8 KB
@@ -41,6 +41,7 @@ ALIGNERS_PAF = {
 # citations
 CITATION = {
     'bowtie2':   'Bowtie2: Langmead B, Salzberg SL (2012). "Fast gapped-read alignment with Bowtie 2." Nat Methods. 9(4):357-359. doi:10.1038/nmeth.1923',
+    'bwa':       'BWA: Li H, Durbin R (2009). "Fast and accurate short read alignment with Burrows–Wheeler transform." Bioinformatics. 25(14):1754-1760. doi:10.1093/bioinformatics/btp324',
     'dragmap':   'DRAGMAP: https://github.com/Illumina/DRAGMAP',
     'hisat2':    'HISAT2: Kim D, Paggi JM, Park C, Bennett C, Salzberg SL (2019). "Graph-based genome alignment and genotyping with HISAT2 and HISAT-genotype." Nat Biotechnol. 37:907-915. doi:10.1038/s41587-019-0201-4',
     'lra':       'LRA: Ren J, Chaisson MJP (2021). "lra: A long read aligner for sequences and contigs." PLoS Comput Biol. 17(6):e1009078. doi:10.1371/journal.pcbi.1009078',
@@ -222,6 +223,15 @@ def check_bowtie2():
     if o is None or 'Bowtie 2 version' not in o.decode():
         print("ERROR: bowtie2-build is not runnable in your PATH", file=sys.stderr); exit(1)
 
+# check BWA
+def check_bwa():
+    try:
+        o = subprocess.run(['bwa'], stdout=subprocess.PIPE, stderr=subprocess.PIPE).stderr
+    except:
+        o = None
+    if o is None or 'Program: bwa' not in o.decode():
+        print("ERROR: BWA is not runnable in your PATH", file=sys.stderr); exit(1)
+
 # check DRAGMAP
 def check_dragmap():
     try:
@@ -373,6 +383,31 @@ def build_index_bowtie2(ref_genome_path, threads, verbose=True):
     log = open('%s.bowtie2.log' % ref_genome_path, 'w'); subprocess.call(command, stdout=log, stderr=subprocess.STDOUT); log.close()
     if verbose:
         print_log("bowtie2 index built: %s.bowtie2.*.bt2" % ref_genome_path)
+    chdir(orig_dir)
+
+# build BWA index
+def build_index_bwa(ref_genome_path, threads, verbose=True):
+    exts = ['amb', 'ann', 'bwt', 'pac', 'sa']
+    all_found = True
+    for ext in exts:
+        if not isfile('%s.%s' % (ref_genome_path,ext)):
+            all_found = False; break
+    if all_found:
+        if verbose:
+            print_log("BWA index found: %s.[amb, ann, bwt, pac, sa]" % ref_genome_path)
+        return
+    for ext in exts:
+        if isfile('%s.%s' % (ref_genome_path,ext)):
+            remove('%s.%s' % (ref_genome_path,ext))
+    ref_genome_dir, ref_genome_fn = split(ref_genome_path)
+    orig_dir = getcwd()
+    chdir(ref_genome_dir)
+    command = ['bwa', 'index', ref_genome_path]
+    if verbose:
+        print_log("Building BWA index: %s" % ' '.join(command))
+    log = open('%s.bwa.log' % ref_genome_path, 'w'); subprocess.call(command, stdout=log, stderr=subprocess.STDOUT); log.close()
+    if verbose:
+        print_log("BWA index built: %s.[amb, ann, bwt, pac, sa]" % ref_genome_path)
     chdir(orig_dir)
 
 # build DRAGMAP index
@@ -572,6 +607,16 @@ def align_bowtie2(seqs_path, out_aln_path, ref_genome_path, threads, verbose=Tru
     if verbose:
         print_log("bowtie2 alignment complete: %s" % out_aln_path)
 
+# align genomes using BWA MEM
+def align_bwa(seqs_path, out_aln_path, ref_genome_path, threads, verbose=True):
+    command = ['bwa', 'mem', '-t', str(threads), ref_genome_path, seqs_path]
+    if verbose:
+        print_log("Aligning using BWA: %s" % ' '.join(command))
+    out = open(out_aln_path, 'w'); log = open('%s.log' % out_aln_path, 'w')
+    subprocess.call(command, stdout=out, stderr=log); out.close(); log.close()
+    if verbose:
+        print_log("BWA alignment complete: %s" % out_aln_path)
+
 # align genomes using DRAGMAP
 def align_dragmap(seqs_path, out_aln_path, ref_genome_path, threads, verbose=True):
     tmp_fq_path = '%s.fastq.gz' % out_aln_path
@@ -694,6 +739,12 @@ ALIGNERS = {
         'check':       check_bowtie2,
         'build_index': build_index_bowtie2,
         'align':       align_bowtie2,
+    },
+
+    'bwa': {
+        'check':       check_bwa,
+        'build_index': build_index_bwa,
+        'align':       align_bwa,
     },
 
     'dragmap': {
