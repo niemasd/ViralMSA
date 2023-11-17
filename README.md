@@ -90,7 +90,7 @@ Please also cite the read mapper you selected.
 
 ### BWA
 
-> Li H, Durbin R (2009). "Fast and accurate short read alignment with Burrows–Wheeler transform." *Bioinformatics(. 25(14):1754-1760. [doi:10.1093/bioinformatics/btp324](https://doi.org/10.1093/bioinformatics/btp324)
+> Li H, Durbin R (2009). "Fast and accurate short read alignment with Burrows–Wheeler transform." *Bioinformatics*. 25(14):1754-1760. [doi:10.1093/bioinformatics/btp324](https://doi.org/10.1093/bioinformatics/btp324)
 
 ### DRAGMAP
 
