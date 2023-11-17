@@ -22,6 +22,7 @@ ViralMSA also requires at least one of the following tools to perform the alignm
 
 * **[Minimap2](https://github.com/lh3/minimap2) (used by default; strongly recommended)**
 * [bowtie2](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml)
+* [BWA](https://bio-bwa.sourceforge.net/)
 * [DRAGMAP](https://github.com/Illumina/DRAGMAP)
 * [HISAT2](http://daehwankimlab.github.io/hisat2)
 * [LRA](https://github.com/ChaissonLab/LRA)
@@ -86,6 +87,10 @@ Please also cite the read mapper you selected.
 ### bowtie2
 
 > Langmead B, Salzberg SL (2012). "Fast gapped-read alignment with Bowtie 2." *Nat Methods*. 9(4):357-359. [doi:10.1038/nmeth.1923](https://doi.org/10.1038/nmeth.1923)
+
+### BWA
+
+> Li H, Durbin R (2009). "Fast and accurate short read alignment with Burrows–Wheeler transform." *Bioinformatics(. 25(14):1754-1760. [doi:10.1093/bioinformatics/btp324](https://doi.org/10.1093/bioinformatics/btp324)
 
 ### DRAGMAP
 
