@@ -28,6 +28,7 @@ ViralMSA also requires at least one of the following tools to perform the alignm
 * [LRA](https://github.com/ChaissonLab/LRA)
 * [mm2-fast](https://github.com/bwa-mem2/mm2-fast)
 * [NGMLR](https://github.com/philres/ngmlr)
+* [seq-align](https://github.com/noporpoise/seq-align)
 * [STAR](https://github.com/alexdobin/STAR)
 * [Unimap](https://github.com/lh3/unimap)
 * [wfmash](https://github.com/ekg/wfmash)
@@ -111,6 +112,9 @@ Please also cite the read mapper you selected.
 ### NGMLR
 
 > Sedlazeck FJ, Rescheneder P, Smolka M, Fang H, Nattestad M, von Haeseler A, Schatz MC (2018). "Accurate detection of complex structural variations using single-molecule sequencing." *Nat Methods*. 15:461-468. [doi:10.1038/s41592-018-0001-7](https://doi.org/10.1038/s41592-018-0001-7)
+
+### seq-align
+> Turner I (2015). "seq-align". https://github.com/noporpoise/seq-align
 
 ### STAR
 
