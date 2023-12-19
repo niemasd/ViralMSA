@@ -140,3 +140,12 @@ It seems as though, in some cases in which an input viral sequence has many `N`s
 
 ## Missing letters from the beginning/end of some sequences
 If you notice that some sequences are missing letters at the beginning/end, even though they don't appear as insertions with respect to the reference genome, it could be that the read mapper (e.g. Minimap2) is soft-clipping those bases from the alignment (if you open the `.sam` file in the output folder, those entries should have soft-clipping, denoted by `S`, at the beginning/end of the CIGAR string). A simple hacky fix is to add a bunch of matching letters (e.g. `AAAAA...`) to the beginnings/ends of all of your sequences (including your reference genome) to force a match at the beginning/end of the pairwise alignment done by the read mapper, thus preventing soft-clipping.
+
+## Missing Sequences in Output
+Because ViralMSA relies on read mappers to compute each pairwise alignment to the reference genome, and because read mappers can fail to align a sequence if it deviates too significantly from the reference genome, sequences from your input can be omitted from ViralMSA's output if they did not appear in the output of the underlying read mapper you used, and you'll be shown the following warning:
+
+> WARNING: Some sequences from the input are missing from the output. Perhaps try a different aligner or reference genome?
+
+As is mentioned in the warning, to remedy this, you can either try a different reference genome (if you believe there is one that be more similar to *all* of your sequences than the reference you're currently using), or you can try a different aligner. I will briefly mention that there is typically a trade-off between accuracy/sensitivity and speed for different read mappers, so feel free to review the literature to compare/contrast the different read mappers supported by ViralMSA.
+
+As a last resort, ViralMSA also supports [seq-align](https://github.com/noporpoise/seq-align), which performs complete pairwise global alignments. This method is the most sensitive (it's guaranteed to align every sequence in your input), but it will likely be ***much*** slower than the other options.
