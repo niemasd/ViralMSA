@@ -20,7 +20,7 @@ import subprocess
 import sys
 
 # useful constants
-VERSION = '1.1.40'
+VERSION = '1.1.41'
 RELEASES_URL = 'https://api.github.com/repos/niemasd/ViralMSA/tags'
 CIGAR_LETTERS = {'M','D','I','S','H','=','X'}
 DEFAULT_BUFSIZE = 1048576 # 1 MB #8192 # 8 KB
@@ -1195,6 +1195,7 @@ def main():
     print_log("===== RUN INFORMATION =====")
     print_log("ViralMSA Version: %s" % VERSION)
     print_log("Sequences: %s" % args.sequences)
+    print_log("- %d sequences in input file" % num_input_IDs)
     print_log("Reference: %s" % args.reference)
     print_log("Email Address: %s" % args.email)
     print_log("Output Directory: %s" % args.output)
@@ -1240,6 +1241,8 @@ def main():
     print_log("Multiple sequence alignment complete: %s" % out_msa_path)
     if num_output_IDs < num_input_IDs:
         print_log("WARNING: Some sequences from the input are missing from the output. Perhaps try a different aligner or reference genome?")
+        print_log("- Input: %d sequences" % num_input_IDs)
+        print_log("- Output: %d sequences" % num_output_IDs)
     print_log()
 
     # print citations and finish
