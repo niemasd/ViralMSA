@@ -79,9 +79,13 @@ If you use ViralMSA in your work, please cite:
 
 > Moshiri N (2021). "ViralMSA: Massively scalable reference-guided multiple sequence alignment of viral genomes." *Bioinformatics*. 37(5):714–716. [doi:10.1093/bioinformatics/btaa743](https://doi.org/10.1093/bioinformatics/btaa743)
 
+If you use the ViralMSA web application (rather than the command line tool), please also cite:
+
+> Ji D, Aboukhalil R, Moshiri N (2023). "ViralWasm: a client-side user-friendly web application suite for viral genomics." *Bioinformatics*. btae018. [doi:10.1093/bioinformatics/btae018](https://doi.org/10.1093/bioinformatics/btae018)
+
 Please also cite the read mapper you selected.
 
-### **Minimap2 (the default selection)**
+### **Minimap2 (default selection; only option for web app)**
 
 > Li H (2018). "Minimap2: pairwise alignment for nucleotide sequences." *Bioinformatics*. 34(18):3094–3100. [doi:10.1093/bioinformatics/bty191](https://doi.org/10.1093/bioinformatics/bty191)
 
