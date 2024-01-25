@@ -20,7 +20,7 @@ import subprocess
 import sys
 
 # useful constants
-VERSION = '1.1.41'
+VERSION = '1.1.42'
 RELEASES_URL = 'https://api.github.com/repos/niemasd/ViralMSA/tags'
 CIGAR_LETTERS = {'M','D','I','S','H','=','X'}
 DEFAULT_BUFSIZE = 1048576 # 1 MB #8192 # 8 KB
@@ -82,12 +82,15 @@ REFS = {
     'hcv7':            'NC_030791', # HCV genotype 7
     'hiv1':            'NC_001802', # HIV-1
     'hiv2':            'NC_001722', # HIV-2
-    'monkeypox':       'NC_063383', # Monkeypox Virus
+    'measles':         'NC_001498', # Measles Virus (Measles morbillivirus)
+    'mpox':            'NC_063383', # Mpox Virus
     'restonvirus':     'NC_004161', # Reston Virus (Reston ebolavirus)
     'sarscov2':        'NC_045512', # SARS-CoV-2 (COVID-19)
     'sudanvirus':      'NC_006432', # Sudan Virus (Sudan ebolavirus)
     'taiforestvirus':  'NC_014372', # Tai Forest Virus (Tai Forest ebolavirus, Cote d'Ivoire ebolavirus)
 }
+
+# common names of viruses (for -l listing)
 REF_NAMES = {
     'CHIKV': {
         'chikv': 'Chikungunya virus',
@@ -124,14 +127,36 @@ REF_NAMES = {
         'hiv2':            'HIV-2',
     },
 
-    'Monkeypox': {
-        'monkeypox':       'Monkeypox Virus',
+    'Measles': {
+        'measles':         'Measles Virus',
+    },
+
+    'Mpox': {
+        'monkeypox':       'Mpox Virus',
+        'mpox':            'Mpox Virus',
     },
     
     'SARS-CoV-2': {
+        'covid19':         'SARS-CoV-2 (COVID-19)',
         'sarscov2':        'SARS-CoV-2 (COVID-19)',
+        'sc2':             'SARS-CoV-2 (COVID-19)',
     }
 }
+
+# aliases for user-friendliness
+REF_ALIASES = {
+    'covid19':   'sarscov2',
+    'monkeypox': 'mpox',
+    'sc2':       'sarscov2',
+}
+for k,v in REF_ALIASES.items():
+    REFS[k] = REFS[v]
+    for virus in REF_NAMES:
+        if v in REF_NAMES[virus]:
+            REF_NAMES[virus][k] = REF_NAMES[virus][v]
+            break
+
+# check for validity in reference names
 tmp = set(REFS.keys()) - {k2 for k1 in REF_NAMES for k2 in REF_NAMES[k1]}
 assert len(tmp) == 0, "Value(s) in REFS missing in REF_NAMES: %s" % str(tmp)
 
