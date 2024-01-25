@@ -95,14 +95,18 @@ export class App extends Component {
 			if (this.state.REFS && this.state.REF_NAMES && this.state.refGenomes.size > 0) {
 				clearInterval(preloadRefInterval);
 				const preloadRefOptions = [];
+				const preloadRefOptionsUniqueNames = new Set();
 				for (const REF_NAME_MAP of this.state.REF_NAMES) {
 					const REF_NAME_MAP_TYPE = [...REF_NAME_MAP[1]]
 					for (const REF_NAME of REF_NAME_MAP_TYPE) {
 						const virus = REF_NAME[0];
 						const commonName = REF_NAME[1];
-						preloadRefOptions.push(
-							<option value={this.state.REFS.get(virus)} key={commonName}>{commonName}</option>
-						)
+						if(!preloadRefOptionsUniqueNames.has(commonName)) {
+							preloadRefOptionsUniqueNames.add(commonName);
+							preloadRefOptions.push(
+								<option value={this.state.REFS.get(virus)} key={commonName}>{commonName}</option>
+							)
+						}
 					}
 				}
 
