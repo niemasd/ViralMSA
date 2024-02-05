@@ -20,7 +20,7 @@ import subprocess
 import sys
 
 # useful constants
-VERSION = '1.1.42'
+VERSION = '1.1.43'
 RELEASES_URL = 'https://api.github.com/repos/niemasd/ViralMSA/tags'
 CIGAR_LETTERS = {'M','D','I','S','H','=','X'}
 DEFAULT_BUFSIZE = 1048576 # 1 MB #8192 # 8 KB
@@ -63,102 +63,12 @@ CITATION = {
 }
 
 # reference genomes for common viruses
-REFS = {
-    'bombalivirus':    'NC_039345', # Bombali Virus (Bombali ebolavirus)
-    'bundibugyovirus': 'NC_014373', # Bundibugyo Virus (Bundibugyo ebolavirus)
-    'chikv':           'NC_004162', # Chikungunya virus
-    'denv1':           'NC_001477', # Dengue Virus 1
-    'denv2':           'NC_001474', # Dengue Virus 2
-    'denv3':           'NC_001475', # Dengue Virus 3
-    'denv4':           'NC_002640', # Dengue Virus 4
-    'ebolavirus':      'NC_002549', # Ebola Virus (Zaire ebolavirus)
-    'hcv1':            'NC_004102', # HCV genotype 1
-    'hcv1h77':         'NC_038882', # HCV genotpye 1 (isolate H77)
-    'hcv2':            'NC_009823', # HCV genotype 2
-    'hcv3':            'NC_009824', # HCV genotype 3
-    'hcv4':            'NC_009825', # HCV genotype 4
-    'hcv5':            'NC_009826', # HCV genotype 5
-    'hcv6':            'NC_009827', # HCV genotype 6
-    'hcv7':            'NC_030791', # HCV genotype 7
-    'hiv1':            'NC_001802', # HIV-1
-    'hiv2':            'NC_001722', # HIV-2
-    'measles':         'NC_001498', # Measles Virus (Measles morbillivirus)
-    'mpox':            'NC_063383', # Mpox Virus
-    'restonvirus':     'NC_004161', # Reston Virus (Reston ebolavirus)
-    'sarscov2':        'NC_045512', # SARS-CoV-2 (COVID-19)
-    'sudanvirus':      'NC_006432', # Sudan Virus (Sudan ebolavirus)
-    'taiforestvirus':  'NC_014372', # Tai Forest Virus (Tai Forest ebolavirus, Cote d'Ivoire ebolavirus)
-}
-
-# common names of viruses (for -l listing)
-REF_NAMES = {
-    'CHIKV': {
-        'chikv': 'Chikungunya virus',
-    },
-    'DENV': {
-        'denv1':           'Dengue Virus 1',
-        'denv2':           'Dengue Virus 2',
-        'denv3':           'Dengue Virus 3',
-        'denv4':           'Dengue Virus 4',
-    },
-
-    'Ebola': {
-        'bombalivirus':    'Bombali Virus (Bombali ebolavirus)',
-        'bundibugyovirus': 'Bundibugyo Virus (Bundibugyo ebolavirus)',
-        'ebolavirus':      'Ebola Virus (Zaire ebolavirus)',
-        'restonvirus':     'Reston Virus (Reston ebolavirus)',
-        'sudanvirus':      'Sudan Virus (Sudan ebolavirus)',
-        'taiforestvirus':  'Tai Forest Virus (Tai Forest ebolavirus, Cote d\'Ivoire ebolavirus)',
-    },
-
-    'HCV': {
-        'hcv1':            'HCV genotype 1',
-        'hcv1h77':         'HCV genotpye 1 (isolate H77)',
-        'hcv2':            'HCV genotype 2',
-        'hcv3':            'HCV genotype 3',
-        'hcv4':            'HCV genotype 4',
-        'hcv5':            'HCV genotype 5',
-        'hcv6':            'HCV genotype 6',
-        'hcv7':            'HCV genotype 7',
-    },
-    
-    'HIV': {
-        'hiv1':            'HIV-1',
-        'hiv2':            'HIV-2',
-    },
-
-    'Measles': {
-        'measles':         'Measles Virus',
-    },
-
-    'Mpox': {
-        'monkeypox':       'Mpox Virus',
-        'mpox':            'Mpox Virus',
-    },
-    
-    'SARS-CoV-2': {
-        'covid19':         'SARS-CoV-2 (COVID-19)',
-        'sarscov2':        'SARS-CoV-2 (COVID-19)',
-        'sc2':             'SARS-CoV-2 (COVID-19)',
-    }
-}
-
-# aliases for user-friendliness
-REF_ALIASES = {
-    'covid19':   'sarscov2',
-    'monkeypox': 'mpox',
-    'sc2':       'sarscov2',
-}
-for k,v in REF_ALIASES.items():
-    REFS[k] = REFS[v]
-    for virus in REF_NAMES:
-        if v in REF_NAMES[virus]:
-            REF_NAMES[virus][k] = REF_NAMES[virus][v]
-            break
-
-# check for validity in reference names
-tmp = set(REFS.keys()) - {k2 for k1 in REF_NAMES for k2 in REF_NAMES[k1]}
-assert len(tmp) == 0, "Value(s) in REFS missing in REF_NAMES: %s" % str(tmp)
+REFS_JSON_URL = 'https://github.com/Niema-Lab/Reference-Genomes/releases/latest/download/REFS.json'
+try:
+    REFS_JSON = jload(urlopen(REFS_JSON_URL))
+    REFS = {n:k for k in REFS_JSON for n in REFS_JSON[k]['shortname']}
+except:
+    REFS_JSON = None; REFS = None
 
 # print to log (prefixed by current time)
 def print_log(s='', end='\n'):
@@ -906,166 +816,21 @@ ALIGNERS = {
     },
 }
 
-# handle GUI (updates argv)
-def run_gui():
-    def clear_argv():
-        tmp = sys.argv[0]; sys.argv.clear(); sys.argv.append(tmp)
-    try:
-        # imports
-        from tkinter import Button, Checkbutton, END, Entry, Frame, IntVar, Label, OptionMenu, StringVar, Tk
-        from tkinter.filedialog import askdirectory, askopenfilename
-
-        # helper function to make a popup
-        def gui_popup(message, title=None):
-            popup = Tk()
-            if title:
-                popup.wm_title(title)
-            label = Label(popup, text=message)
-            label.pack()
-            button_close = Button(popup, text="Close", command=popup.destroy)
-            button_close.pack(padx=3, pady=3)
-            popup.mainloop()
-
-        # create applet
-        root = Tk()
-        root.geometry("600x400")
-        #root.configure(background='white')
-
-        # set up main frame
-        frame = Frame(root)
-        frame.pack()
-
-        # add header
-        header = Label(frame, text="ViralMSA %s" % VERSION, font=('Arial',24))
-        header.pack()
-
-        # handle input FASTA selection
-        button_seqs_prefix = "Input Sequences:\n"
-        button_seqs_nofile = "<none selected>"
-        def find_filename_seqs():
-            fn = askopenfilename(title="Select Input Sequences (FASTA format)",filetypes=(("FASTA Files",("*.fasta","*.fas")),("All Files","*.*")))
-            if len(fn) == 0:
-                button_seqs.configure(text="%s%s" % (button_seqs_prefix,button_seqs_nofile))
-            else:
-                button_seqs.configure(text="%s%s" % (button_seqs_prefix,fn))
-        button_seqs = Button(frame, text="%s%s" % (button_seqs_prefix,button_seqs_nofile), command=find_filename_seqs)
-        button_seqs.pack(padx=3, pady=3)
-
-        # handle reference
-        dropdown_ref_default = "Select Reference"
-        dropdown_ref_var = StringVar(frame)
-        dropdown_ref_var.set(dropdown_ref_default)
-        dropdown_ref = OptionMenu(frame, dropdown_ref_var, *sorted(REF_NAMES[k][v] for k in REF_NAMES for v in REF_NAMES[k]))
-        dropdown_ref.pack()
-
-        # handle user email
-        entry_email_default = "Enter Email Address"
-        entry_email = Entry(frame, width=30)
-        entry_email.insert(END, entry_email_default)
-        entry_email.pack()
-
-        # handle output folder selection
-        button_out_prefix = "Output Directory:\n"
-        button_out_nofolder = "<none selected>"
-        def find_directory_out():
-            dn = askdirectory(title="Select Output Directory")
-            if len(dn) == 0:
-                button_out.configure(text="%s%s" % (button_out_prefix,button_out_nofolder))
-            else:
-                button_out.configure(text="%s%s" % (button_out_prefix,dn))
-        button_out = Button(frame, text="%s%s" % (button_out_prefix,button_out_nofolder), command=find_directory_out)
-        button_out.pack(padx=3, pady=3)
-
-        # handle aligner selection
-        dropdown_aligner_prefix = "Aligner: "
-        dropdown_aligner_var = StringVar(frame)
-        dropdown_aligner_var.set("%s%s" % (dropdown_aligner_prefix,DEFAULT_ALIGNER.lower()))
-        dropdown_aligner = OptionMenu(frame, dropdown_aligner_var, *sorted(("%s%s" % (dropdown_aligner_prefix,a)) for a in ALIGNERS))
-        dropdown_aligner.pack()
-
-        # handle threads selection
-        dropdown_threads_prefix = "Threads: "
-        dropdown_threads_var = StringVar(frame)
-        dropdown_threads_var.set("%s%s" % (dropdown_threads_prefix,DEFAULT_THREADS))
-        dropdown_threads = OptionMenu(frame, dropdown_threads_var, *[("%s%d" % (dropdown_threads_prefix,i)) for i in range(1,DEFAULT_THREADS+1)])
-        dropdown_threads.pack()
-
-        # handle omit reference toggle
-        check_omitref_var = IntVar(frame)
-        check_omitref = Checkbutton(frame, text="Omit reference sequence from output MSA", variable=check_omitref_var, onvalue=1, offvalue=0)
-        check_omitref.pack()
-
-        # add run button
-        def finish_applet():
-            valid = True
-            # check sequences
-            try:
-                if button_seqs['text'] == "%s%s" % (button_seqs_prefix,button_seqs_nofile):
-                    gui_popup("ERROR: Input Sequences file not selected", title="ERROR"); valid = False
-            except:
-                pass
-            # check reference
-            try:
-                if dropdown_ref_var.get() == dropdown_ref_default:
-                   gui_popup("ERROR: Reference not selected", title="ERROR"); valid = False
-            except:
-                pass
-            # check email
-            try:
-                if '@' not in entry_email.get():
-                    gui_popup("ERROR: Email Address not entered", title="ERROR"); valid = False
-            except:
-                pass
-            # check output directory
-            try:
-                if button_out['text'] == "%s%s" % (button_out_prefix,button_out_nofolder):
-                    gui_popup("ERROR: Output Directory not selected", title="ERROR"); valid = False
-                elif isdir(button_out['text'].lstrip(button_out_prefix).strip()):
-                    gui_popup("ERROR: Output Directory already exists", title="ERROR"); valid = False
-            except:
-                pass
-            # close applet to run ViralMSA
-            if valid:
-                sys.argv.append('-s'); sys.argv.append(button_seqs['text'].lstrip(button_seqs_prefix).strip())
-                sys.argv.append('-r'); sys.argv.append([v for k in REF_NAMES for v in REF_NAMES[k] if REF_NAMES[k][v] == dropdown_ref_var.get()][0])
-                sys.argv.append('-e'); sys.argv.append(entry_email.get())
-                sys.argv.append('-o'); sys.argv.append(button_out['text'].lstrip(button_out_prefix).strip())
-                sys.argv.append('-a'); sys.argv.append(dropdown_aligner_var.get().lstrip(dropdown_aligner_prefix).strip())
-                sys.argv.append('-t'); sys.argv.append(dropdown_threads_var.get().lstrip(dropdown_threads_prefix).strip())
-                if check_omitref_var.get() == 1:
-                    sys.argv.append('--omit_ref')
-                try:
-                    root.destroy()
-                except:
-                    pass
-        button_run = Button(frame, text="Run", command=finish_applet)
-        button_run.pack(padx=3, pady=3)
-
-        # add title and execute GUI
-        root.title("ViralMSA %s" % VERSION)
-        root.mainloop()
-    except:
-        print("ERROR: Unable to import Tkinter", file=sys.stderr); exit(1)
-    if len(sys.argv) == 1:
-        exit()
-
 # parse user args
 def parse_args():
-    # check if user wants to run the GUI
-    if len(sys.argv) == 1:
-        run_gui()
-
     # check if user wants to update ViralMSA
     if '-u' in sys.argv or '--update' in sys.argv:
         update_viralmsa()
 
     # check if user just wants to list references
     if '-l' in sys.argv or '--list_references' in sys.argv:
-        print("=== List of ViralMSA Reference Sequences ===")
-        for v in sorted(REF_NAMES.keys()):
-            print("* %s" % v)
-            for r in sorted(REF_NAMES[v].keys()):
-                print("  - %s: %s" % (r, REF_NAMES[v][r]))
+        if REFS_JSON is None:
+            print("ERROR: Listing references requires an internet connection", file=sys.stderr); exit(1)
+        print("=== Reference Sequence Aliases (for use with -s) ===")
+        for ID in sorted(REFS_JSON.keys(), key=lambda x: REFS_JSON[x]['name']):
+            print('* %s' % REFS_JSON[ID]['name'])
+            print("  - Aliases: %s" % ', '.join(REFS_JSON[ID]['shortname']))
+            print()
         exit(0)
 
     # use argparse to parse user arguments
@@ -1115,7 +880,7 @@ def parse_args():
             copy(fn, args.ref_genome_path)
     else:
         tmp = args.reference.lower().replace(' ','').replace('-','').replace('_','')
-        if tmp in REFS:
+        if REFS is not None and tmp in REFS:
             args.reference = REFS[tmp]
         args.reference = args.reference.upper()
         args.ref_path = '%s/%s' % (args.viralmsa_dir, args.reference)
@@ -1126,6 +891,8 @@ def parse_args():
 
 # download reference genome
 def download_ref_genome(reference, ref_path, ref_genome_path, email, bufsize=DEFAULT_BUFSIZE):
+    if REFS is None:
+        print("ERROR: Unable to download reference genome if offline", file=sys.stderr); exit(1)
     try:
         from Bio import Entrez
     except ModuleNotFoundError:
