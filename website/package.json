@@ -4,10 +4,11 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --host",
-    "build": "vite build",
+    "dev": "npm run compile-refs && vite --host",
+    "build": "npm run compile-refs && vite build",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview"
+    "preview": "vite preview",
+	"compile-refs": "cd ../ && git submodule update --init && cd ref_genomes && python3 compile.py && mv REFS.json ../website/public/REFS.json"
   },
   "dependencies": {
     "@biowasm/aioli": "^3.1.0",

@@ -1,4 +1,4 @@
-importScripts("https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js");
+importScripts("https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js");
 
 // constants & global variables
 const PATH_TO_PYODIDE_ROOT = "/home/pyodide/";
@@ -45,6 +45,7 @@ const init = async () => {
         stderr: (text) => {
             self.postMessage({'pyodideConsole': "STDERR: " + text + "\n"})
         },
+		indexURL: "/ViralMSA/tools/pyodide/"
     });
 
     // create cache directory for ViralMSA sequences and indexes 
@@ -56,15 +57,12 @@ const init = async () => {
     // load in ViralMSAWeb.py
     ViralMSAWeb = await (await fetch("https://raw.githubusercontent.com/daniel-ji/ViralMSA/master/website/src/assets/python/ViralMSAWeb.py")).text()
 
-    // get REFS and REF_NAMES for preloaded reference sequences and indexes
-    pyodide.runPython(ViralMSAWeb)
-	const REFS_JSON_URL = pyodide.globals.get('REFS_JSON_URL');
-	REFS_JSON = await (await fetch(REFS_JSON_URL)).json();
+    // get REFS for preloaded reference sequences and indexes
+	REFS_JSON = await (await fetch("/ViralMSA/REFS.json")).json();
 
     self.postMessage({
         'init': 'done',
 		'REFS_JSON': REFS_JSON,
-        'VERSION': pyodide.globals.get('VERSION'),
     })
 }
 
