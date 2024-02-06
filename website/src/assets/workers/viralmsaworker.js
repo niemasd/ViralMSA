@@ -1,4 +1,4 @@
-importScripts("https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js");
+importScripts("https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js");
 
 // constants & global variables
 const PATH_TO_PYODIDE_ROOT = "/home/pyodide/";
@@ -10,7 +10,6 @@ let mm2FinishedBuffer;
 let mmiOutput; 
 // holds python code of web wrapper for ViralMSA
 let ViralMSAWeb;
-let REFS; 
 let REFS_JSON;
 
 // webworker api
@@ -46,14 +45,8 @@ const init = async () => {
         stderr: (text) => {
             self.postMessage({'pyodideConsole': "STDERR: " + text + "\n"})
         },
+		indexURL: "/ViralMSA/tools/pyodide/"
     });
-
-    // load micropip, a package manager for Pyodide
-    await pyodide.loadPackage("micropip");
-    const micropip = pyodide.pyimport("micropip");
-    
-    // install biopython, a ViralMSA dependency
-    await micropip.install('biopython');
 
     // create cache directory for ViralMSA sequences and indexes 
     pyodide.FS.mkdir(PATH_TO_PYODIDE_ROOT + 'cache');
@@ -62,17 +55,14 @@ const init = async () => {
     pyodide.FS.writeFile(PATH_TO_PYODIDE_ROOT + 'ViralMSA.py', await (await fetch("https://raw.githubusercontent.com/niemasd/ViralMSA/master/ViralMSA.py")).text(), { encoding: "utf8" });
 
     // load in ViralMSAWeb.py
-    ViralMSAWeb = await (await fetch("https://raw.githubusercontent.com/niemasd/ViralMSA/master/website/src/assets/python/ViralMSAWeb.py")).text()
+    ViralMSAWeb = await (await fetch("https://raw.githubusercontent.com/daniel-ji/ViralMSA/master/website/src/assets/python/ViralMSAWeb.py")).text()
 
-    // get REFS and REFS_JSON for preloaded reference sequences and indexes
-    pyodide.runPython(ViralMSAWeb)
-    REFS = pyodide.globals.get('REFS').toJs()
-    REFS_JSON = pyodide.globals.get('REFS_JSON').toJs()
+    // get REFS for preloaded reference sequences and indexes
+	REFS_JSON = await (await fetch("/ViralMSA/REFS.json")).json();
+
     self.postMessage({
         'init': 'done',
-        'REFS': REFS, 
-        'REFS_JSON': REFS_JSON,
-        'VERSION': pyodide.globals.get('VERSION'),
+		'REFS_JSON': REFS_JSON,
     })
 }
 
@@ -109,13 +99,13 @@ const runViralMSA = async (inputSequences, referenceSequence, refID, omitRef) =>
     // preloaded reference sequence and index  
     if (refID) {
         // get reference sequence virus name to use in command line args
-        const refVirus = [...REFS].find(([key, value]) => value === refID)[0];
+		        const refVirus = Object.entries(REFS_JSON).find(([key, value]) => key === refID)[0];
 
         // only fetch reference sequence and index if not already in cache
         if (!pyodide.FS.readdir(`${PATH_TO_PYODIDE_ROOT}/cache/`).includes(refID)) {
             // get reference sequence and index
-            const referenceSequence = await (await fetch("https://raw.githubusercontent.com/niemasd/viralmsa/master/ref_genomes/" + refID + "/" + refID + ".fas")).text();
-            const refIndex = new Uint8Array(await (await fetch("https://raw.githubusercontent.com/niemasd/viralmsa/master/ref_genomes/" + refID + "/" + refID + ".fas.mmi")).arrayBuffer());
+            const referenceSequence = await (await fetch("https://raw.githubusercontent.com/Niema-Lab/Reference-Genomes/main/" + refID + "/" + refID + ".fas")).text();
+            const refIndex = new Uint8Array(await (await fetch("https://raw.githubusercontent.com/Niema-Lab/Reference-Genomes/main/" + refID + "/" + refID + ".fas.mmi")).arrayBuffer());
         
             // write reference sequence and index to Pyodide
             pyodide.FS.mkdir(`${PATH_TO_PYODIDE_ROOT}/cache/${refID}`)

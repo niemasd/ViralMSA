@@ -1,11 +1,6 @@
 #! /usr/bin/env python3
 import ViralMSA
 
-# for retrieving REFS and REFS_JSON from ViralMSA for preloading indexes in web implementation
-REFS = ViralMSA.REFS
-REFS_JSON = ViralMSA.REFS_JSON
-VERSION = ViralMSA.VERSION
-
 old_subprocess_call = ViralMSA.subprocess.call
 
 # override to ensure that ViralMSA sanity check for minimap2 passes for web implementation

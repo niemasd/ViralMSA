@@ -8,27 +8,24 @@ import {
 	CLEAR_LOG,
 	MAX_SHARED_ARRAY_BUFFER_SIZE,
 	VIRAL_MSA_LINK,
-	VIRAL_MSA_REPO_STRUCTURE_LINK,
 	EXAMPLE_INPUT_FILE,
 	EXAMPLE_PRELOADED_REF
 } from './constants.js';
 
 const viralMSAWorker = new Worker(new URL('./assets/workers/viralmsaworker.js', import.meta.url));
-const minimap2Worker = new Worker(new URL('./assets/workers/minimap2worker.js', import.meta.url));
+const minimap2Worker = new Worker(new URL('./assets/workers/minimap2worker.js', import.meta.url), { type: "module" });
 
 export class App extends Component {
 	constructor(props) {
 		super(props)
 
 		this.state = {
-			REFS: undefined,
 			REFS_JSON: undefined,
 
 			exampleInput: undefined,
 			useExampleInput: false,
 			inputFile: undefined,
 
-			refGenomes: new Set(),
 			preloadRefOptions: undefined,
 			preloadedRef: undefined,
 
@@ -62,7 +59,6 @@ export class App extends Component {
 
 		// Other initialization
 		this.getViralMSAVersion();
-		this.fetchPreloadedRef();
 		this.initPreloadedRefs();
 		this.fetchExampleInput();
 	}
@@ -78,25 +74,13 @@ export class App extends Component {
 		}
 	}
 
-	fetchPreloadedRef = async () => {
-		const res = await fetch(VIRAL_MSA_REPO_STRUCTURE_LINK);
-		const json = await res.json();
-		const refGenomes = new Set();
-		for (const file of json.tree) {
-			if (file.path.startsWith("ref_genomes/")) {
-				refGenomes.add(file.path.split("/")[1]);
-			}
-		}
-		this.setState({ refGenomes });
-	}
-
 	initPreloadedRefs = () => {
 		const preloadRefInterval = setInterval(() => {
-			if (this.state.REFS && this.state.REFS_JSON && this.state.refGenomes.size > 0) {
+			if (this.state.REFS_JSON) {
 				clearInterval(preloadRefInterval);
 				const preloadRefOptions = [];
 				for (const REF_ID in this.state.REFS_JSON) {
-                    const REF_NAME = this.state.REFS_JSON[REF_ID];
+                    const REF_NAME = this.state.REFS_JSON[REF_ID]['name'];
 					preloadRefOptions.push(
 						<option value={REF_ID} key={REF_NAME}>{REF_NAME}</option>
 					)
@@ -121,7 +105,7 @@ export class App extends Component {
 			alert(event.data.error);
 		} else if (event.data.init) {
 			// done loading pyodide / ViralMSA 
-			this.setState({ REFS: event.data.REFS, REFS_JSON: event.data.REF_JSON })
+			this.setState({ REFS_JSON: event.data.REFS_JSON })
 			LOG("ViralMSA Loaded.")
 		} else if (event.data.download) {
 			// download results
@@ -190,7 +174,7 @@ export class App extends Component {
 	}
 
 	toggleExampleData = () => {
-		this.setState(prevState => ({ useExampleInput: !prevState.useExampleInput, preloadedRef: prevState.useExampleInput ? prevState.preloadedRef : EXAMPLE_PRELOADED_REF}))
+		this.setState(prevState => ({ useExampleInput: !prevState.useExampleInput, preloadedRef: prevState.useExampleInput ? prevState.preloadedRef : EXAMPLE_PRELOADED_REF }))
 	}
 
 	runViralMSA = async () => {
@@ -237,7 +221,7 @@ export class App extends Component {
 			// only need to provide refID when using a preloaded reference sequence and index
 			refID = this.state.preloadedRef;
 			// write reference index to minimap2 since it will never be built
-			refIndex = new Uint8Array(await (await fetch("https://raw.githubusercontent.com/niemasd/viralmsa/master/ref_genomes/" + refID + "/" + refID + ".fas.mmi")).arrayBuffer());
+			refIndex = new Uint8Array(await (await fetch("https://raw.githubusercontent.com/Niema-Lab/Reference-Genomes/main/" + refID + "/" + refID + ".fas.mmi")).arrayBuffer());
 			minimap2Worker.postMessage({ writeIndex: refIndex })
 		}
 
