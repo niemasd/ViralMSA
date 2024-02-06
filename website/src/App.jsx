@@ -22,7 +22,7 @@ export class App extends Component {
 
 		this.state = {
 			REFS: undefined,
-			REF_NAMES: undefined,
+			REFS_JSON: undefined,
 
 			exampleInput: undefined,
 			useExampleInput: false,
@@ -92,22 +92,14 @@ export class App extends Component {
 
 	initPreloadedRefs = () => {
 		const preloadRefInterval = setInterval(() => {
-			if (this.state.REFS && this.state.REF_NAMES && this.state.refGenomes.size > 0) {
+			if (this.state.REFS && this.state.REFS_JSON && this.state.refGenomes.size > 0) {
 				clearInterval(preloadRefInterval);
 				const preloadRefOptions = [];
-				const preloadRefOptionsUniqueNames = new Set();
-				for (const REF_NAME_MAP of this.state.REF_NAMES) {
-					const REF_NAME_MAP_TYPE = [...REF_NAME_MAP[1]]
-					for (const REF_NAME of REF_NAME_MAP_TYPE) {
-						const virus = REF_NAME[0];
-						const commonName = REF_NAME[1];
-						if(!preloadRefOptionsUniqueNames.has(commonName)) {
-							preloadRefOptionsUniqueNames.add(commonName);
-							preloadRefOptions.push(
-								<option value={this.state.REFS.get(virus)} key={commonName}>{commonName}</option>
-							)
-						}
-					}
+				for (const REF_ID in this.state.REFS_JSON) {
+                    const REF_NAME = this.state.REFS_JSON[REF_ID];
+					preloadRefOptions.push(
+						<option value={REF_ID} key={REF_NAME}>{REF_NAME}</option>
+					)
 				}
 
 				preloadRefOptions.sort((a, b) => a.key.localeCompare(b.key));
@@ -129,7 +121,7 @@ export class App extends Component {
 			alert(event.data.error);
 		} else if (event.data.init) {
 			// done loading pyodide / ViralMSA 
-			this.setState({ REFS: event.data.REFS, REF_NAMES: event.data.REF_NAMES })
+			this.setState({ REFS: event.data.REFS, REFS_JSON: event.data.REF_JSON })
 			LOG("ViralMSA Loaded.")
 		} else if (event.data.download) {
 			// download results
