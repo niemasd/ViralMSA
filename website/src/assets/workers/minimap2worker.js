@@ -1,9 +1,10 @@
+import Aioli from "@biowasm/aioli/dist/aioli";
+
 let CLI;
 let mm2FinishedBuffer;
 
 const init = async () => {
 	// load minimap2 from BioWASM
-	const Aioli = (await import("@biowasm/aioli/dist/aioli")).default;
 	CLI = await new Aioli([{
 		tool: "minimap2",
 		version: "2.22",
