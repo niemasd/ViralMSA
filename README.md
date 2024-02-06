@@ -22,11 +22,13 @@ ViralMSA also requires at least one of the following tools to perform the alignm
 
 * **[Minimap2](https://github.com/lh3/minimap2) (used by default; strongly recommended)**
 * [bowtie2](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml)
+* [BWA](https://bio-bwa.sourceforge.net/)
 * [DRAGMAP](https://github.com/Illumina/DRAGMAP)
 * [HISAT2](http://daehwankimlab.github.io/hisat2)
 * [LRA](https://github.com/ChaissonLab/LRA)
 * [mm2-fast](https://github.com/bwa-mem2/mm2-fast)
 * [NGMLR](https://github.com/philres/ngmlr)
+* [seq-align](https://github.com/noporpoise/seq-align)
 * [STAR](https://github.com/alexdobin/STAR)
 * [Unimap](https://github.com/lh3/unimap)
 * [wfmash](https://github.com/ekg/wfmash)
@@ -77,15 +79,23 @@ If you use ViralMSA in your work, please cite:
 
 > Moshiri N (2021). "ViralMSA: Massively scalable reference-guided multiple sequence alignment of viral genomes." *Bioinformatics*. 37(5):714–716. [doi:10.1093/bioinformatics/btaa743](https://doi.org/10.1093/bioinformatics/btaa743)
 
+If you use the ViralMSA web application (rather than the command-line tool), please *also* cite:
+
+> Ji D, Aboukhalil R, Moshiri N (2023). "ViralWasm: a client-side user-friendly web application suite for viral genomics." *Bioinformatics*. btae018. [doi:10.1093/bioinformatics/btae018](https://doi.org/10.1093/bioinformatics/btae018)
+
 Please also cite the read mapper you selected.
 
-### **Minimap2 (the default selection)**
+### **Minimap2 (default selection; only option for web app)**
 
 > Li H (2018). "Minimap2: pairwise alignment for nucleotide sequences." *Bioinformatics*. 34(18):3094–3100. [doi:10.1093/bioinformatics/bty191](https://doi.org/10.1093/bioinformatics/bty191)
 
 ### bowtie2
 
 > Langmead B, Salzberg SL (2012). "Fast gapped-read alignment with Bowtie 2." *Nat Methods*. 9(4):357-359. [doi:10.1038/nmeth.1923](https://doi.org/10.1038/nmeth.1923)
+
+### BWA
+
+> Li H, Durbin R (2009). "Fast and accurate short read alignment with Burrows–Wheeler transform." *Bioinformatics*. 25(14):1754-1760. [doi:10.1093/bioinformatics/btp324](https://doi.org/10.1093/bioinformatics/btp324)
 
 ### DRAGMAP
 
@@ -106,6 +116,9 @@ Please also cite the read mapper you selected.
 ### NGMLR
 
 > Sedlazeck FJ, Rescheneder P, Smolka M, Fang H, Nattestad M, von Haeseler A, Schatz MC (2018). "Accurate detection of complex structural variations using single-molecule sequencing." *Nat Methods*. 15:461-468. [doi:10.1038/s41592-018-0001-7](https://doi.org/10.1038/s41592-018-0001-7)
+
+### seq-align
+> Turner I (2015). "seq-align". https://github.com/noporpoise/seq-align
 
 ### STAR
 
@@ -131,3 +144,12 @@ It seems as though, in some cases in which an input viral sequence has many `N`s
 
 ## Missing letters from the beginning/end of some sequences
 If you notice that some sequences are missing letters at the beginning/end, even though they don't appear as insertions with respect to the reference genome, it could be that the read mapper (e.g. Minimap2) is soft-clipping those bases from the alignment (if you open the `.sam` file in the output folder, those entries should have soft-clipping, denoted by `S`, at the beginning/end of the CIGAR string). A simple hacky fix is to add a bunch of matching letters (e.g. `AAAAA...`) to the beginnings/ends of all of your sequences (including your reference genome) to force a match at the beginning/end of the pairwise alignment done by the read mapper, thus preventing soft-clipping.
+
+## Missing Sequences in Output
+Because ViralMSA relies on read mappers to compute each pairwise alignment to the reference genome, and because read mappers can fail to align a sequence if it deviates too significantly from the reference genome, sequences from your input can be omitted from ViralMSA's output if they did not appear in the output of the underlying read mapper you used, and you'll be shown the following warning:
+
+> WARNING: Some sequences from the input are missing from the output. Perhaps try a different aligner or reference genome?
+
+As is mentioned in the warning, to remedy this, you can either try a different reference genome (if you believe there is one that be more similar to *all* of your sequences than the reference you're currently using), or you can try a different aligner (using the `-a` argument). I will briefly mention that there is typically a trade-off between accuracy/sensitivity and speed for different read mappers, so feel free to review the literature to compare/contrast the different read mappers supported by ViralMSA.
+
+As a last resort, ViralMSA also supports [seq-align](https://github.com/noporpoise/seq-align), which performs complete pairwise global alignments. This method is the most sensitive (it's guaranteed to align every sequence in your input), but it will likely be ***much*** slower than the other options. To use it, you can specify `-a seq-align`.

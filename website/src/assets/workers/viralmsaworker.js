@@ -11,7 +11,7 @@ let mmiOutput;
 // holds python code of web wrapper for ViralMSA
 let ViralMSAWeb;
 let REFS; 
-let REF_NAMES;
+let REFS_JSON;
 
 // webworker api
 self.onmessage = async (event) => {
@@ -64,14 +64,14 @@ const init = async () => {
     // load in ViralMSAWeb.py
     ViralMSAWeb = await (await fetch("https://raw.githubusercontent.com/niemasd/ViralMSA/master/website/src/assets/python/ViralMSAWeb.py")).text()
 
-    // get REFS and REF_NAMES for preloaded reference sequences and indexes
+    // get REFS and REFS_JSON for preloaded reference sequences and indexes
     pyodide.runPython(ViralMSAWeb)
     REFS = pyodide.globals.get('REFS').toJs()
-    REF_NAMES = pyodide.globals.get('REF_NAMES').toJs()
+    REFS_JSON = pyodide.globals.get('REFS_JSON').toJs()
     self.postMessage({
         'init': 'done',
         'REFS': REFS, 
-        'REF_NAMES': REF_NAMES,
+        'REFS_JSON': REFS_JSON,
         'VERSION': pyodide.globals.get('VERSION'),
     })
 }

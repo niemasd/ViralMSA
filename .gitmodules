@@ -1,0 +1,3 @@
+[submodule "ref_genomes"]
+	path = ref_genomes
+	url = git@github.com:Niema-Lab/Reference-Genomes.git

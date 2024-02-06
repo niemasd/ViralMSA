@@ -4,7 +4,7 @@ MAINTAINER Niema Moshiri <niemamoshiri@gmail.com>
 
 # Set up environment and install dependencies
 RUN apt-get update && apt-get -y upgrade && \
-    DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get install -y cmake g++ g++-10 gcc-10 libboost-all-dev libbz2-dev libcurl4-openssl-dev libgsl-dev libjemalloc-dev liblzma-dev make pkg-config python3 python3-pip unzip wget zlib1g-dev && \
+    DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get install -y cmake g++ g++-10 gcc-10 git libboost-all-dev libbz2-dev libcurl4-openssl-dev libgsl-dev libjemalloc-dev liblzma-dev make pkg-config python3 python3-pip unzip wget zlib1g-dev && \
 
     # Install Python packages
     pip install --no-cache-dir biopython && \
@@ -19,12 +19,21 @@ RUN apt-get update && apt-get -y upgrade && \
     rm -rf htslib-* && \
 
     # Install Bowtie2
-    wget -qO- "https://github.com/BenLangmead/bowtie2/archive/refs/tags/v2.5.1.tar.gz" | tar -zx && \
+    wget -qO- "https://github.com/BenLangmead/bowtie2/archive/refs/tags/v2.5.2.tar.gz" | tar -zx && \
     cd bowtie2-* && \
     make && \
     make install && \
     cd .. && \
     rm -rf bowtie2-* && \
+
+    # Install BWA
+    wget -qO- "https://github.com/lh3/bwa/releases/download/v0.7.17/bwa-0.7.17.tar.bz2" | tar -xj && \
+    cd bwa-* && \
+    sed -i 's/const uint8_t rle_auxtab\[8\];/\/\/const uint8_t rle_auxtab\[8\];/g' rle.h && \
+    make && \
+    mv bwa /usr/local/bin/bwa && \
+    cd .. && \
+    rm -rf bwa-* && \
 
     # Install DRAGMAP
     wget -qO- "https://github.com/Illumina/DRAGMAP/archive/refs/tags/1.3.0.tar.gz" | tar -zx && \
@@ -69,6 +78,14 @@ RUN apt-get update && apt-get -y upgrade && \
     mv ../bin/ngmlr-*/ngmlr /usr/local/bin/ngmlr && \
     cd ../.. && \
     rm -rf ngmlr-* && \
+
+    # Install seq-align
+    git clone --recursive https://github.com/noporpoise/seq-align.git && \
+    cd seq-align && \
+    make && \
+    mv bin/* /usr/local/bin/ && \
+    cd .. && \
+    rm -rf seq-align && \
 
     # Install STAR
     wget -qO- "https://github.com/alexdobin/STAR/archive/refs/tags/2.7.11a.tar.gz" | tar -zx && \
