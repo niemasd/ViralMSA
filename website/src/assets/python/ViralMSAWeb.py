@@ -1,9 +1,8 @@
 #! /usr/bin/env python3
 import ViralMSA
 
-# for retrieving REFS and REFS_JSON from ViralMSA for preloading indexes in web implementation
-REFS = ViralMSA.REFS
-REFS_JSON = ViralMSA.REFS_JSON
+# for retrieving REFS_JSON_URL from ViralMSA for preloading indexes in web implementation
+REFS_JSON_URL = ViralMSA.REFS_JSON_URL
 VERSION = ViralMSA.VERSION
 
 old_subprocess_call = ViralMSA.subprocess.call
