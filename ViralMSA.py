@@ -20,7 +20,7 @@ import subprocess
 import sys
 
 # useful constants
-VERSION = '1.1.43'
+VERSION = '1.1.44'
 RELEASES_URL = 'https://api.github.com/repos/niemasd/ViralMSA/tags'
 CIGAR_LETTERS = {'M','D','I','S','H','=','X'}
 DEFAULT_BUFSIZE = 1048576 # 1 MB #8192 # 8 KB
@@ -62,13 +62,9 @@ CITATION = {
     'winnowmap': 'Winnowmap2: Jain C, Rhie A, Hansen NF, Koren S, Phillippy AM (2022). "Long-read mapping to repetitive reference sequences using Winnowmap2". Nature Methods. 19:705-710. doi:10.1038/s41592-022-01457-8',
 }
 
-# reference genomes for common viruses
-REFS_JSON_URL = 'https://github.com/Niema-Lab/Reference-Genomes/releases/latest/download/REFS.json'
-try:
-    REFS_JSON = jload(urlopen(REFS_JSON_URL))
-    REFS = {n:k for k in REFS_JSON for n in REFS_JSON[k]['shortname']}
-except:
-    REFS_JSON = None; REFS = None
+# reference genomes for common viruses (updated 2024-02-16): https://github.com/Niema-Lab/Reference-Genomes/releases/latest/download/REFS.json
+REFS_JSON = {"NC_006432": {"name": "Sudan Virus (Sudan ebolavirus)", "shortname": ["sudan", "sudanvirus", "sudanebola", "sudanebolavirus"]}, "NC_030791": {"name": "HCV genotype 7", "shortname": ["hcv7"]}, "NC_001475": {"name": "Dengue Virus 3", "shortname": ["denv3", "dengue3", "denguevirus3"]}, "NC_001802": {"name": "HIV-1", "shortname": ["hiv1"]}, "NC_045512": {"name": "SARS-CoV-2 (COVID-19)", "shortname": ["sc2", "sarscov2", "covid", "covid19"]}, "NC_009825": {"name": "HCV genotype 4", "shortname": ["hcv4"]}, "NC_002549": {"name": "Ebola Virus (Zaire ebolavirus)", "shortname": ["ebola", "ebolavirus", "zaire", "zaireebola", "zaireebolavirus"]}, "NC_004162": {"name": "Chikungunya Virus", "shortname": ["chikv", "chikungunya", "chikungunyavirus"]}, "NC_009827": {"name": "HCV genotype 6", "shortname": ["hcv6"]}, "NC_001498": {"name": "Measles Virus (Measles morbillivirus)", "shortname": ["measles", "measlesvirus", "measlesmorbillivirus"]}, "NC_063383": {"name": "Mpox Virus", "shortname": ["mpox", "mpoxvirus", "monkeypox", "monkeypoxvirus"]}, "NC_009824": {"name": "HCV genotype 3", "shortname": ["hcv3"]}, "NC_004161": {"name": "Reston Virus (Reston ebolavirus)", "shortname": ["reston", "restonvirus", "restonebola", "restonebolavirus"]}, "NC_009826": {"name": "HCV genotype 5", "shortname": ["hcv5"]}, "NC_004102": {"name": "HCV genotype 1", "shortname": ["hcv1"]}, "NC_014372": {"name": "Tai Forest Virus (Tai Forest ebolavirus, Cote d'Ivoire ebolavirus)", "shortname": ["taiforest", "taiforestvirus", "taiforestebola", "taiforestebolavirus", "cotedivoire", "cotedivoirevirus", "cotedivoireebola", "cotedivoireebolavirus"]}, "NC_009823": {"name": "HCV genotype 2", "shortname": ["hcv2"]}, "NC_038882": {"name": "HCV genotpye 1 (isolate H77)", "shortname": ["hcv1h77"]}, "NC_001477": {"name": "Dengue Virus 1", "shortname": ["denv1", "dengue1", "denguevirus1"]}, "NC_001474": {"name": "Dengue Virus 2", "shortname": ["denv2", "dengue2", "denguevirus2"]}, "NC_039345": {"name": "Bombali Virus (Bombali ebolavirus)", "shortname": ["bombali", "bombalivirus"]}, "NC_002640": {"name": "Dengue Virus 4", "shortname": ["denv4", "dengue4", "denguevirus4"]}, "NC_014373": {"name": "Bundibugyo Virus (Bundibugyo ebolavirus)", "shortname": ["bundibugyo", "bundibugyovirus"]}, "NC_001722": {"name": "HIV-2", "shortname": ["hiv2"]}}
+REFS = {n:k for k in REFS_JSON for n in REFS_JSON[k]['shortname']}
 
 # print to log (prefixed by current time)
 def print_log(s='', end='\n'):
