@@ -56,18 +56,27 @@ usage: ViralMSA.py [-h] -s SEQUENCES -r REFERENCE -e EMAIL -o OUTPUT [-a ALIGNER
   -u, --update                                Update ViralMSA (default: False)
 ```
 
+### GenBank Accession Number
 For the reference genome, you can provide a GenBank accession number, such as the following:
 
 ```
 ViralMSA.py -e email@address.com -s sequences.fas -o output -r NC_045512
 ```
 
+### Preselected Reference Genomes
 For specific viruses of interest, you can simply use their name, and we have provided what we believe would be a good choice of reference genome, such as the following:
 
 ```
 ViralMSA.py -e email@address.com -s sequences.fas -o output -r SARS-CoV-2
 ```
 
+Our preselected viral reference genomes can be found in the following GitHub repository:
+
+https://github.com/Niema-Lab/Reference-Genomes
+
+If you would like to contribute a new or updated viral reference genome to our collection, please feel free to submit a [GitHub Issue](https://github.com/Niema-Lab/Reference-Genomes/issues/new) or a [Pull Request](https://github.com/Niema-Lab/Reference-Genomes/pulls) with all relevant information.
+
+### Local File
 If you have a local reference genome you would like to use, you can provide the path to a FASTA file with a single sequence, such as the following:
 
 ```
