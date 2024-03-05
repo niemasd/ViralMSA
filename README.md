@@ -56,6 +56,9 @@ usage: ViralMSA.py [-h] -s SEQUENCES -r REFERENCE -e EMAIL -o OUTPUT [-a ALIGNER
   -u, --update                                Update ViralMSA (default: False)
 ```
 
+## Reference Genome Selection
+ViralMSA provides multiple options for selecting a reference genome against which reference-guided multiple sequence alignment will be performed.
+
 ### GenBank Accession Number
 For the reference genome, you can provide a GenBank accession number, such as the following:
 
