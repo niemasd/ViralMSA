@@ -52,7 +52,7 @@ RUN apt-get update && apt-get -y upgrade && \
     rm -rf hisat2-* && \
 
     # Install Minimap2
-    wget -qO- "https://github.com/lh3/minimap2/archive/refs/tags/v2.26.tar.gz" | tar -zx && \
+    wget -qO- "https://github.com/lh3/minimap2/archive/refs/tags/v2.27.tar.gz" | tar -zx && \
     cd minimap2-* && \
     make && \
     chmod a+x minimap2 && \
