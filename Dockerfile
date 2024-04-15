@@ -19,7 +19,7 @@ RUN apt-get update && apt-get -y upgrade && \
     rm -rf htslib-* && \
 
     # Install Bowtie2
-    wget -qO- "https://github.com/BenLangmead/bowtie2/archive/refs/tags/v2.5.2.tar.gz" | tar -zx && \
+    wget -qO- "https://github.com/BenLangmead/bowtie2/archive/refs/tags/v2.5.3.tar.gz" | tar -zx && \
     cd bowtie2-* && \
     make && \
     make install && \
@@ -88,7 +88,7 @@ RUN apt-get update && apt-get -y upgrade && \
     rm -rf seq-align && \
 
     # Install STAR
-    wget -qO- "https://github.com/alexdobin/STAR/archive/refs/tags/2.7.11a.tar.gz" | tar -zx && \
+    wget -qO- "https://github.com/alexdobin/STAR/archive/refs/tags/2.7.11b.tar.gz" | tar -zx && \
     mv STAR-*/bin/Linux_*_static/* /usr/local/bin/ && \
     rm -rf STAR-* && \
 
@@ -102,7 +102,7 @@ RUN apt-get update && apt-get -y upgrade && \
     rm -rf master.zip unimap-master && \
 
     # Install wfmash
-    wget -qO- "https://github.com/waveygang/wfmash/releases/download/v0.10.5/wfmash-v0.10.5.tar.gz" | tar -zx && \
+    wget -qO- "https://github.com/waveygang/wfmash/releases/download/v0.13.0/wfmash-v0.13.0.tar.gz" | tar -zx && \
     cd wfmash-* && \
     cmake -H. -Bbuild -DCMAKE_C_COMPILER="$(which gcc-10)" -DCMAKE_CXX_COMPILER="$(which g++-10)" && \
     cmake --build build -- && \
