@@ -10,7 +10,7 @@ RUN apt-get update && apt-get -y upgrade && \
     pip install --no-cache-dir biopython && \
 
     # Install htslib
-    wget -qO- "https://github.com/samtools/htslib/releases/download/1.18/htslib-1.18.tar.bz2" | tar -xj && \
+    wget -qO- "https://github.com/samtools/htslib/releases/download/1.20/htslib-1.20.tar.bz2" | tar -xj && \
     cd htslib-* && \
     ./configure && \
     make && \
@@ -52,7 +52,7 @@ RUN apt-get update && apt-get -y upgrade && \
     rm -rf hisat2-* && \
 
     # Install Minimap2
-    wget -qO- "https://github.com/lh3/minimap2/archive/refs/tags/v2.27.tar.gz" | tar -zx && \
+    wget -qO- "https://github.com/lh3/minimap2/archive/refs/tags/v2.28.tar.gz" | tar -zx && \
     cd minimap2-* && \
     make && \
     chmod a+x minimap2 && \
