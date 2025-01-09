@@ -19,7 +19,7 @@ RUN apt-get update && apt-get -y upgrade && \
     rm -rf htslib-* && \
 
     # Install Bowtie2
-    wget -qO- "https://github.com/BenLangmead/bowtie2/archive/refs/tags/v2.5.3.tar.gz" | tar -zx && \
+    wget -qO- "https://github.com/BenLangmead/bowtie2/archive/refs/tags/v2.5.4.tar.gz" | tar -zx && \
     cd bowtie2-* && \
     make && \
     make install && \
