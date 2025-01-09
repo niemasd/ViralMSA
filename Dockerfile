@@ -27,7 +27,7 @@ RUN apt-get update && apt-get -y upgrade && \
     rm -rf bowtie2-* && \
 
     # Install BWA
-    wget -qO- "https://github.com/lh3/bwa/releases/download/v0.7.17/bwa-0.7.17.tar.bz2" | tar -xj && \
+    wget -qO- "https://github.com/lh3/bwa/releases/download/v0.7.17/bwa-0.7.18.tar.bz2" | tar -xj && \
     cd bwa-* && \
     sed -i 's/const uint8_t rle_auxtab\[8\];/\/\/const uint8_t rle_auxtab\[8\];/g' rle.h && \
     make && \
