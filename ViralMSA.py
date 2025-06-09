@@ -20,7 +20,7 @@ import subprocess
 import sys
 
 # useful constants
-VERSION = '1.1.44'
+VERSION = '1.1.45'
 RELEASES_URL = 'https://api.github.com/repos/niemasd/ViralMSA/tags'
 CIGAR_LETTERS = {'M','D','I','S','H','=','X'}
 DEFAULT_BUFSIZE = 1048576 # 1 MB #8192 # 8 KB
@@ -833,8 +833,8 @@ def parse_args():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-s', '--sequences', required=True, type=str, help="Input Sequences (FASTA format, or SAM if already mapped)")
     parser.add_argument('-r', '--reference', required=True, type=str, help="Reference")
-    parser.add_argument('-e', '--email', required=True, type=str, help="Email Address (for Entrez)")
     parser.add_argument('-o', '--output', required=True, type=str, help="Output Directory")
+    parser.add_argument('-e', '--email', required=False, type=str, default=None, help="Email Address (for Entrez)")
     parser.add_argument('-a', '--aligner', required=False, type=str, default=DEFAULT_ALIGNER, help="Aligner (options: %s)" % ', '.join(sorted(ALIGNERS.keys())))
     parser.add_argument('-t', '--threads', required=False, type=int, default=DEFAULT_THREADS, help="Number of Threads")
     parser.add_argument('-b', '--buffer_size', required=False, type=int, default=DEFAULT_BUFSIZE, help="File Stream Buffer Size (bytes)")
@@ -877,6 +877,8 @@ def parse_args():
     else:
         tmp = args.reference.lower().replace(' ','').replace('-','').replace('_','')
         if REFS is not None and tmp in REFS:
+            if args.email is None:
+                print("ERROR: Must provide email address to download reference genome", file=sys.stderr); exit(1)
             args.reference = REFS[tmp]
         args.reference = args.reference.upper()
         args.ref_path = '%s/%s' % (args.viralmsa_dir, args.reference)
@@ -887,6 +889,8 @@ def parse_args():
 
 # download reference genome
 def download_ref_genome(reference, ref_path, ref_genome_path, email, bufsize=DEFAULT_BUFSIZE):
+    if email is None:
+        print("ERROR: Must provide email address to download reference genome", file=sys.stderr); exit(1)
     if REFS is None:
         print("ERROR: Unable to download reference genome if offline", file=sys.stderr); exit(1)
     try:
@@ -985,8 +989,9 @@ def main():
     print_log("Sequences: %s" % args.sequences)
     print_log("- %d sequences in input file" % num_input_IDs)
     print_log("Reference: %s" % args.reference)
-    print_log("Email Address: %s" % args.email)
     print_log("Output Directory: %s" % args.output)
+    if args.email is not None:
+        print_log("Email Address: %s" % args.email)
     if INPUT_TYPE == 'FASTA':
         print_log("Aligner: %s" % args.aligner)
     print_log("ViralMSA Cache Directory: %s" % args.viralmsa_dir)
