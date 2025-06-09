@@ -45,8 +45,8 @@ usage: ViralMSA.py [-h] -s SEQUENCES -r REFERENCE -e EMAIL -o OUTPUT [-a ALIGNER
   -h, --help                                  show this help message and exit
   -s SEQUENCES, --sequences SEQUENCES         Input Sequences (FASTA format)
   -r REFERENCE, --reference REFERENCE         Reference
-  -e EMAIL, --email EMAIL                     Email Address (for Entrez)
   -o OUTPUT, --output OUTPUT                  Output Directory
+  -e EMAIL, --email EMAIL                     Email Address (for Entrez)
   -a ALIGNER, --aligner ALIGNER               Aligner (default: Minimap2)
   -t THREADS, --threads THREADS               Number of Threads (default: max)
   -b BUFFER_SIZE, --buffer_size BUFFER_SIZE   File Stream Buffer Size (bytes) (default: 1048576)
