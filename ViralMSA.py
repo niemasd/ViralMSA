@@ -20,7 +20,7 @@ import subprocess
 import sys
 
 # useful constants
-VERSION = '1.1.46'
+VERSION = '1.1.47'
 RELEASES_URL = 'https://api.github.com/repos/niemasd/ViralMSA/tags'
 CIGAR_LETTERS = {'M','D','I','S','H','=','X'}
 DEFAULT_BUFSIZE = 1048576 # 1 MB #8192 # 8 KB
@@ -62,9 +62,16 @@ CITATION = {
     'winnowmap': 'Winnowmap2: Jain C, Rhie A, Hansen NF, Koren S, Phillippy AM (2022). "Long-read mapping to repetitive reference sequences using Winnowmap2". Nature Methods. 19:705-710. doi:10.1038/s41592-022-01457-8',
 }
 
-# reference genomes for common viruses (updated 2024-02-16): https://github.com/Niema-Lab/Reference-Genomes/releases/latest/download/REFS.json
-REFS_JSON = {"NC_009823": {"name": "HCV genotype 2", "shortname": ["hcv2"]}, "NC_009825": {"name": "HCV genotype 4", "shortname": ["hcv4"]}, "NC_006432": {"name": "Sudan Virus (Sudan ebolavirus)", "shortname": ["sudan", "sudanvirus", "sudanebola", "sudanebolavirus"]}, "NC_039199": {"name": "Human Metapneumovirus", "shortname": ["hmpv", "humanmetapneumovirus", "metapneumovirus"]}, "NC_045512": {"name": "SARS-CoV-2 (COVID-19)", "shortname": ["sc2", "sarscov2", "covid", "covid19"]}, "NC_004102": {"name": "HCV genotype 1", "shortname": ["hcv1"]}, "NC_009826": {"name": "HCV genotype 5", "shortname": ["hcv5"]}, "NC_039345": {"name": "Bombali Virus (Bombali ebolavirus)", "shortname": ["bombali", "bombalivirus"]}, "NC_009827": {"name": "HCV genotype 6", "shortname": ["hcv6"]}, "NC_063383": {"name": "Mpox Virus", "shortname": ["mpox", "mpoxvirus", "monkeypox", "monkeypoxvirus"]}, "NC_001781": {"name": "HRSV-B", "shortname": ["hrsvb", "rsvb"]}, "NC_001498": {"name": "Measles Virus (Measles morbillivirus)", "shortname": ["measles", "measlesvirus", "measlesmorbillivirus"]}, "NC_002549": {"name": "Ebola Virus (Zaire ebolavirus)", "shortname": ["ebola", "ebolavirus", "zaire", "zaireebola", "zaireebolavirus"]}, "NC_038235": {"name": "HRSV-A", "shortname": ["hrsva", "rsva"]}, "NC_014373": {"name": "Bundibugyo Virus (Bundibugyo ebolavirus)", "shortname": ["bundibugyo", "bundibugyovirus"]}, "NC_001474": {"name": "Dengue Virus 2", "shortname": ["denv2", "dengue2", "denguevirus2"]}, "NC_001475": {"name": "Dengue Virus 3", "shortname": ["denv3", "dengue3", "denguevirus3"]}, "NC_004161": {"name": "Reston Virus (Reston ebolavirus)", "shortname": ["reston", "restonvirus", "restonebola", "restonebolavirus"]}, "NC_009824": {"name": "HCV genotype 3", "shortname": ["hcv3"]}, "NC_030791": {"name": "HCV genotype 7", "shortname": ["hcv7"]}, "NC_004162": {"name": "Chikungunya Virus", "shortname": ["chikv", "chikungunya", "chikungunyavirus"]}, "NC_014372": {"name": "Tai Forest Virus (Tai Forest ebolavirus, Cote d'Ivoire ebolavirus)", "shortname": ["taiforest", "taiforestvirus", "taiforestebola", "taiforestebolavirus", "cotedivoire", "cotedivoirevirus", "cotedivoireebola", "cotedivoireebolavirus"]}, "NC_001722": {"name": "HIV-2", "shortname": ["hiv2"]}, "NC_002640": {"name": "Dengue Virus 4", "shortname": ["denv4", "dengue4", "denguevirus4"]}, "NC_001477": {"name": "Dengue Virus 1", "shortname": ["denv1", "dengue1", "denguevirus1"]}, "NC_001802": {"name": "HIV-1", "shortname": ["hiv1"]}, "NC_038882": {"name": "HCV genotpye 1 (isolate H77)", "shortname": ["hcv1h77"]}}
-REFS = {n:k for k in REFS_JSON for n in REFS_JSON[k]['shortname']}
+# reference genomes for common viruses
+REFS_FAIL = False; REFS_JSON = None; REFS = None; REFS_JSON_URL = 'https://github.com/Niema-Lab/Reference-Genomes/releases/latest/download/REFS.json'
+def get_refs_json():
+    global REFS_FAIL
+    if not REFS_FAIL:
+        try:
+            global REFS_JSON; REFS_JSON = jload(urlopen(REFS_JSON_URL))
+            global REFS; REFS = {n:k for k in REFS_JSON for n in REFS_JSON[k]['shortname']}
+        except:
+            REFS_FAIL = False
 
 # print to log (prefixed by current time)
 def print_log(s='', end='\n'):
@@ -820,6 +827,7 @@ def parse_args():
 
     # check if user just wants to list references
     if '-l' in sys.argv or '--list_references' in sys.argv:
+        get_refs_json()
         if REFS_JSON is None:
             print("ERROR: Listing references requires an internet connection", file=sys.stderr); exit(1)
         print("=== Reference Sequence Aliases (for use with -s) ===")
@@ -875,14 +883,20 @@ def parse_args():
             makedirs(args.ref_path)
             copy(fn, args.ref_genome_path)
     else:
-        tmp = args.reference.lower().replace(' ','').replace('-','').replace('_','')
-        if REFS is not None and tmp in REFS:
-            if args.email is None:
-                print("ERROR: Must provide email address to download reference genome", file=sys.stderr); exit(1)
-            args.reference = REFS[tmp]
         args.reference = args.reference.upper()
         args.ref_path = '%s/%s' % (args.viralmsa_dir, args.reference)
         args.ref_genome_path = '%s/%s.fas' % (args.ref_path, args.reference)
+        if not isfile(args.ref_genome_path):
+            if args.email is None:
+                print("ERROR: Must provide email address to download reference genome", file=sys.stderr); exit(1)
+            get_refs_json()
+            if REFS is None:
+                print("ERROR: Unable to download reference genome if offline", file=sys.stderr); exit(1)
+            tmp = args.reference.lower().replace(' ','').replace('-','').replace('_','')
+            if tmp in REFS:
+                args.reference = REFS[tmp].upper()
+                args.ref_path = '%s/%s' % (args.viralmsa_dir, args.reference)
+                args.ref_genome_path = '%s/%s.fas' % (args.ref_path, args.reference)
 
     # user args are valid, so return
     return args
@@ -891,6 +905,7 @@ def parse_args():
 def download_ref_genome(reference, ref_path, ref_genome_path, email, bufsize=DEFAULT_BUFSIZE):
     if email is None:
         print("ERROR: Must provide email address to download reference genome", file=sys.stderr); exit(1)
+    get_refs_json()
     if REFS is None:
         print("ERROR: Unable to download reference genome if offline", file=sys.stderr); exit(1)
     try:
@@ -968,6 +983,10 @@ def aln_to_fasta(out_aln_path, out_msa_path, ref_genome_path, omit_ref=False, bu
 
 # main content
 def main():
+    # print initial run information
+    print_log("===== RUN INFORMATION =====")
+    print_log("ViralMSA Version: %s" % VERSION)
+
     # parse user args and prepare run
     INPUT_TYPE = None
     args = parse_args()
@@ -983,9 +1002,7 @@ def main():
         ALIGNERS[args.aligner]['check']()
         num_input_IDs = count_IDs_fasta(args.sequences, bufsize=args.buffer_size)
 
-    # print run information
-    print_log("===== RUN INFORMATION =====")
-    print_log("ViralMSA Version: %s" % VERSION)
+    # print remaining run information
     print_log("Sequences: %s" % args.sequences)
     print_log("- %d sequences in input file" % num_input_IDs)
     print_log("Reference: %s" % args.reference)
