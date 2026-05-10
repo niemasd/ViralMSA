@@ -71,7 +71,7 @@ def get_refs_json():
             global REFS_JSON; REFS_JSON = jload(urlopen(REFS_JSON_URL))
             global REFS; REFS = {n:k for k in REFS_JSON for n in REFS_JSON[k]['shortname']}
         except:
-            REFS_FAIL = False
+            REFS_FAIL = True
 
 # print to log (prefixed by current time)
 def print_log(s='', end='\n'):
