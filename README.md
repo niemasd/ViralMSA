@@ -20,7 +20,8 @@ ViralMSA.py -u
 
 ViralMSA also requires at least one of the following tools to perform the alignment:
 
-* **[Minimap2](https://github.com/lh3/minimap2) (used by default; strongly recommended)**
+* **[rammap](https://github.com/jwanglab/rammap) (used by default; strongly recommended)**
+* **[Minimap2](https://github.com/lh3/minimap2) (recommmended if rammap is too memory-intensive)**
 * [bowtie2](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml)
 * [BWA](https://bio-bwa.sourceforge.net/)
 * [DRAGMAP](https://github.com/Illumina/DRAGMAP)
@@ -47,7 +48,7 @@ usage: ViralMSA.py [-h] -s SEQUENCES -r REFERENCE -e EMAIL -o OUTPUT [-a ALIGNER
   -r REFERENCE, --reference REFERENCE         Reference
   -o OUTPUT, --output OUTPUT                  Output Directory
   -e EMAIL, --email EMAIL                     Email Address (for Entrez)
-  -a ALIGNER, --aligner ALIGNER               Aligner (default: Minimap2)
+  -a ALIGNER, --aligner ALIGNER               Aligner (default: rammap)
   -t THREADS, --threads THREADS               Number of Threads (default: max)
   -b BUFFER_SIZE, --buffer_size BUFFER_SIZE   File Stream Buffer Size (bytes) (default: 1048576)
   -l, --list_references                       List all reference sequences (default: False)
@@ -97,7 +98,11 @@ If you use ViralMSA via the [ViralWasm-Epi web application](https://niema-lab.gi
 
 Please also cite the read mapper you selected.
 
-### **Minimap2 (default selection; only option for web app)**
+### **rammap (default option)**
+
+> Wang JR, Li H (2026). "Memory-safe high-performance sequence mapping with rammap." *bioRxiv*. [doi:10.64898/2026.05.26.726289](https://doi.org/10.64898/2026.05.26.726289)
+
+### **Minimap2 (only option for web app)**
 
 > Li H (2018). "Minimap2: pairwise alignment for nucleotide sequences." *Bioinformatics*. 34(18):3094–3100. [doi:10.1093/bioinformatics/bty191](https://doi.org/10.1093/bioinformatics/bty191)
 
