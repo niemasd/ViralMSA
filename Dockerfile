@@ -6,11 +6,17 @@ MAINTAINER Niema Moshiri <niemamoshiri@gmail.com>
 RUN apt-get update && apt-get -y upgrade && \
     DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get install -y cmake g++ g++-10 gcc-10 git libboost-all-dev libbz2-dev libcurl4-openssl-dev libgsl-dev libjemalloc-dev liblzma-dev make pkg-config python3 python3-pip unzip wget zlib1g-dev && \
 
+    # Install Rust toolchain
+    wget -qO- "https://sh.rustup.rs" | sh -s -- -y && \
+    . "$HOME/.cargo/env" && \
+    rustup update stable && \
+    rustup default stable && \
+
     # Install Python packages
     pip install --no-cache-dir biopython && \
 
     # Install htslib
-    wget -qO- "https://github.com/samtools/htslib/releases/download/1.20/htslib-1.20.tar.bz2" | tar -xj && \
+    wget -qO- "https://github.com/samtools/htslib/releases/download/1.23.1/htslib-1.23.1.tar.bz2" | tar -xj && \
     cd htslib-* && \
     ./configure && \
     make && \
@@ -19,7 +25,7 @@ RUN apt-get update && apt-get -y upgrade && \
     rm -rf htslib-* && \
 
     # Install Bowtie2
-    wget -qO- "https://github.com/BenLangmead/bowtie2/archive/refs/tags/v2.5.4.tar.gz" | tar -zx && \
+    wget -qO- "https://github.com/BenLangmead/bowtie2/archive/refs/tags/v2.5.5.tar.gz" | tar -zx && \
     cd bowtie2-* && \
     make && \
     make install && \
@@ -27,7 +33,7 @@ RUN apt-get update && apt-get -y upgrade && \
     rm -rf bowtie2-* && \
 
     # Install BWA
-    wget -qO- "https://github.com/lh3/bwa/archive/refs/tags/v0.7.18.tar.gz" | tar -zx && \
+    wget -qO- "https://github.com/lh3/bwa/archive/refs/tags/v0.7.19.tar.gz" | tar -zx && \
     cd bwa-* && \
     make && \
     mv bwa /usr/local/bin/bwa && \
@@ -43,7 +49,7 @@ RUN apt-get update && apt-get -y upgrade && \
     rm -rf DRAGMAP-* && \
 
     # Install HISAT2
-    wget -qO- "https://github.com/DaehwanKimLab/hisat2/archive/refs/tags/v2.2.1.tar.gz" | tar -zx && \
+    wget -qO- "https://github.com/DaehwanKimLab/hisat2/archive/refs/tags/v2.2.2.tar.gz" | tar -zx && \
     cd hisat2-* && \
     make && \
     mv hisat2 hisat2-* hisat2_*.py /usr/local/bin/ && \
@@ -51,7 +57,7 @@ RUN apt-get update && apt-get -y upgrade && \
     rm -rf hisat2-* && \
 
     # Install Minimap2
-    wget -qO- "https://github.com/lh3/minimap2/archive/refs/tags/v2.28.tar.gz" | tar -zx && \
+    wget -qO- "https://github.com/lh3/minimap2/archive/refs/tags/v2.31.tar.gz" | tar -zx && \
     cd minimap2-* && \
     make && \
     chmod a+x minimap2 && \
@@ -78,6 +84,14 @@ RUN apt-get update && apt-get -y upgrade && \
     cd ../.. && \
     rm -rf ngmlr-* && \
 
+    # Install rammap
+    wget -qO- "https://github.com/jwanglab/rammap/archive/refs/tags/v1.0.0.tar.gz" | tar -zx && \
+    cd rammap-* && \
+    cargo build --release && \
+    mv target/release/rammap /usr/local/bin/rammap && \
+    cd .. && \
+    rm -rf rammap-* && \
+
     # Install seq-align
     git clone --recursive https://github.com/noporpoise/seq-align.git && \
     cd seq-align && \
@@ -101,7 +115,7 @@ RUN apt-get update && apt-get -y upgrade && \
     rm -rf master.zip unimap-master && \
 
     # Install wfmash
-    wget -qO- "https://github.com/waveygang/wfmash/releases/download/v0.13.0/wfmash-v0.13.0.tar.gz" | tar -zx && \
+    wget -qO- "https://github.com/waveygang/wfmash/releases/download/v0.24.2/wfmash-v0.24.2.tar.gz" | tar -zx && \
     cd wfmash-* && \
     cmake -H. -Bbuild -DCMAKE_C_COMPILER="$(which gcc-10)" -DCMAKE_CXX_COMPILER="$(which g++-10)" && \
     cmake --build build -- && \
@@ -109,7 +123,7 @@ RUN apt-get update && apt-get -y upgrade && \
     cd .. && \
     rm -rf wfmash-* && \
 
-    # Install Windowmap
+    # Install Winnowmap
     wget -qO- "https://github.com/marbl/Winnowmap/archive/refs/tags/v2.03.tar.gz"  | tar -zx && \
     cd Winnowmap-* && \
     make && \
