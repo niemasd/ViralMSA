@@ -20,11 +20,11 @@ import subprocess
 import sys
 
 # useful constants
-VERSION = '1.1.47'
+VERSION = '1.1.48'
 RELEASES_URL = 'https://api.github.com/repos/niemasd/ViralMSA/tags'
 CIGAR_LETTERS = {'M','D','I','S','H','=','X'}
 DEFAULT_BUFSIZE = 1048576 # 1 MB #8192 # 8 KB
-DEFAULT_ALIGNER = 'minimap2'
+DEFAULT_ALIGNER = 'rammap'
 DEFAULT_THREADS = cpu_count()
 global QUIET; QUIET = False
 global LOGFILE; LOGFILE = None
@@ -54,6 +54,7 @@ CITATION = {
     'minimap2':  'Minimap2: Li H (2018). "Minimap2: pairwise alignment for nucleotide sequences." Bioinformatics. 34(18):3094-3100. doi:10.1093/bioinformatics/bty191',
     'mm2-fast':  'mm2-fast: Kalikar S, Jain C, Vasimuddin M, Misra S (2022). "Accelerating minimap2 for long-read sequencing applications on modern CPUs." Nat Comput Sci. 2:78-83. doi:10.1038/s43588-022-00201-8',
     'ngmlr':     'NGMLR: Sedlazeck FJ, Rescheneder P, Smolka M, Fang H, Nattestad M, von Haeseler A, Schatz MC (2018). "Accurate detection of complex structural variations using single-molecule sequencing." Nat Methods. 15:461-468. doi:10.1038/s41592-018-0001-7',
+    'rammap':    'rammap: Wang JR, Li H (2026). "Memory-safe high-performance sequence mapping with rammap." bioRxiv. doi:10.64898/2026.05.26.726289',
     'seq-align': 'seq-align: Turner I (2015). "seq-align". https://github.com/noporpoise/seq-align',
     'star':      'STAR: Dobin A, Davis CA, Schlesinger F, Drehkow J, Zaleski C, Jha S, Batut P, Chaisson M, Gingeras TR (2013). "STAR: ultrafast universal RNA-seq aligner." Bioinformatics. 29(1):15-21. doi:10.1093/bioinformatics/bts635',
     'unimap':    'Unimap: Li H (2021). "Unimap: A fork of minimap2 optimized for assembly-to-reference alignment." https://github.com/lh3/unimap',
@@ -254,6 +255,15 @@ def check_ngmlr():
     if o is None or 'Usage: ngmlr' not in o.decode():
         print("ERROR: NGMLR is not runnable in your PATH", file=sys.stderr); exit(1)
 
+# check rammap
+def check_rammap():
+    try:
+        o = subprocess.check_output(['rammap', '-h'])
+    except:
+        o = None
+    if o is None or 'Usage: rammap' not in o.decode():
+        print("ERROR: rammap is not runnable in your PATH", file=sys.stderr); exit(1)
+
 # check seq-align
 def check_seqalign():
     try:
@@ -447,7 +457,7 @@ def build_index_minigraph(ref_genome_path, threads, verbose=True):
 
 # build minimap2 index
 def build_index_minimap2(ref_genome_path, threads, verbose=True):
-    index_path = '%s.mmi' % ref_genome_path
+    index_path = '%s.minimap2.mmi' % ref_genome_path
     if isfile(index_path):
         if verbose:
             print_log("Minimap2 index found: %s" % index_path)
@@ -491,6 +501,20 @@ def build_index_ngmlr(ref_genome_path, threads, verbose=True):
     log = open('%s.NGMLR.log' % ref_genome_path, 'w'); subprocess.call(command, stdin=subprocess.DEVNULL, stderr=log, stdout=DEVNULL); log.close()
     if verbose:
         print_log("NGMLR index built: %s and %s" % (enc_index_path, ht_index_path))
+
+# build rammap index
+def build_index_rammap(ref_genome_path, threads, verbose=True):
+    index_path = '%s.rammap.mmi' % ref_genome_path
+    if isfile(index_path):
+        if verbose:
+            print_log("rammap index found: %s" % index_path)
+        return
+    command = ['rammap', '-t', str(threads), '-d', index_path, ref_genome_path]
+    if verbose:
+        print_log("Building rammap index: %s" % ' '.join(command))
+    log = open('%s.log' % index_path, 'w'); subprocess.call(command, stderr=log); log.close()
+    if verbose:
+        print_log("rammap index built: %s" % index_path)
 
 # build seq-align index
 def build_index_seqalign(ref_genome_path, threads, verbose=True):
@@ -621,7 +645,7 @@ def align_minigraph(seqs_path, out_paf_path, ref_genome_path, threads, verbose=T
 
 # align genomes using minimap2
 def align_minimap2(seqs_path, out_aln_path, ref_genome_path, threads, bufsize=DEFAULT_BUFSIZE, verbose=True):
-    index_path = '%s.mmi' % ref_genome_path
+    index_path = '%s.minimap2.mmi' % ref_genome_path
     command = ['minimap2', '-t', str(threads), '--score-N=0', '--secondary=no', '--sam-hit-only', '-a', '-o', out_aln_path, index_path, seqs_path]
     if verbose:
         print_log("Aligning using Minimap2: %s" % ' '.join(command))
@@ -647,6 +671,16 @@ def align_ngmlr(seqs_path, out_aln_path, ref_genome_path, threads, bufsize=DEFAU
     log = open('%s.log' % out_aln_path, 'w'); subprocess.call(command, stderr=log); log.close()
     if verbose:
         print_log("NGMLR alignment complete: %s" % out_aln_path)
+
+# align genomes using rammap
+def align_rammap(seqs_path, out_aln_path, ref_genome_path, threads, bufsize=DEFAULT_BUFSIZE, verbose=True):
+    index_path = '%s.rammap.mmi' % ref_genome_path
+    command = ['rammap', '-t', str(threads), '--score-N=0', '--secondary=no', '--sam-hit-only', '-a', '-o', out_aln_path, index_path, seqs_path]
+    if verbose:
+        print_log("Aligning using rammap: %s" % ' '.join(command))
+    log = open('%s.log' % out_aln_path, 'w'); subprocess.call(command, stderr=log); log.close()
+    if verbose:
+        print_log("rammap alignment complete: %s" % out_aln_path)
 
 # helper function to perform individual pairwise alignments
 def run_needleman_wunsch(x): # x is (command, ref_seq, query_header, query_seq) tuple
@@ -786,6 +820,12 @@ ALIGNERS = {
         'check':       check_ngmlr,
         'build_index': build_index_ngmlr,
         'align':       align_ngmlr,
+    },
+
+    'rammap': {
+        'check':       check_rammap,
+        'build_index': build_index_rammap,
+        'align':       align_rammap,
     },
 
     'seq-align': {
