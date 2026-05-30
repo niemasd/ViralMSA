@@ -4,7 +4,7 @@ MAINTAINER Niema Moshiri <niemamoshiri@gmail.com>
 
 # Set up environment and install dependencies
 RUN apt-get update && apt-get -y upgrade && \
-    DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get install -y cmake g++ g++-10 gcc-10 git libboost-all-dev libbz2-dev libcurl4-openssl-dev libgsl-dev libjemalloc-dev liblzma-dev make pkg-config python3 python3-pip unzip wget zlib1g-dev && \
+    DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get install -y cmake g++ g++-10 gcc-10 git libboost-all-dev libbz2-dev libcurl4-openssl-dev libdeflate-dev libgsl-dev libjemalloc-dev liblzma-dev make pkg-config python3 python3-pip unzip wget zlib1g-dev && \
 
     # Install Rust toolchain
     wget -qO- "https://sh.rustup.rs" | sh -s -- -y && \
