@@ -20,7 +20,7 @@ import subprocess
 import sys
 
 # useful constants
-VERSION = '1.1.48'
+VERSION = '1.1.49'
 RELEASES_URL = 'https://api.github.com/repos/niemasd/ViralMSA/tags'
 CIGAR_LETTERS = {'M','D','I','S','H','=','X'}
 DEFAULT_BUFSIZE = 1048576 # 1 MB #8192 # 8 KB
@@ -1023,10 +1023,6 @@ def aln_to_fasta(out_aln_path, out_msa_path, ref_genome_path, omit_ref=False, bu
 
 # main content
 def main():
-    # print initial run information
-    print_log("===== RUN INFORMATION =====")
-    print_log("ViralMSA Version: %s" % VERSION)
-
     # parse user args and prepare run
     INPUT_TYPE = None
     args = parse_args()
@@ -1042,7 +1038,9 @@ def main():
         ALIGNERS[args.aligner]['check']()
         num_input_IDs = count_IDs_fasta(args.sequences, bufsize=args.buffer_size)
 
-    # print remaining run information
+    # print run information
+    print_log("===== RUN INFORMATION =====")
+    print_log("ViralMSA Version: %s" % VERSION)
     print_log("Sequences: %s" % args.sequences)
     print_log("- %d sequences in input file" % num_input_IDs)
     print_log("Reference: %s" % args.reference)
