@@ -5,11 +5,11 @@ RUN apt-get update && \
     mkdir -p /usr/include/sys && \
     ln -s /usr/include/linux/sysctl.h /usr/include/sys/sysctl.h && \
 
-    # install ViralMSA v1.1.49
+    # install ViralMSA
     wget -qO /usr/local/bin/ViralMSA.py "https://github.com/niemasd/ViralMSA/releases/download/1.1.49/ViralMSA.py" && \
     chmod a+x /usr/local/bin/ViralMSA.py && \
 
-    # install htslib v1.24
+    # install htslib
     wget -qO- "https://github.com/samtools/htslib/releases/download/1.24/htslib-1.24.tar.bz2" | tar -xj && \
     cd htslib-* && \
     ./configure && \
@@ -18,13 +18,13 @@ RUN apt-get update && \
     rm -rf htslib-* && \
     ldconfig && \
 
-    # install Bowtie2 v2.5.5
+    # install Bowtie2
     wget -q "https://github.com/BenLangmead/bowtie2/releases/download/v2.5.5/bowtie2-2.5.5-linux-x86_64.zip" && \
     unzip bowtie2-*.zip && \
     mv bowtie2-*/bowtie2* /usr/local/bin/ && \
     rm -rf bowtie2-* && \
 
-    # install BWA v0.7.19
+    # install BWA
     wget -qO- "https://github.com/lh3/bwa/archive/refs/tags/v0.7.19.tar.gz" | tar -zx && \
     cd bwa-* && \
     make && \
@@ -32,14 +32,14 @@ RUN apt-get update && \
     cd .. && \
     rm -rf bwa-* && \
 
-    # install DRAGMAP v1.2.1
+    # install DRAGMAP
     wget -qO- "https://github.com/Illumina/DRAGMAP/archive/refs/tags/1.2.1.tar.gz" | tar -zx && \
     cd DRAGMAP-* && \
     HAS_GTEST=0 CFLAGS="-include stdint.h -Wno-error=format-overflow -Wno-error=nonnull" CXXFLAGS="-include cstdint -Wno-error=nonnull" make install && \
     cd .. && \
     rm -rf DRAGMAP-* && \
 
-    # install HISAT2 v2.2.3
+    # install HISAT2
     wget -qO- "https://github.com/DaehwanKimLab/hisat2/archive/refs/tags/v2.2.3.tar.gz" | tar -zx && \
     cd hisat2-* && \
     make && \
@@ -47,7 +47,7 @@ RUN apt-get update && \
     cd .. && \
     rm -rf hisat2-* && \
 
-    # install LRA v1.3.7.2
+    # install LRA
     wget -qO- "https://github.com/ChaissonLab/LRA/archive/refs/tags/1.3.7.2.tar.gz" | tar -zx && \
     cd LRA-* && \
     make && \
@@ -55,12 +55,12 @@ RUN apt-get update && \
     cd .. && \
     rm -rf LRA-* && \
 
-    # install Minimap2 v2.31
+    # install Minimap2
     wget -qO- "https://github.com/lh3/minimap2/releases/download/v2.31/minimap2-2.31_x64-linux.tar.bz2" | tar -jx && \
     mv minimap2-*/minimap2 /usr/local/bin/ && \
     rm -rf minimap2-* && \
 
-    # install mm2-fast v1.0
+    # install mm2-fast
     wget -qO- "https://github.com/bwa-mem2/mm2-fast/releases/download/mm2-fast-v1.0/Source_code_including_submodules.tar.gz" | tar -zx && \
     cd mm2-fast && \
     make no_opt=1 && \
@@ -68,14 +68,22 @@ RUN apt-get update && \
     cd .. && \
     rm -rf mm2-fast && \
 
-    # install NGMLR v0.2.7
+    # install NGMLR
     wget -qO- "https://github.com/philres/ngmlr/releases/download/v0.2.7/ngmlr-0.2.7-linux-x86_64.tar.gz" | tar -zx && \
     mv ngmlr-*/ngmlr /usr/local/bin/ && \
     rm -rf ngmlr-* && \
 
-    # install Rammap v1.2.0
+    # install Rammap
     wget -qO /usr/local/bin/rammap "https://github.com/jwanglab/rammap/releases/download/v1.2.0/rammap_x86_64-unknown-linux-gnu_v1.2.0" && \
     chmod a+x /usr/local/bin/rammap && \
+
+    # install samtools
+    wget -qO- "https://github.com/samtools/samtools/releases/download/1.24/samtools-1.24.tar.bz2" | tar -xj && \
+    cd samtools-* && \
+    ./configure --without-curses && \
+    make install && \
+    cd .. && \
+    rm -rf samtools-*
 
     # install seq-align
     git clone --recurse-submodules https://github.com/noporpoise/seq-align.git && \
@@ -85,7 +93,7 @@ RUN apt-get update && \
     cd .. && \
     rm -rf seq-align && \
 
-    # install STAR v2.7.11b
+    # install STAR
     wget -q "https://github.com/alexdobin/STAR/releases/download/2.7.11b/STAR_2.7.11b.zip" && \
     unzip STAR_*.zip && \
     mv STAR_*/Linux_x86_64_static/* /usr/local/bin/ && \
@@ -99,11 +107,11 @@ RUN apt-get update && \
     cd .. && \
     rm -rf unimap-* && \
 
-    # install wfmash v0.24.2
+    # install wfmash
     wget -qO /usr/local/bin/wfmash "https://github.com/waveygang/wfmash/releases/download/v0.24.2/wfmash-v0.24.2-linux-x86_64" && \
     chmod a+x /usr/local/bin/wfmash && \
 
-    # install Winnowmap v2.03
+    # install Winnowmap
     wget -qO- "https://github.com/marbl/Winnowmap/archive/refs/tags/v2.03.tar.gz" | tar -zx && \
     cd Winnowmap-* && \
     make && \
