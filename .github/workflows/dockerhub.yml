@@ -5,6 +5,8 @@ on:
       - main # set to main branch
     tags:
       - "*.*" # set to version tag pattern
+    paths:
+      - Dockerfile
 env:
   DOCKER_AUTOBUILDS_CONTEXT_PATH: .
   DOCKER_AUTOBUILDS_DOCKERFILE_PATH: Dockerfile
