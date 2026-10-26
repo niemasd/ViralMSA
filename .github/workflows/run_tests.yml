@@ -47,7 +47,6 @@ jobs:
             niemasd/viralmsa:latest \
             sh -ec '
               aligners=$(python3 -c "from json import loads as jloads; from os import environ; print(\" \".join(jloads(environ[\"ALIGNERS_JSON\"])))")
-              failures=""
               for aligner in $aligners; do
                 echo "::group::Testing $aligner"
                 output="/tmp/viralmsa-${aligner}"
@@ -58,16 +57,14 @@ jobs:
                      -o "$output" \
                      -t 2; then
                   echo "PASS: $aligner (ViralMSA exited 0)"
+                  echo "::endgroup::"
                 else
-                  echo "FAIL: $aligner (ViralMSA exited non-zero)" >&2
-                  failures="$failures $aligner"
+                  status=$?
+                  echo "FAIL: $aligner (ViralMSA exited with code $status)" >&2
+                  echo "::error title=Aligner failed::$aligner exited with code $status"
+                  echo "::endgroup::"
+                  exit 1
                 fi
-                echo "::endgroup::"
               done
-              if [ -n "$failures" ]; then
-                echo "Failed aligners:$failures" >&2
-                exit 1
-              fi
-
               echo "All aligners completed successfully."
             '
