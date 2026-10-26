@@ -20,7 +20,7 @@ import subprocess
 import sys
 
 # useful constants
-VERSION = '1.1.50'
+VERSION = '1.1.51'
 RELEASES_URL = 'https://api.github.com/repos/niemasd/ViralMSA/tags'
 CIGAR_LETTERS = {'M','D','I','S','H','=','X'}
 DEFAULT_BUFSIZE = 1048576 # 1 MB #8192 # 8 KB
@@ -1070,11 +1070,11 @@ def main():
         # align viral genomes against referencea
         print_log("===== ALIGNMENT =====")
         if args.aligner in ALIGNERS_FAS:
-            out_aln_path = '%s/%s.aln.fas' % (args.output, args.sequences.split('/')[-1])
+            out_aln_path = '%s/reference_mapping.fas' % args.output
         elif args.aligner in ALIGNERS_PAF:
-            out_aln_path = '%s/%s.paf' % (args.output, args.sequences.split('/')[-1])
+            out_aln_path = '%s/reference_mapping.paf' % args.output
         else:
-            out_aln_path = '%s/%s.sam' % (args.output, args.sequences.split('/')[-1])
+            out_aln_path = '%s/reference_mapping.sam' % args.output
         ALIGNERS[args.aligner]['align'](args.sequences, out_aln_path, args.ref_genome_path, args.threads, bufsize=args.buffer_size)
     elif INPUT_TYPE == 'SAM':
         out_aln_path = args.sequences
@@ -1084,7 +1084,7 @@ def main():
     if args.stdout:
         out_msa_path = None
     else:
-        out_msa_path = '%s/%s.aln' % (args.output, args.sequences.split('/')[-1])
+        out_msa_path = '%s/multiple_sequence_alignment.aln' % args.output
     num_output_IDs = aln_to_fasta(out_aln_path, out_msa_path, args.ref_genome_path, omit_ref=args.omit_ref, bufsize=args.buffer_size)
     print_log("Multiple sequence alignment complete: %s" % out_msa_path)
     if num_output_IDs < num_input_IDs:
