@@ -1,7 +1,9 @@
 # Minimal Docker image for ViralMSA using Debian base
 FROM debian:stable-slim
 RUN apt-get update && \
-    apt-get install -y bzip2 g++ gcc libboost-date-time-dev libboost-filesystem-dev libboost-iostreams-dev libboost-program-options-dev libboost-system-dev libboost-thread-dev libbz2-dev libcurl4-openssl-dev liblzma-dev make python3 unzip wget zlib1g-dev && \
+    apt-get install -y bzip2 g++ gcc git libboost-date-time-dev libboost-filesystem-dev libboost-iostreams-dev libboost-program-options-dev libboost-system-dev libboost-thread-dev libbz2-dev libcurl4-openssl-dev liblzma-dev make python3 unzip wget zlib1g-dev && \
+    mkdir -p /usr/include/sys && \
+    ln -s /usr/include/linux/sysctl.h /usr/include/sys/sysctl.h && \
 
     # install ViralMSA v1.1.49
     wget -qO /usr/local/bin/ViralMSA.py "https://github.com/niemasd/ViralMSA/releases/download/1.1.49/ViralMSA.py" && \
@@ -68,5 +70,42 @@ RUN apt-get update && \
     # install NGMLR v0.2.7
     wget -qO- "https://github.com/philres/ngmlr/releases/download/v0.2.7/ngmlr-0.2.7-linux-x86_64.tar.gz" | tar -zx && \
     mv ngmlr-*/ngmlr /usr/local/bin/ && \
-    rm -rf ngmlr-*
-    # TODO continue here: https://github.com/niemasd/ViralMSA/blob/e11bb7118b60ecc290d1abc87dc3463953d1e7ee/ViralMSA.py#L825
+    rm -rf ngmlr-* && \
+
+    # install Rammap v1.2.0
+    wget -qO /usr/local/bin/rammap "https://github.com/jwanglab/rammap/releases/download/v1.2.0/rammap_x86_64-unknown-linux-gnu_v1.2.0" && \
+    chmod a+x /usr/local/bin/rammap && \
+
+    # install seq-align
+    git clone --recurse-submodules https://github.com/noporpoise/seq-align.git && \
+    cd seq-align && \
+    make && \
+    mv bin/* /usr/local/bin/ && \
+    cd .. && \
+    rm -rf seq-align && \
+
+    # install STAR v2.7.11b
+    wget -q "https://github.com/alexdobin/STAR/releases/download/2.7.11b/STAR_2.7.11b.zip" && \
+    unzip STAR_*.zip && \
+    mv STAR_*/Linux_x86_64_static/* /usr/local/bin/ && \
+    rm -rf STAR_* && \
+
+    # install unimap
+    wget -qO- "https://github.com/lh3/unimap/archive/refs/heads/master.tar.gz" | tar -zx && \
+    cd unimap-* && \
+    make && \
+    mv unimap /usr/local/bin/ && \
+    cd .. && \
+    rm -rf unimap-* && \
+
+    # install wfmash v0.24.2
+    wget -qO /usr/local/bin/wfmash "https://github.com/waveygang/wfmash/releases/download/v0.24.2/wfmash-v0.24.2-linux-x86_64" && \
+    chmod a+x /usr/local/bin/wfmash && \
+
+    # install Winnowmap v2.03
+    wget -qO- "https://github.com/marbl/Winnowmap/archive/refs/tags/v2.03.tar.gz" | tar -zx && \
+    cd Winnowmap-* && \
+    make && \
+    mv bin/* /usr/local/bin/ && \
+    cd .. && \
+    rm -rf Winnowmap-*
