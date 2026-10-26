@@ -32,8 +32,8 @@ RUN apt-get update && \
     cd .. && \
     rm -rf bwa-* && \
 
-    # install DRAGMAP v1.3.0
-    wget -qO- "https://github.com/Illumina/DRAGMAP/archive/refs/tags/1.3.0.tar.gz" | tar -zx && \
+    # install DRAGMAP v1.2.1
+    wget -qO- "https://github.com/Illumina/DRAGMAP/archive/refs/tags/1.2.1.tar.gz" | tar -zx && \
     cd DRAGMAP-* && \
     HAS_GTEST=0 CFLAGS="-include stdint.h -Wno-error=format-overflow -Wno-error=nonnull" CXXFLAGS="-include cstdint -Wno-error=nonnull" make install && \
     cd .. && \
