@@ -83,7 +83,7 @@ RUN apt-get update && \
     ./configure --without-curses && \
     make install && \
     cd .. && \
-    rm -rf samtools-*
+    rm -rf samtools-* && \
 
     # install seq-align
     git clone --recurse-submodules https://github.com/noporpoise/seq-align.git && \
