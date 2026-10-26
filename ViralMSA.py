@@ -24,6 +24,8 @@ VERSION = '1.2.1'
 RELEASES_URL = 'https://api.github.com/repos/niemasd/ViralMSA/tags'
 CIGAR_LETTERS = {'M', 'D', 'I', 'S', 'H', '=', 'X'}
 CIGAR_LETTERS_ALL = {'M', 'I', 'D', 'N', 'S', 'H', 'P', '=', 'X'}
+AUG_REF_PREFIX = 'AUG_REF '
+ORIG_REF_PREFIX = 'ORIG_REF '
 DEFAULT_BUFSIZE = 1048576 # 1 MB
 DEFAULT_ALIGNER = 'rammap'
 DEFAULT_THREADS = cpu_count()
@@ -278,7 +280,7 @@ def get_insertions_from_pairwise_fasta(aln_stream, ref_seq, bufsize=DEFAULT_BUFS
     return insertions
 
 # write augmented reference (for 2-pass "support insertions" strategy)
-def write_augmented_reference(ref_header, ref_seq, insertions, out_path, bufsize=DEFAULT_BUFSIZE):
+def write_augmented_reference(aug_ref_header, ref_seq, insertions, out_path, bufsize=DEFAULT_BUFSIZE):
     augmented_parts = list()
     for i in range(len(ref_seq) + 1):
         mwt = MWT(insertions[i])
@@ -288,7 +290,7 @@ def write_augmented_reference(ref_header, ref_seq, insertions, out_path, bufsize
             augmented_parts.append(ref_seq[i])
     augmented_seq = ''.join(augmented_parts)
     with open(out_path, 'w', buffering=bufsize) as out:
-        out.write('>%s\n%s\n' % (ref_header, augmented_seq))
+        out.write('>%s\n%s\n' % (aug_ref_header, augmented_seq))
     return augmented_seq
 
 # check bowtie2
@@ -1196,8 +1198,7 @@ def run_insert_strategy_first_pass(args, input_type, ref_header, ref_seq):
         if input_aln_file is not None and not input_aln_file.closed:
             input_aln_file.close()
     augmented_reference_path = '%s/reference_with_insertions.fas' % args.output
-    ref_header = 'AUG_REF ' + ref_header
-    augmented_seq = write_augmented_reference(ref_header, ref_seq, insertions, augmented_reference_path, bufsize=args.buffer_size)
+    augmented_seq = write_augmented_reference(AUG_REF_PREFIX + ref_header, ref_seq, insertions, augmented_reference_path, bufsize=args.buffer_size)
     args.ref_genome_path = augmented_reference_path
     if input_type == 'SAM':
         args.sequences = extracted_sequences_path; input_type = 'FASTA'
@@ -1253,6 +1254,13 @@ def main():
         print_log("===== INSERTION DISCOVERY =====")
         ref_header, ref_seq = list(iter_fasta(args.ref_genome_path))[0]
         INPUT_TYPE = run_insert_strategy_first_pass(args, INPUT_TYPE, ref_header, ref_seq)
+        if not args.omit_ref:
+            second_pass_sequences_path = '%s/sequences_with_original_reference.fas' % args.output
+            with open(second_pass_sequences_path, 'w', buffering=args.buffer_size) as out:
+                out.write('>%s\n%s\n' % (ORIG_REF_PREFIX + ref_header, ref_seq))
+                for header, seq in iter_fasta(args.sequences, bufsize=args.buffer_size):
+                    out.write('>%s\n%s\n' % (header, seq))
+            args.sequences = second_pass_sequences_path
 
     # prepare for alignment
     mapper_process = None
