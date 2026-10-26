@@ -1,7 +1,7 @@
 # Minimal Docker image for ViralMSA using Debian base
 FROM debian:stable-slim
 RUN apt-get update && \
-    apt-get install -y bzip2 g++ gcc git libboost-date-time-dev libboost-filesystem-dev libboost-iostreams-dev libboost-program-options-dev libboost-system-dev libboost-thread-dev libbz2-dev libcurl4-openssl-dev liblzma-dev make python3 unzip wget zlib1g-dev && \
+    apt-get install -y bzip2 g++ gcc git libboost-date-time-dev libboost-filesystem-dev libboost-iostreams-dev libboost-program-options-dev libboost-system-dev libboost-thread-dev libbz2-dev libcurl4-openssl-dev liblzma-dev make python3 python-is-python3 unzip wget zlib1g-dev && \
     mkdir -p /usr/include/sys && \
     ln -s /usr/include/linux/sysctl.h /usr/include/sys/sysctl.h && \
 
