@@ -6,7 +6,7 @@ RUN apt-get update && \
     ln -s /usr/include/linux/sysctl.h /usr/include/sys/sysctl.h && \
 
     # install ViralMSA
-    wget -qO /usr/local/bin/ViralMSA.py "https://github.com/niemasd/ViralMSA/releases/download/1.1.49/ViralMSA.py" && \
+    wget -qO /usr/local/bin/ViralMSA.py "https://github.com/niemasd/ViralMSA/releases/latest/download/ViralMSA.py" && \
     chmod a+x /usr/local/bin/ViralMSA.py && \
 
     # install htslib
