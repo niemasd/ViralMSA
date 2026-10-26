@@ -1,0 +1,90 @@
+
+name: Run ViralMSA Tests
+on:
+  push:
+permissions:
+  contents: read
+jobs:
+  smoke-test:
+    name: Test all aligners
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.x"
+      - name: Find ALIGNERS keys
+        id: aligners
+        run: |
+          python - <<'PY' > "$RUNNER_TEMP/aligners.json"
+          from ast import walk
+          from json import dumps as jdumps
+          from pathlib import Path
+          tree = ast.parse(Path("ViralMSA.py").read_text())
+          aligners = list()
+          for node in walk(tree):
+              if (isinstance(node, ast.Assign) and any(isinstance(target, ast.Name) and target.id == "ALIGNERS" for target in node.targets) and isinstance(node.value, ast.Dict)):
+                  aligners = [
+                      key.value
+                      for key in node.value.keys
+                      if isinstance(key, ast.Constant)
+                      and isinstance(key.value, str)
+                  ]
+                  break
+          if len(aligners) == 0:
+              raise SystemExit("No ALIGNERS keys found in ViralMSA.py")
+          print(jdumps(aligners, separators=(",", ":")))
+          PY
+          aligners_json="$(cat "$RUNNER_TEMP/aligners.json")"
+          printf 'aligners=%s\n' "$aligners_json" >> "$GITHUB_OUTPUT"
+      - name: Pull Docker image
+        run: docker pull niemasd/viralmsa:latest
+      - name: Run all aligners against example HIV dataset
+        env:
+          ALIGNERS_JSON: ${{ steps.aligners.outputs.aligners }}
+        run: |
+          docker run --rm \
+            --env ALIGNERS_JSON \
+            --volume "$GITHUB_WORKSPACE:/workspace" \
+            --workdir /workspace/example \
+            niemasd/viralmsa:latest \
+            sh -ec '
+              aligners=$(python3 -c "from json import loads as jloads; from os import environ; print(\" \".join(jloads(environ[\"ALIGNERS_JSON\"])))")
+              failures=""
+              for aligner in $aligners; do
+                echo "::group::Testing $aligner"
+                output="/tmp/viralmsa-${aligner}"
+                if python3 /workspace/ViralMSA.py \
+                     -a "$aligner" \
+                     -s example_hiv.fas \
+                     -r reference_hiv.fas \
+                     -o "$output" \
+                     -t 2; then
+                  msa="$output/example_hiv.fas.aln"
+                  if [ -s "$msa" ]; then
+                    records=$(grep -c "^>" "$msa" || true)
+                    if [ "$records" -ge 2 ]; then
+                      echo "PASS: $aligner ($records FASTA records)"
+                    else
+                      echo "FAIL: $aligner produced only $records FASTA records" >&2
+                      failures="$failures $aligner"
+                    fi
+                  else
+                    echo "FAIL: $aligner did not produce a non-empty alignment: $msa" >&2
+                    failures="$failures $aligner"
+                  fi
+                else
+                  echo "FAIL: ViralMSA exited non-zero for $aligner" >&2
+                  failures="$failures $aligner"
+                fi
+                echo "::endgroup::"
+              done
+              if [ -n "$failures" ]; then
+                echo "Failed aligners:$failures" >&2
+                exit 1
+              fi
+              echo "All aligners passed."
+            '
