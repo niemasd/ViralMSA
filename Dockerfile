@@ -7,6 +7,7 @@ RUN apt-get update && \
 
     # install ViralMSA v1.1.49
     wget -qO /usr/local/bin/ViralMSA.py "https://github.com/niemasd/ViralMSA/releases/download/1.1.49/ViralMSA.py" && \
+    chmod a+x /usr/local/bin/ViralMSA.py && \
 
     # install htslib v1.24
     wget -qO- "https://github.com/samtools/htslib/releases/download/1.24/htslib-1.24.tar.bz2" | tar -xj && \
