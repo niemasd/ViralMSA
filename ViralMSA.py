@@ -20,10 +20,11 @@ import subprocess
 import sys
 
 # useful constants
-VERSION = '1.2.0'
+VERSION = '1.2.1'
 RELEASES_URL = 'https://api.github.com/repos/niemasd/ViralMSA/tags'
-CIGAR_LETTERS = {'M','D','I','S','H','=','X'}
-DEFAULT_BUFSIZE = 1048576 # 1 MB #8192 # 8 KB
+CIGAR_LETTERS = {'M', 'D', 'I', 'S', 'H', '=', 'X'}
+CIGAR_LETTERS_ALL = {'M', 'I', 'D', 'N', 'S', 'H', 'P', '=', 'X'}
+DEFAULT_BUFSIZE = 1048576 # 1 MB
 DEFAULT_ALIGNER = 'rammap'
 DEFAULT_THREADS = cpu_count()
 global QUIET; QUIET = False
@@ -38,11 +39,6 @@ ALIGNERS_FAS = {
     'seq-align',
 }
 
-# read mappers that output PAF
-ALIGNERS_PAF = {
-    'minigraph',
-}
-
 # citations
 CITATION = {
     'bowtie2':   'Bowtie2: Langmead B, Salzberg SL (2012). "Fast gapped-read alignment with Bowtie 2." Nat Methods. 9(4):357-359. doi:10.1038/nmeth.1923',
@@ -50,7 +46,6 @@ CITATION = {
     'dragmap':   'DRAGMAP: https://github.com/Illumina/DRAGMAP',
     'hisat2':    'HISAT2: Kim D, Paggi JM, Park C, Bennett C, Salzberg SL (2019). "Graph-based genome alignment and genotyping with HISAT2 and HISAT-genotype." Nat Biotechnol. 37:907-915. doi:10.1038/s41587-019-0201-4',
     'lra':       'LRA: Ren J, Chaisson MJP (2021). "lra: A long read aligner for sequences and contigs." PLoS Comput Biol. 17(6):e1009078. doi:10.1371/journal.pcbi.1009078',
-    'minigraph': 'Minigraph: https://github.com/lh3/minigraph',
     'minimap2':  'Minimap2: Li H (2018). "Minimap2: pairwise alignment for nucleotide sequences." Bioinformatics. 34(18):3094-3100. doi:10.1093/bioinformatics/bty191',
     'mm2-fast':  'mm2-fast: Kalikar S, Jain C, Vasimuddin M, Misra S (2022). "Accelerating minimap2 for long-read sequencing applications on modern CPUs." Nat Comput Sci. 2:78-83. doi:10.1038/s43588-022-00201-8',
     'ngmlr':     'NGMLR: Sedlazeck FJ, Rescheneder P, Smolka M, Fang H, Nattestad M, von Haeseler A, Schatz MC (2018). "Accurate detection of complex structural variations using single-molecule sequencing." Nat Methods. 15:461-468. doi:10.1038/s41592-018-0001-7',
@@ -62,6 +57,32 @@ CITATION = {
     'wfmash':    'wfmash: Jain C, Koren S, Dilthey A, Phillippy AM, Aluru S (2018). "A Fast Adaptive Algorithm for Computing Whole-Genome Homology Maps". Bioinformatics. 34(17):i748-i756. doi:10.1093/bioinformatics/bty597. Marco-Sola S, Moure JC, Moreto M, Espinosa A (2021). "Fast gap-affine pairwise alignment using the wavefront algorithm". Bioinformatics. 37(4):456-463. doi:10.1093/bioinformatics/btaa777',
     'winnowmap': 'Winnowmap2: Jain C, Rhie A, Hansen NF, Koren S, Phillippy AM (2022). "Long-read mapping to repetitive reference sequences using Winnowmap2". Nature Methods. 19:705-710. doi:10.1038/s41592-022-01457-8',
 }
+
+# helper Multiway Trie class
+class MWT:
+    def __init__(self, initial_words=list()):
+        self.root = dict(); self.word_ids = set()
+        for word in initial_words:
+            self.add(word)
+    def __len__(self):
+        return len(self.word_ids)
+    def __iter__(self):
+        yield from self.iterate_words(internal=True)
+    def iterate_words(self, internal=True):
+        to_visit = [(self.root, '')]
+        while len(to_visit) != 0:
+            curr, s = to_visit.pop()
+            if (id(curr) in self.word_ids) and (internal or (len(curr) == 0)):
+                yield s
+            for c, child in sorted(curr.items(), reverse=True):
+                to_visit.append((child, s+c))
+    def add(self, word):
+        curr = self.root
+        for c in word:
+            if c not in curr:
+                curr[c] = dict()
+            curr = curr[c]
+        self.word_ids.add(id(curr))
 
 # reference genomes for common viruses
 REFS_FAIL = False; REFS_JSON = None; REFS = None; REFS_JSON_URL = 'https://github.com/Niema-Lab/Reference-Genomes/releases/latest/download/REFS.json'
@@ -124,6 +145,20 @@ def parse_cigar(s):
         out.append((let, int(num[::-1])))
     return out[::-1]
 
+# parse CIGAR string for insertions
+def parse_cigar_for_insertions(cigar):
+    edits = list(); op_len = ''
+    for char in cigar:
+        if char.isdigit():
+            op_len += char
+        elif char in CIGAR_LETTERS_ALL and op_len:
+            edits.append((char, int(op_len))); op_len = ''
+        else:
+            raise ValueError("Invalid CIGAR string: %s" % cigar)
+    if op_len:
+        raise ValueError("Invalid CIGAR string: %s" % cigar)
+    return edits
+
 # iterate over a FASTA file as (header, seq) tuples
 def iter_fasta(fa_path, bufsize=DEFAULT_BUFSIZE):
     if hasattr(fa_path, 'read') or not isinstance(fa_path, str):
@@ -160,6 +195,101 @@ def fasta2fastq(fa_path, fq_path, qual='~', bufsize=DEFAULT_BUFSIZE):
             fq_file.write(curr.encode())
         else:
             fq_file.write(curr)
+
+# get list of insertions from SAM: insertions[i] = set of insertion strings before index i of reference sequence
+def get_insertions_from_sam(aln_stream, ref_seq, extracted_sequences_path=None, bufsize=DEFAULT_BUFSIZE):
+    insertions = [set() for _ in range(len(ref_seq) + 1)]
+    extracted_sequences = open(extracted_sequences_path, 'w', buffering=bufsize) if extracted_sequences_path is not None else None
+    try:
+        for line in aln_stream:
+            if not line.strip() or line.startswith('@'):
+                continue
+            parts = [s.strip() for s in line.split('\t')]
+            if len(parts) < 11:
+                raise ValueError("Invalid SAM record: expected at least 11 tab-delimited fields")
+            flag = int(parts[1])
+            if flag not in (0, 16):
+                continue
+            query_id = parts[0]
+            seq = parts[9]
+            cigar = parts[5]
+            if seq == '*':
+                continue
+            if extracted_sequences is not None:
+                extracted_sequences.write('>%s\n%s\n' % (query_id, seq))
+            if cigar == '*' or int(parts[3]) < 1:
+                continue
+            ref_pos = int(parts[3]) - 1
+            query_pos = 0
+            for op, op_len in parse_cigar_for_insertions(cigar):
+                if op in ('M', '=', 'X'):
+                    ref_pos += op_len; query_pos += op_len
+                elif op == 'I':
+                    if ref_pos < 0 or ref_pos > len(ref_seq):
+                        raise ValueError("SAM insertion for %s is outside the reference" % query_id)
+                    inserted = seq[query_pos:query_pos + op_len]
+                    if len(inserted) != op_len:
+                        raise ValueError("SAM CIGAR/sequence length mismatch for %s" % query_id)
+                    insertions[ref_pos].add(inserted)
+                    query_pos += op_len
+                elif op in ('D', 'N'):
+                    ref_pos += op_len
+                elif op == 'S':
+                    query_pos += op_len # ignore soft clips (might consider treating them as head/tail insertions in the future)
+                elif op == 'H':
+                    pass
+                elif op == 'P':
+                    pass
+                else:
+                    raise ValueError("Unsupported CIGAR operation: %s" % op)
+    finally:
+        if extracted_sequences is not None:
+            extracted_sequences.close()
+    return insertions
+
+# get list of insertions from SAM: insertions[i] = set of insertion strings before index i of reference sequence
+def get_insertions_from_pairwise_fasta(aln_stream, ref_seq, bufsize=DEFAULT_BUFSIZE):
+    insertions = [set() for _ in range(len(ref_seq) + 1)]
+    records = iter(iter_fasta(aln_stream, bufsize=bufsize))
+    while True:
+        try:
+            _, ref_aln = next(records)
+        except StopIteration:
+            break
+        try:
+            _, query_aln = next(records)
+        except StopIteration as exc:
+            raise RuntimeError("Incomplete pairwise FASTA alignment from seq-align") from exc
+        if len(ref_aln) != len(query_aln):
+            raise RuntimeError("Pairwise FASTA alignment rows have different lengths")
+        ref_pos = 0; inserted = list()
+        for ref_base, query_base in zip(ref_aln, query_aln):
+            if ref_base == '-':
+                if query_base != '-':
+                    inserted.append(query_base)
+            else:
+                if inserted:
+                    insertions[ref_pos].add(''.join(inserted)); inserted = list()
+                ref_pos += 1
+        if inserted:
+            insertions[ref_pos].add(''.join(inserted))
+        if ref_pos != len(ref_seq):
+            raise RuntimeError("Pairwise FASTA alignment does not span the full reference")
+    return insertions
+
+# write augmented reference (for 2-pass "support insertions" strategy)
+def write_augmented_reference(ref_header, ref_seq, insertions, out_path, bufsize=DEFAULT_BUFSIZE):
+    augmented_parts = list()
+    for i in range(len(ref_seq) + 1):
+        mwt = MWT(insertions[i])
+        if len(mwt) != 0:
+            augmented_parts.append(''.join(mwt.iterate_words(internal=False)))
+        if i < len(ref_seq):
+            augmented_parts.append(ref_seq[i])
+    augmented_seq = ''.join(augmented_parts)
+    with open(out_path, 'w', buffering=bufsize) as out:
+        out.write('>%s\n%s\n' % (ref_header, augmented_seq))
+    return augmented_seq
 
 # check bowtie2
 def check_bowtie2():
@@ -220,15 +350,6 @@ def check_lra():
     if o is None or 'lra (long sequence alignment)' not in o.decode():
         print(o.decode())
         print("ERROR: LRA is not runnable in your PATH", file=sys.stderr); exit(1)
-
-# check minigraph
-def check_minigraph():
-    try:
-        o = subprocess.run(['minigraph'], stdout=subprocess.PIPE, stderr=subprocess.PIPE).stderr
-    except:
-        o = None
-    if o is None or 'Usage: minigraph' not in o.decode():
-        print("ERROR: Minigraph is not runnable in your PATH", file=sys.stderr); exit(1)
 
 # check minimap2
 def check_minimap2():
@@ -453,10 +574,6 @@ def build_index_lra(ref_genome_path, threads, verbose=True):
         else:
             print_log("LRA index built: %s and %s" % (gli_index_path, mms_index_path))
 
-# build minigraph index
-def build_index_minigraph(ref_genome_path, threads, verbose=True):
-    pass # Minigraph doesn't seem to do anything with a ref genome with 1 sequence
-
 # build minimap2 index
 def build_index_minimap2(ref_genome_path, threads, verbose=True):
     index_path = '%s.minimap2.mmi' % ref_genome_path
@@ -653,11 +770,6 @@ def align_lra(seqs_path, out_aln_path, ref_genome_path, threads, bufsize=DEFAULT
     command = ['lra', 'align', '-t', str(threads), '-CONTIG', '-p', 's', lra_ref_genome_path, seqs_path]
     return start_alignment(command, out_aln_path, 'LRA', bufsize=bufsize, verbose=verbose)
 
-# align genomes using minigraph
-def align_minigraph(seqs_path, out_paf_path, ref_genome_path, threads, verbose=True):
-    command = ['minigraph', '-c', '-t', str(threads), '--secondary=no', '-l', '0', '-d', '0', '-L', '0', ref_genome_path, seqs_path]
-    return start_alignment(command, out_paf_path, 'Minigraph', verbose=verbose)
-
 # align genomes using minimap2
 def align_minimap2(seqs_path, out_aln_path, ref_genome_path, threads, bufsize=DEFAULT_BUFSIZE, verbose=True):
     index_path = '%s.minimap2.mmi' % ref_genome_path
@@ -682,7 +794,7 @@ def align_rammap(seqs_path, out_aln_path, ref_genome_path, threads, bufsize=DEFA
     return start_alignment(command, out_aln_path, 'rammap', bufsize=bufsize, verbose=verbose)
 
 # helper function to perform individual pairwise alignments
-def run_needleman_wunsch(x): # x is (command, ref_seq, query_header, query_seq) tuple
+def run_needleman_wunsch(x): # x is (command, ref_seq, query_header, query_seq, no_insertions) tuple
     ref_aln, query_aln = subprocess.check_output(x[0] + [x[1], x[3]]).decode().strip().splitlines()
     start_ind_in = 0; end_ind_ex = len(ref_aln)
     for c in ref_aln:
@@ -695,12 +807,16 @@ def run_needleman_wunsch(x): # x is (command, ref_seq, query_header, query_seq) 
             end_ind_ex -= 1
         else:
             break
-    return (x[2], query_aln[start_ind_in:end_ind_ex])
+    if x[4]:
+        return (x[2], query_aln[start_ind_in:end_ind_ex])
+    return (x[2], ref_aln[start_ind_in:end_ind_ex], query_aln[start_ind_in:end_ind_ex])
 
 # align genomes using seq-align
-def align_seqalign(seqs_path, out_aln_path, ref_genome_path, threads, bufsize=DEFAULT_BUFSIZE, verbose=True):
+def align_seqalign(seqs_path, out_aln_path, ref_genome_path, threads, no_insertions=True, bufsize=DEFAULT_BUFSIZE, verbose=True):
     # set things up
-    command = ['needleman_wunsch', '--printfasta', '--nogapsin1']
+    command = ['needleman_wunsch', '--printfasta']
+    if no_insertions:
+        command.append('--nogapsin1')
     if verbose:
         print_log("Aligning using seq-align: %s" % ' '.join(command))
     log = open('%s.log' % out_aln_path, 'w', buffering=bufsize)
@@ -710,9 +826,14 @@ def align_seqalign(seqs_path, out_aln_path, ref_genome_path, threads, bufsize=DE
     pool = Pool(processes=threads)
     complete = False
     try:
-        inputs = ((command, ref_seq, curr_header, curr_seq) for curr_header, curr_seq in iter_fasta(seqs_path))
+        inputs = ((command, ref_seq, curr_header, curr_seq, no_insertions) for curr_header, curr_seq in iter_fasta(seqs_path))
         for curr in pool.imap_unordered(run_needleman_wunsch, inputs, chunksize=1):
-            log.write("Finished %s\n" % curr[0]); yield '>%s\n' % curr[0]; yield '%s\n' % curr[1]
+            log.write("Finished %s\n" % curr[0])
+            if no_insertions:
+                yield '>%s\n' % curr[0]; yield '%s\n' % curr[1]
+            else:
+                yield '>%s_reference_alignment\n' % curr[0]; yield '%s\n' % curr[1]
+                yield '>%s\n' % curr[0]; yield '%s\n' % curr[2]
         complete = True
     finally:
         if complete:
@@ -784,13 +905,6 @@ ALIGNERS = {
         'align':       align_lra,
     },
 
-    # Minigraph still doesn't work (only outputs PAF without sequences)
-    #'minigraph': {
-    #    'check':       check_minigraph,
-    #    'build_index': build_index_minigraph,
-    #    'align':       align_minigraph,
-    #},
-
     'minimap2': {
         'check':       check_minimap2,
         'build_index': build_index_minimap2,
@@ -848,6 +962,10 @@ ALIGNERS = {
 
 # parse user args
 def parse_args():
+    # check if user just wants to print version
+    if '-v' in sys.argv or '--version' in sys.argv:
+        print(VERSION); exit(0)
+
     # check if user wants to update ViralMSA
     if '-u' in sys.argv or '--update' in sys.argv:
         update_viralmsa()
@@ -871,13 +989,15 @@ def parse_args():
     parser.add_argument('-o', '--output', required=True, type=str, help="Output Directory")
     parser.add_argument('-e', '--email', required=False, type=str, default=None, help="Email Address (for Entrez)")
     parser.add_argument('-a', '--aligner', required=False, type=str, default=DEFAULT_ALIGNER, help="Aligner (options: %s)" % ', '.join(sorted(ALIGNERS.keys())))
+    parser.add_argument('-is', '--insert_strategy', action='store_true', help="Attempt to include insertions relative to the reference in the multiple sequence alignment")
     parser.add_argument('-t', '--threads', required=False, type=int, default=DEFAULT_THREADS, help="Number of Threads")
+    parser.add_argument('-km', '--keep_mapping', action='store_true', help="Keep the mapper output in the output directory")
     parser.add_argument('-b', '--buffer_size', required=False, type=int, default=DEFAULT_BUFSIZE, help="File Stream Buffer Size (bytes)")
     parser.add_argument('-l', '--list_references', action='store_true', help="List all reference sequences")
     parser.add_argument('-or', '--omit_ref', action='store_true', help="Omit reference sequence from output alignment")
-    parser.add_argument('-km', '--keep_mapping', action='store_true', help="Keep the mapper output in the output directory")
     parser.add_argument('-q', '--quiet', action='store_true', help="Suppress log output")
     parser.add_argument('-vd', '--viralmsa_dir', required=False, type=str, default=abspath(expanduser("~/.viralmsa")), help="ViralMSA Cache Directory")
+    parser.add_argument('-v', '--version', action='store_true', help="Print ViralMSA version")
     parser.add_argument('-u', '--update', action='store_true', help="Update ViralMSA (current version: %s)" % VERSION)
     args = parser.parse_args()
 
@@ -949,7 +1069,7 @@ def download_ref_genome(reference, ref_path, ref_genome_path, email, bufsize=DEF
         print("ERROR: Reference genome must only have a single sequence", file=sys.stderr); exit(1)
     f = open(ref_genome_path, 'w', buffering=bufsize); f.write(seq.strip()); f.write('\n'); f.close()
 
-# convert alignment (SAM/FASTA/PAF) to FASTA
+# convert alignment (SAM/FASTA) to FASTA
 def aln_to_fasta(aln_stream, aln_type, out_msa_path, ref_genome_path, omit_ref=False, bufsize=DEFAULT_BUFSIZE):
     msa = open(out_msa_path, 'w', buffering=bufsize)
     ref_header, ref_seq = list(iter_fasta(ref_genome_path))[0]; ref_seq_len = len(ref_seq)
@@ -990,12 +1110,100 @@ def aln_to_fasta(aln_stream, aln_type, out_msa_path, ref_genome_path, omit_ref=F
     elif aln_type == 'FASTA':
         for query in iter_fasta(aln_stream, bufsize=bufsize):
             msa.write('>%s\n%s\n' % query); num_output_IDs += 1
-    elif aln_type == 'PAF':
-        raise RuntimeError("PAF alignments are not yet supported")
     else:
         raise ValueError("Unknown alignment type: %s" % aln_type)
     msa.close()
     return num_output_IDs
+
+# run first pass of 2-pass "support insertions" strategy
+def run_insert_strategy_first_pass(args, input_type, ref_header, ref_seq):
+    # set things up
+    mapper_process = None; mapper_log = None
+    samtools_process = None; samtools_log = None
+    mapping_sink = None; aln_stream = None; input_aln_file = None
+    out_aln_path = None; aln_type = None
+    extracted_sequences_path = '%s/extracted_sequences.fas' % args.output if input_type == 'SAM' else None
+
+    # run first pass
+    try:
+        if input_type == 'SAM':
+            aln_type = 'SAM'; out_aln_path = '%s/reference_mapping_initial.bam' % args.output
+            input_aln_file = open(args.sequences, 'r', buffering=args.buffer_size); aln_stream = input_aln_file
+        else:
+            ALIGNERS[args.aligner]['build_index'](args.ref_genome_path, args.threads)
+            if args.aligner in ALIGNERS_FAS:
+                aln_type = 'FASTA'; out_aln_path = '%s/reference_mapping_initial.fas' % args.output
+            else:
+                aln_type = 'SAM'; out_aln_path = '%s/reference_mapping_initial.bam' % args.output
+            if args.aligner == 'seq-align':
+                mapper_result = ALIGNERS[args.aligner]['align'](args.sequences, out_aln_path, args.ref_genome_path, args.threads, bufsize=args.buffer_size, no_insertions=False); aln_stream = mapper_result
+            else:
+                mapper_process, mapper_log = ALIGNERS[args.aligner]['align'](args.sequences, out_aln_path, args.ref_genome_path, args.threads, bufsize=args.buffer_size); aln_stream = mapper_process.stdout
+        if args.keep_mapping:
+            if aln_type == 'SAM':
+                samtools_log_path = '%s/samtools_initial.log' % args.output
+                samtools_log = open(samtools_log_path, 'w', buffering=args.buffer_size)
+                try:
+                    samtools_process = subprocess.Popen(['samtools', 'view', '-b', '-o', out_aln_path, '-'], stdin=subprocess.PIPE, stderr=samtools_log, universal_newlines=True, bufsize=args.buffer_size)
+                except FileNotFoundError as exc:
+                    samtools_log.close(); samtools_log = None
+                    raise RuntimeError("--keep_mapping with SAM output requires samtools in PATH") from exc
+                mapping_sink = samtools_process.stdin
+            else:
+                mapping_sink = open(out_aln_path, 'w', buffering=args.buffer_size)
+            aln_stream = tee_stream(aln_stream, mapping_sink)
+        if aln_type == 'SAM':
+            insertions = get_insertions_from_sam(aln_stream, ref_seq, extracted_sequences_path=extracted_sequences_path, bufsize=args.buffer_size)
+        else:
+            insertions = get_insertions_from_pairwise_fasta(aln_stream, ref_seq, bufsize=args.buffer_size)
+        if mapper_process is not None:
+            finish_alignment(mapper_process, mapper_log, args.aligner, out_aln_path, verbose=not args.quiet)
+            mapper_process = None; mapper_log = None
+        if samtools_process is not None:
+            samtools_returncode = samtools_process.wait(); samtools_process = None
+            if samtools_log is not None and not samtools_log.closed:
+                samtools_log.close()
+            samtools_log = None
+            if samtools_returncode != 0:
+                raise subprocess.CalledProcessError(samtools_returncode, ['samtools', 'view', '-b', '-o', out_aln_path, '-'])
+
+    # clean things up
+    finally:
+        if hasattr(aln_stream, 'close'):
+            aln_stream.close()
+        if mapping_sink is not None and not mapping_sink.closed:
+            mapping_sink.close()
+        if mapper_process is not None:
+            try:
+                if mapper_process.poll() is None:
+                    mapper_process.terminate()
+            except ProcessLookupError:
+                pass
+            mapper_process.wait()
+            if mapper_process.stdout is not None and not mapper_process.stdout.closed:
+                mapper_process.stdout.close()
+            if mapper_log is not None and not mapper_log.closed:
+                mapper_log.close()
+        if samtools_process is not None:
+            try:
+                if samtools_process.poll() is None:
+                    samtools_process.terminate()
+            except ProcessLookupError:
+                pass
+            samtools_process.wait()
+        if samtools_log is not None and not samtools_log.closed:
+            samtools_log.close()
+        if input_aln_file is not None and not input_aln_file.closed:
+            input_aln_file.close()
+    augmented_reference_path = '%s/reference_with_insertions.fas' % args.output
+    ref_header = 'AUG_REF ' + ref_header
+    augmented_seq = write_augmented_reference(ref_header, ref_seq, insertions, augmented_reference_path, bufsize=args.buffer_size)
+    args.ref_genome_path = augmented_reference_path
+    if input_type == 'SAM':
+        args.sequences = extracted_sequences_path; input_type = 'FASTA'
+    print_log("Insertion discovery complete: %d reference bases -> %d augmented reference bases" % (len(ref_seq), len(augmented_seq)))
+    print_log("Augmented reference: %s" % augmented_reference_path)
+    return input_type
 
 # main content
 def main():
@@ -1009,6 +1217,8 @@ def main():
     if args.sequences.lower().endswith('.sam'):
         INPUT_TYPE = 'SAM'
         num_input_IDs = count_IDs_sam(args.sequences, bufsize=args.buffer_size)
+        if args.insert_strategy:
+            ALIGNERS[args.aligner]['check']() # 2-pass strategy remaps extracted SAM sequences to augmented reference
     else: # assume FASTA input if not SAM
         INPUT_TYPE = 'FASTA'
         ALIGNERS[args.aligner]['check']()
@@ -1023,7 +1233,7 @@ def main():
     print_log("Output Directory: %s" % args.output)
     if args.email is not None:
         print_log("Email Address: %s" % args.email)
-    if INPUT_TYPE == 'FASTA':
+    if INPUT_TYPE == 'FASTA' or args.insert_strategy:
         print_log("Aligner: %s" % args.aligner)
     print_log("ViralMSA Cache Directory: %s" % args.viralmsa_dir)
     print_log()
@@ -1036,6 +1246,13 @@ def main():
         print_log("Downloading reference genome from NCBI...")
         download_ref_genome(args.reference, args.ref_path, args.ref_genome_path, args.email, bufsize=args.buffer_size)
         print_log("Reference genome downloaded: %s" % args.ref_genome_path)
+
+    # run 2-pass insertion strategy (if applicable)
+    if args.insert_strategy:
+        print_log()
+        print_log("===== INSERTION DISCOVERY =====")
+        ref_header, ref_seq = list(iter_fasta(args.ref_genome_path))[0]
+        INPUT_TYPE = run_insert_strategy_first_pass(args, INPUT_TYPE, ref_header, ref_seq)
 
     # prepare for alignment
     mapper_process = None
@@ -1056,8 +1273,6 @@ def main():
             print_log("===== ALIGNMENT =====")
             if args.aligner in ALIGNERS_FAS:
                 aln_type = 'FASTA'; out_aln_path = '%s/reference_mapping.fas' % args.output
-            elif args.aligner in ALIGNERS_PAF:
-                aln_type = 'PAF'; out_aln_path = '%s/reference_mapping.paf' % args.output
             else:
                 aln_type = 'SAM'; out_aln_path = '%s/reference_mapping.bam' % args.output
             mapper_result = ALIGNERS[args.aligner]['align'](args.sequences, out_aln_path, args.ref_genome_path, args.threads, bufsize=args.buffer_size)

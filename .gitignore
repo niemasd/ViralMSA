@@ -9,6 +9,7 @@
 *.fasta.gz
 *.sam
 *.sam.gz
+out*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
