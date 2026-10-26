@@ -38,36 +38,23 @@ ViralMSA also requires at least one of the following tools to perform the alignm
 We also provide a Docker image with all dependencies installed: [niemasd/viralmsa](https://hub.docker.com/r/niemasd/viralmsa)
 
 ## Usage
-ViralMSA can be used as follows:
+ViralMSA can be used as follows (run with `-h/--help` for full usage information):
 
-```
-usage: ViralMSA.py [-h] -s SEQUENCES -r REFERENCE -e EMAIL -o OUTPUT [-a ALIGNER] [-t THREADS] [-l] [--omit_ref] [--viralmsa_dir VIRALMSA_DIR]
-
-  -h, --help                                  show this help message and exit
-  -s SEQUENCES, --sequences SEQUENCES         Input Sequences (FASTA format)
-  -r REFERENCE, --reference REFERENCE         Reference
-  -o OUTPUT, --output OUTPUT                  Output Directory
-  -e EMAIL, --email EMAIL                     Email Address (for Entrez)
-  -a ALIGNER, --aligner ALIGNER               Aligner (default: rammap)
-  -t THREADS, --threads THREADS               Number of Threads (default: max)
-  -b BUFFER_SIZE, --buffer_size BUFFER_SIZE   File Stream Buffer Size (bytes) (default: 1048576)
-  -l, --list_references                       List all reference sequences (default: False)
-  --omit_ref                                  Omit reference sequence from output alignment (default: False)
-  --viralmsa_dir VIRALMSA_DIR                 ViralMSA Cache Directory (default: ~/.viralmsa)
-  -u, --update                                Update ViralMSA (default: False)
+```bash
+ViralMSA.py -s <sequences.fasta> -r <reference> -o <output_folder>
 ```
 
-## Reference Genome Selection
+### Reference Genome Selection
 ViralMSA provides multiple options for selecting a reference genome against which reference-guided multiple sequence alignment will be performed.
 
-### GenBank Accession Number
+#### GenBank Accession Number
 For the reference genome, you can provide a GenBank accession number, such as the following:
 
 ```
 ViralMSA.py -e email@address.com -s sequences.fas -o output -r NC_045512
 ```
 
-### Preselected Reference Genomes
+#### Preselected Reference Genomes
 For specific viruses of interest, you can simply use their name, and we have provided what we believe would be a good choice of reference genome, such as the following:
 
 ```
@@ -80,7 +67,7 @@ https://github.com/Niema-Lab/Reference-Genomes
 
 If you would like to contribute a new or updated viral reference genome to our collection, please feel free to submit a [GitHub Issue](https://github.com/Niema-Lab/Reference-Genomes/issues/new) or a [Pull Request](https://github.com/Niema-Lab/Reference-Genomes/pulls) with all relevant information.
 
-### Local File
+#### Local File
 If you have a local reference genome you would like to use, you can provide the path to a FASTA file with a single sequence, such as the following:
 
 ```
