@@ -20,12 +20,12 @@ jobs:
         id: aligners
         run: |
           python - <<'PY' > "$RUNNER_TEMP/aligners.json"
-          from ast import walk
           from json import dumps as jdumps
           from pathlib import Path
+          import ast
           tree = ast.parse(Path("ViralMSA.py").read_text())
           aligners = list()
-          for node in walk(tree):
+          for node in ast.walk(tree):
               if (isinstance(node, ast.Assign) and any(isinstance(target, ast.Name) and target.id == "ALIGNERS" for target in node.targets) and isinstance(node.value, ast.Dict)):
                   aligners = [
                       key.value
