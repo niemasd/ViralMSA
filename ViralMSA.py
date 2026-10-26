@@ -498,7 +498,7 @@ def build_index_ngmlr(ref_genome_path, threads, verbose=True):
     command = ['ngmlr', '-x', 'pacbio', '-i', '0', '--no-smallinv', '-t', str(threads), '-r', ref_genome_path]
     if verbose:
         print_log("Building NGMLR index: %s" % ' '.join(command))
-    log = open('%s.NGMLR.log' % ref_genome_path, 'w'); subprocess.call(command, stdin=subprocess.DEVNULL, stderr=log, stdout=DEVNULL); log.close()
+    log = open('%s.NGMLR.log' % ref_genome_path, 'w'); subprocess.call(command, stdin=subprocess.DEVNULL, stderr=log, stdout=subprocess.DEVNULL); log.close()
     if verbose:
         print_log("NGMLR index built: %s and %s" % (enc_index_path, ht_index_path))
 
