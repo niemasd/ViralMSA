@@ -63,7 +63,7 @@ RUN apt-get update && \
     # install mm2-fast v1.0
     wget -qO- "https://github.com/bwa-mem2/mm2-fast/releases/download/mm2-fast-v1.0/Source_code_including_submodules.tar.gz" | tar -zx && \
     cd mm2-fast && \
-    make && \
+    make no_opt=1 && \
     mv minimap2 /usr/local/bin/mm2-fast && \
     cd .. && \
     rm -rf mm2-fast && \
