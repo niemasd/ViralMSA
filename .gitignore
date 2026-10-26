@@ -2,6 +2,7 @@
 *.aln
 *.aln.gz
 *.bam
+*.fai
 *.fas
 *.fas.gz
 *.fasta

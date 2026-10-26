@@ -560,7 +560,7 @@ def build_index_unimap(ref_genome_path, threads, verbose=True):
 
 # build wfmash index
 def build_index_wfmash(ref_genome_path, threads, verbose=True):
-    build_index_faidx(ref_genome_path, threads, verbose=True)
+    build_index_faidx(ref_genome_path, threads, verbose=verbose)
 
 # build Winnowmap index
 def build_index_winnowmap(ref_genome_path, threads, verbose=True):
@@ -742,7 +742,8 @@ def align_unimap(seqs_path, out_aln_path, ref_genome_path, threads, bufsize=DEFA
 
 # align genomes using wfmash
 def align_wfmash(seqs_path, out_aln_path, ref_genome_path, threads, bufsize=DEFAULT_BUFSIZE, verbose=True):
-    command = ['wfmash', '-N', '--sam-format', '--threads=%d' % threads, ref_genome_path, seqs_path]
+    build_index_faidx(seqs_path, threads, verbose=verbose)
+    command = ['wfmash', '-N', '-a', '-f', '--threads=%d' % threads, ref_genome_path, seqs_path]
     return start_alignment(command, out_aln_path, 'wfmash', bufsize=bufsize, verbose=verbose)
 
 # align genomes using Winnowmap
