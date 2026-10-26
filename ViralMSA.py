@@ -297,7 +297,7 @@ def check_wfmash():
         o = subprocess.check_output(['wfmash', '-h'])
     except:
         o = None
-    if o is None or 'wfmash [target] [queries...] {OPTIONS}' not in o.decode():
+    if o is None or 'wfmash' not in o.decode():
         print("ERROR: wfmash is not runnable in your PATH", file=sys.stderr); exit(1)
 
 # check Winnowmap
