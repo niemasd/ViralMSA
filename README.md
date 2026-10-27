@@ -74,6 +74,19 @@ If you have a local reference genome you would like to use, you can provide the 
 ViralMSA.py -s sequences.fas -o output -r my_reference.fas
 ```
 
+### Insertions
+In the original idea behind ViralMSA, because the positions of the reference genome are used as anchors to build the columns of the MSA, insertions were omitted. However, we have a new experimental 2-pass mapping strategy for attempting to add support for insertions with respect to the reference genome (`-is/--insert_strategy`):
+
+* In the first pass mapping, the original input sequences are mapped to the user-selected reference sequence (just like normal)
+* Then, an augmented reference sequence is produced by adding all insertions
+    1. Enumerate the insertion strings before each position of the reference
+    2. Build a Multiway Trie from each per-position collection of insertion strings
+    3. Insert the concatenation of the leaf words of the Multiway Trie
+        * Insertions that are prefixes of other insertions are implicitly included by the longer insertions they are prefixes of
+* Then, perform a second pass mapping of the original input sequences to this augmented reference sequence
+
+**This feature is experimental and is not well-tested! Use at your own risk!** But do let us know how it goes if you try it!
+
 ## Citing ViralMSA
 If you use ViralMSA in your work, please cite:
 
