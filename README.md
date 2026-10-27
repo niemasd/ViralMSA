@@ -87,6 +87,8 @@ In the original idea behind ViralMSA, because the positions of the reference gen
         * Insertions that are prefixes of other insertions are implicitly included by the longer insertions they are prefixes of
 * Then, perform a second pass mapping of the original input sequences to this augmented reference sequence
 
+If you choose to use this mode, I would recommend using [seq-align](https://github.com/noporpoise/seq-align) as the aligner (`-a seq-align`) for the sake of accuracy. However, seq-align is much slower than the default aligner, so this may not be fast enough for ultra-large datasets.
+
 **This feature is experimental and is not well-tested! Use at your own risk!** But do let us know how it goes if you try it!
 
 ## Citing ViralMSA
